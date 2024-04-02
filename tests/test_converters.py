@@ -198,22 +198,22 @@ class TestDataConvert:
 
 
 class TestExtract:
-    def test_default(self, centered_eight):
+    def test_default(self, centered_eight, chains, draws):
         post = extract(centered_eight)
         assert isinstance(post, xr.Dataset)
         assert "sample" in post.sizes
-        assert post.theta.size == (4 * 500 * 8)
+        assert post.theta.size == (chains * draws * 8)
 
     def test_seed(self, centered_eight):
         post = extract(centered_eight, rng=7)
         post_pred = extract(centered_eight, group="posterior_predictive", rng=7)
         assert all(post.sample == post_pred.sample)
 
-    def test_no_combine(self, centered_eight):
+    def test_no_combine(self, centered_eight, chains, draws):
         post = extract(centered_eight, combined=False)
         assert "sample" not in post.sizes
-        assert post.sizes["chain"] == 4
-        assert post.sizes["draw"] == 500
+        assert post.sizes["chain"] == chains
+        assert post.sizes["draw"] == draws
 
     def test_var_name_group(self, centered_eight):
         prior = extract(centered_eight, group="prior", var_names="the", filter_vars="like")

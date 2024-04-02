@@ -120,11 +120,8 @@ class TestDataEmcee:
         with pytest.raises(ValueError):
             from_emcee(sampler, blob_names=["inexistent"])
 
-    @pytest.mark.filterwarnings(
-        "ignore:Conversion of an array with ndim > 0 to a scalar:DeprecationWarning"
-    )
     def test_peculiar_blobs(self, data):
-        sampler = emcee.EnsembleSampler(6, 1, lambda x: (-(x**2), (np.random.normal(x), 3)))
+        sampler = emcee.EnsembleSampler(6, 1, lambda x: (-np.sum(x**2), (np.random.normal(x), 3)))
         sampler.run_mcmc(np.random.normal(size=(6, 1)), 20)
         inference_data = from_emcee(sampler, blob_names=["normal", "threes"])
         fails = check_multiple_attrs({"log_likelihood": ["normal", "threes"]}, inference_data)
@@ -133,11 +130,8 @@ class TestDataEmcee:
         fails = check_multiple_attrs({"log_likelihood": ["mix"]}, inference_data)
         assert not fails
 
-    @pytest.mark.filterwarnings(
-        "ignore:Conversion of an array with ndim > 0 to a scalar:DeprecationWarning"
-    )
     def test_single_blob(self):
-        sampler = emcee.EnsembleSampler(6, 1, lambda x: (-(x**2), 3))
+        sampler = emcee.EnsembleSampler(6, 1, lambda x: (-np.sum(x**2), 3))
         sampler.run_mcmc(np.random.normal(size=(6, 1)), 20)
         inference_data = from_emcee(sampler, blob_names=["blob"], blob_groups=["blob_group"])
         fails = check_multiple_attrs({"blob_group": ["blob"]}, inference_data)
