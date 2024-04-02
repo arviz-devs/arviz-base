@@ -1,9 +1,15 @@
 # pylint: disable=no-member, no-self-use, invalid-name, redefined-outer-name
+import os
 
 import numpy as np
 import pytest
 import xarray as xr
 from arviz_base import convert_to_dataset, convert_to_datatree, extract
+
+netcdf_nightlies_skip = pytest.mark.skipif(
+    os.environ.get("NIGHTLIES", False) == "TRUE",
+    reason="Skip netcdf4 dependent tests from nightlies as it generally takes longer to update.",
+)
 
 
 def test_1d_dataset():
@@ -136,6 +142,7 @@ def test_convert_to_datatree_idempotent():
     assert first.prior is second.prior
 
 
+@netcdf_nightlies_skip
 def test_convert_to_datatree_from_file(tmpdir):
     first = convert_to_datatree(np.random.randn(1, 100), group="prior")
     filename = str(tmpdir.join("test_file.nc"))
@@ -149,6 +156,7 @@ def test_convert_to_datatree_bad():
         convert_to_datatree(1)
 
 
+@netcdf_nightlies_skip
 def test_convert_to_dataset_bad(tmpdir):
     first = convert_to_datatree(np.random.randn(1, 100), group="prior")
     filename = str(tmpdir.join("test_file.nc"))

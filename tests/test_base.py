@@ -18,6 +18,11 @@ from arviz_base.datasets import LOCAL_DATASETS, REMOTE_DATASETS, RemoteFileMetad
 from datatree import DataTree
 from xarray.testing import assert_allclose
 
+netcdf_nightlies_skip = pytest.mark.skipif(
+    os.environ.get("NIGHTLIES", False) == "TRUE",
+    reason="Skip netcdf4 dependent tests from nightlies as it generally takes longer to update.",
+)
+
 
 @pytest.fixture(autouse=True)
 def no_remote_data(monkeypatch, tmpdir):
@@ -68,6 +73,7 @@ def no_remote_data(monkeypatch, tmpdir):
     )
 
 
+@netcdf_nightlies_skip
 @pytest.mark.filterwarnings("ignore:numpy.ndarray size changed")
 def test_load_local_arviz_data():
     idata = load_arviz_data("centered_eight")
@@ -85,6 +91,7 @@ def test_load_local_arviz_data():
     assert idata.posterior["theta"].dims == ("chain", "draw", "school")
 
 
+@netcdf_nightlies_skip
 def test_clear_data_home():
     resource = REMOTE_DATASETS["test_remote"]
     assert not os.path.exists(resource.filename)
@@ -94,6 +101,7 @@ def test_clear_data_home():
     assert not os.path.exists(resource.filename)
 
 
+@netcdf_nightlies_skip
 def test_load_remote_arviz_data():
     assert load_arviz_data("test_remote")
 
