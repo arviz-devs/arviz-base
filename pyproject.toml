@@ -51,7 +51,7 @@ ci = [
     "cloudpickle"
 ]
 doc = [
-    "furo",
+    "sphinx-book-theme",
     "myst-parser[linkify]",
     "myst-nb",
     "sphinx-copybutton",

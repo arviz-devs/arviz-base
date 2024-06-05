@@ -44,7 +44,7 @@ def get_data_home(data_home=None):
     By default the data dir is set to a folder named 'arviz_data' in the
     user home folder.
 
-    Alternatively, it can be set by the 'ARVIZ_DATA' environment
+    Alternatively, it can be set by the :envvar:`ARVIZ_DATA` environment
     variable or programmatically by giving an explicit folder path. The '~'
     symbol is expanded to the user home folder.
 
@@ -52,7 +52,7 @@ def get_data_home(data_home=None):
 
     Parameters
     ----------
-    data_home : str | None
+    data_home : str, optional
         The path to arviz data dir.
     """
     if data_home is None:
@@ -68,7 +68,7 @@ def clear_data_home(data_home=None):
 
     Parameters
     ----------
-    data_home : str | None
+    data_home : str, optional
         The path to arviz data dir.
     """
     data_home = get_data_home(data_home)
@@ -94,7 +94,7 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
     Run with no parameters to get a list of all available models.
 
     The directory to save to can also be set with the environment
-    variable `ARVIZ_HOME`. The checksum of the dataset is checked against a
+    variable :envvar:`ARVIZ_DATA`. The checksum of the dataset is checked against a
     hardcoded value to watch for data corruption.
 
     Run `az.clear_data_home` to clear the data directory.

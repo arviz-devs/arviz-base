@@ -59,6 +59,9 @@ extlinks = {
     "pull": ("https://github.com/arviz-devs/arviz-base/pull/%s", "PR#%s"),
 }
 
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+copybutton_prompt_is_regexp = True
+
 nb_execution_mode = "auto"
 nb_execution_excludepatterns = ["*.ipynb"]
 nb_kernel_rgx_aliases = {".*": "python3"}
@@ -91,10 +94,16 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable/", None),
     "python": ("https://docs.python.org/3/", None),
     "xarray": ("https://docs.xarray.dev/en/stable/", None),
+    "arviz_plots": ("https://arviz-plots.readthedocs.io/en/latest", None),
 }
 
 # -- Options for HTML output
 
-html_theme = "furo"
+html_theme = "sphinx_book_theme"
+html_theme_options = {
+    "logo": {
+        "image_light": "_static/ArviZ.png",
+        "image_dark": "_static/ArviZ_white.png",
+    }
+}
 html_static_path = ["_static"]
-html_css_files = ["custom.css"]
