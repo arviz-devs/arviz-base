@@ -82,6 +82,7 @@ select = [
     "E",  # Pycodestyle
     "W",  # Pycodestyle
     "D",  # pydocstyle
+    "NPY", # numpy specific rules
     "UP",  # pyupgrade
     "I",  # isort
     "PL",  # Pylint
