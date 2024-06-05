@@ -34,7 +34,8 @@ def _emcee_lnprob(theta, y, sigma):
     prior = _emcee_lnprior(theta)
     like_vect = -(((mu + tau * eta - y) / sigma) ** 2)
     like = np.sum(like_vect)
-    return like + prior, (like_vect, np.random.normal((mu + tau * eta), sigma))
+    rng = np.random.default_rng()
+    return like + prior, (like_vect, rng.normal((mu + tau * eta), sigma))
 
 
 def emcee_schools_model(data, draws, chains):
@@ -47,7 +48,8 @@ def emcee_schools_model(data, draws, chains):
     J = data["J"]  # pylint: disable=invalid-name
     ndim = J + 2
 
-    pos = np.random.normal(size=(chains, ndim))
+    rng = np.random.default_rng()
+    pos = rng.normal(size=(chains, ndim))
     pos[:, 1] = np.absolute(pos[:, 1])  #  pylint: disable=unsupported-assignment-operation
 
     here = os.path.dirname(os.path.abspath(__file__))

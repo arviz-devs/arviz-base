@@ -14,7 +14,8 @@ netcdf_nightlies_skip = pytest.mark.skipif(
 
 def test_1d_dataset():
     size = 100
-    dataset = convert_to_dataset(np.random.randn(size), sample_dims=["sample"])
+    rng = np.random.default_rng()
+    dataset = convert_to_dataset(rng.normal(size=size), sample_dims=["sample"])
     assert len(dataset.data_vars) == 1
 
     assert set(dataset.coords) == {"sample"}
@@ -22,7 +23,8 @@ def test_1d_dataset():
 
 
 def test_warns_bad_shape():
-    ary = np.random.randn(100, 4)
+    rng = np.random.default_rng()
+    ary = rng.normal(size=(100, 4))
     # Shape should be (chain, draw, *shape)
     with pytest.warns(UserWarning, match="Found chain dimension to be longer than draw"):
         convert_to_dataset(ary, sample_dims=("chain", "draw"))
@@ -34,7 +36,8 @@ def test_warns_bad_shape():
 
 def test_nd_to_dataset():
     shape = (1, 20, 3, 4, 5)
-    dataset = convert_to_dataset(np.random.randn(*shape), sample_dims=("chain", "draw", "pred_id"))
+    rng = np.random.default_rng()
+    dataset = convert_to_dataset(rng.normal(size=shape), sample_dims=("chain", "draw", "pred_id"))
     assert len(dataset.data_vars) == 1
     var_name = list(dataset.data_vars)[0]
 
@@ -47,7 +50,8 @@ def test_nd_to_dataset():
 
 def test_nd_to_datatree():
     shape = (1, 2, 3, 4, 5)
-    data = convert_to_datatree(np.random.randn(*shape), group="prior")
+    rng = np.random.default_rng()
+    data = convert_to_datatree(rng.normal(size=shape), group="prior")
     assert "/prior" in data.groups
     prior = data["prior"]
     assert len(prior.data_vars) == 1
@@ -61,8 +65,9 @@ def test_nd_to_datatree():
 
 def test_more_chains_than_draws():
     shape = (10, 4)
+    rng = np.random.default_rng()
     with pytest.warns(UserWarning):
-        data = convert_to_datatree(np.random.randn(*shape), group="prior")
+        data = convert_to_datatree(rng.normal(size=shape), group="prior")
     assert "/prior" in data.groups
     prior = data["prior"]
     assert len(prior.data_vars) == 1
@@ -77,12 +82,14 @@ def test_more_chains_than_draws():
 class TestConvertToDataset:
     @pytest.fixture(scope="class")
     def data(self):
+        rng = np.random.default_rng()
+
         # pylint: disable=attribute-defined-outside-init
         class Data:
             datadict = {
-                "a": np.random.randn(1, 100),
-                "b": np.random.randn(1, 100, 10),
-                "c": np.random.randn(1, 100, 3, 4),
+                "a": rng.normal(size=(1, 100)),
+                "b": rng.normal(size=(1, 100, 10)),
+                "c": rng.normal(size=(1, 100, 3, 4)),
             }
             coords = {"c1": np.arange(3), "c2": np.arange(4), "b1": np.arange(10)}
             dims = {"b": ["b1"], "c": ["c1", "c2"]}
@@ -131,20 +138,23 @@ class TestConvertToDataset:
 
 
 def test_convert_to_dataset_idempotent():
-    first = convert_to_dataset(np.random.randn(1, 100))
+    rng = np.random.default_rng()
+    first = convert_to_dataset(rng.normal(size=(1, 100)))
     second = convert_to_dataset(first)
     assert first.equals(second)
 
 
 def test_convert_to_datatree_idempotent():
-    first = convert_to_datatree(np.random.randn(1, 100), group="prior")
+    rng = np.random.default_rng()
+    first = convert_to_datatree(rng.normal(size=(1, 100)), group="prior")
     second = convert_to_datatree(first)
     assert first.prior is second.prior
 
 
 @netcdf_nightlies_skip
 def test_convert_to_datatree_from_file(tmpdir):
-    first = convert_to_datatree(np.random.randn(1, 100), group="prior")
+    rng = np.random.default_rng()
+    first = convert_to_datatree(rng.normal(size=(1, 100)), group="prior")
     filename = str(tmpdir.join("test_file.nc"))
     first.to_netcdf(filename)
     second = convert_to_datatree(filename)
@@ -158,7 +168,8 @@ def test_convert_to_datatree_bad():
 
 @netcdf_nightlies_skip
 def test_convert_to_dataset_bad(tmpdir):
-    first = convert_to_datatree(np.random.randn(1, 100), group="prior")
+    rng = np.random.default_rng()
+    first = convert_to_datatree(rng.normal(size=(1, 100)), group="prior")
     filename = str(tmpdir.join("test_file.nc"))
     first.to_netcdf(filename)
     with pytest.raises(ValueError):
@@ -168,11 +179,13 @@ def test_convert_to_dataset_bad(tmpdir):
 class TestDataConvert:
     @pytest.fixture(scope="class")
     def data(self, draws, chains):
+        rng = np.random.default_rng()
+
         class Data:
             # fake 8-school output
             obj = {}
             for key, shape in {"mu": [], "tau": [], "eta": [8], "theta": [8]}.items():
-                obj[key] = np.random.randn(chains, draws, *shape)
+                obj[key] = rng.normal(size=(chains, draws, *shape))
 
         return Data
 

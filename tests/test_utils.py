@@ -9,7 +9,8 @@ from .helpers import ExampleRandomVariable  # pylint: disable=unused-import
 
 @pytest.fixture(scope="module")
 def data():
-    samples = np.random.randn(2, 10)
+    rng = np.random.default_rng()
+    samples = rng.normal(size=(2, 10))
     dataset = dict_to_dataset(
         {
             "mu": samples,  # pylint: disable=invalid-unary-operand-type
@@ -38,11 +39,12 @@ def test_var_names(var_names_expected, data):
 
 def test_var_names_warning():
     """Test confusing var_name handling"""
+    rng = np.random.default_rng()
     ds = dict_to_dataset(
         {
-            "~mu": np.random.randn(2, 10),
-            "mu": -np.random.randn(2, 10),  # pylint: disable=invalid-unary-operand-type
-            "theta": np.random.randn(2, 10, 8),
+            "~mu": rng.normal(size=(2, 10)),
+            "mu": -rng.normal(size=(2, 10)),  # pylint: disable=invalid-unary-operand-type
+            "theta": rng.normal(size=(2, 10, 8)),
         }
     )
     var_names = expected = ["~mu"]
@@ -66,7 +68,8 @@ def test_var_names_key_error(data):
     ],
 )
 def test_var_names_filter_multiple_input(var_args):
-    samples = np.random.randn(1, 10)
+    rng = np.random.default_rng()
+    samples = rng.normal(size=(1, 10))
     data1 = dict_to_dataset({"beta1": samples, "beta2": samples, "phi": samples})
     data2 = dict_to_dataset({"beta1": samples, "beta2": samples, "theta": samples})
     data = [data1, data2]
@@ -92,7 +95,8 @@ def test_var_names_filter_multiple_input(var_args):
 )
 def test_var_names_filter(var_args):
     """Test var_names filter with partial naming or regular expressions."""
-    samples = np.random.randn(1, 10)
+    rng = np.random.default_rng()
+    samples = rng.normal(size=(1, 10))
     data = dict_to_dataset(
         {
             "alpha": samples,
@@ -112,14 +116,16 @@ def test_var_names_filter(var_args):
 def test_nonstring_var_names():
     """Check that non-string variables are preserved"""
     mu = ExampleRandomVariable("mu")
-    samples = np.random.randn(1, 10)
+    rng = np.random.default_rng()
+    samples = rng.normal(size=(1, 10))
     data = dict_to_dataset({mu: samples})
     assert _var_names([mu], data) == [mu]
 
 
 def test_var_names_filter_invalid_argument():
     """Check invalid argument raises."""
-    samples = np.random.randn(1, 10)
+    rng = np.random.default_rng()
+    samples = rng.normal(size=(1, 10))
     data = dict_to_dataset({"alpha": samples})
     msg = r"^\'filter_vars\' can only be None, \'like\', or \'regex\', got: 'foo'$"
     with pytest.raises(ValueError, match=msg):

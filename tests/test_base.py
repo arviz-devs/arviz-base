@@ -172,7 +172,8 @@ def test_make_attrs():
 
 
 def test_dict_to_dataset():
-    datadict = {"a": np.random.randn(1, 100), "b": np.random.randn(1, 100, 10)}
+    rng = np.random.default_rng()
+    datadict = {"a": rng.normal(size=(1, 100)), "b": rng.normal(size=(1, 100, 10))}
     dataset = dict_to_dataset(datadict, coords={"c": np.arange(10)}, dims={"b": ["c"]})
     assert set(dataset.data_vars) == {"a", "b"}
     assert set(dataset.coords) == {"chain", "draw", "c"}
@@ -182,7 +183,8 @@ def test_dict_to_dataset():
 
 
 def test_dict_to_dataset_event_dims_error():
-    datadict = {"a": np.random.randn(1, 100, 10)}
+    rng = np.random.default_rng()
+    datadict = {"a": rng.normal(size=(1, 100, 10))}
     coords = {"b": np.arange(10), "c": ["x", "y", "z"]}
     msg = "more dims"
     with pytest.raises(ValueError, match=msg):
@@ -190,7 +192,8 @@ def test_dict_to_dataset_event_dims_error():
 
 
 def test_dict_to_dataset_with_tuple_coord():
-    datadict = {"a": np.random.randn(1, 100), "b": np.random.randn(1, 100, 10)}
+    rng = np.random.default_rng()
+    datadict = {"a": rng.normal(size=(1, 100)), "b": rng.normal(size=(1, 100, 10))}
     with pytest.raises(TypeError, match="Could not convert tuple"):
         dict_to_dataset(datadict, coords={"c": tuple(range(10))}, dims={"b": ["c"]})
 

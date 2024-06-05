@@ -51,8 +51,9 @@ def test_dataset_to_numpy_combined(sample_dataset):
 def test_xarray_sel_iter_ordering():
     """Assert that coordinate names stay the provided order"""
     coords = list("dcba")
+    rng = np.random.default_rng()
     data = dict_to_dataset(
-        {"x": np.random.randn(1, 100, len(coords))},
+        {"x": rng.normal(size=(1, 100, len(coords)))},
         coords={"in_order": coords},
         dims={"x": ["in_order"]},
     )

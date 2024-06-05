@@ -7,11 +7,13 @@ from arviz_base.testing import check_multiple_attrs
 
 @pytest.fixture(scope="function")
 def data(draws, chains):
+    rng = np.random.default_rng()
+
     class Data:
         # fake 8-school output
         obj = {}
         for key, shape in {"mu": [], "tau": [], "eta": [8], "theta": [8]}.items():
-            obj[key] = np.random.randn(chains, draws, *shape)
+            obj[key] = rng.normal(size=(chains, draws, *shape))
 
     return Data
 
@@ -76,15 +78,16 @@ def test_from_dict(data, eight_schools_params, save_warmup):
 
 def test_from_dict_auto_skip_event_dims():
     # create data
+    rng = np.random.default_rng()
     data = {
         "log_likelihood": {
-            "y": np.random.randn(4, 100),
+            "y": rng.normal(size=(4, 100)),
         },
         "posterior_predictive": {
-            "y": np.random.randn(4, 100, 8),
+            "y": rng.normal(size=(4, 100, 8)),
         },
         "observed_data": {
-            "y": np.random.randn(8),
+            "y": rng.normal(size=8),
         },
     }
 
