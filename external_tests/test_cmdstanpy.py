@@ -225,6 +225,7 @@ class TestDataCmdStanPy:
                 "theta": ["school"],
                 "log_lik": ["log_lik_dim"],
             },
+            log_likelihood=True,
             dtypes=data.model,
         )
 
