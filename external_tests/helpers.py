@@ -1,5 +1,6 @@
 # pylint: disable=redefined-outer-name, comparison-with-callable, protected-access
 """Test helper functions for external tests."""
+
 import gzip
 import importlib
 import logging

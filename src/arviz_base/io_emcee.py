@@ -1,4 +1,5 @@
 """emcee-specific conversion code."""
+
 import warnings
 
 import numpy as np

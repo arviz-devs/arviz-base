@@ -1,5 +1,6 @@
 # pylint: disable=no-self-use
 """Tests for labeller classes."""
+
 import pytest
 from arviz_base.labels import (
     BaseLabeller,

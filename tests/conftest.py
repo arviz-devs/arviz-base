@@ -1,5 +1,6 @@
 # pylint: disable=redefined-outer-name
 """Test configuration and global fixtures."""
+
 import numpy as np
 import pytest
 from arviz_base import from_dict

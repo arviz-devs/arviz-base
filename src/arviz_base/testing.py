@@ -1,6 +1,5 @@
 """ArviZ testing utilities."""
 
-
 from datatree import DataTree
 
 

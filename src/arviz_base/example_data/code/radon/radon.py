@@ -7,8 +7,7 @@ with open("radon.json", "rb") as f:
     radon_data = json.load(f)
 
 radon_data = {
-    key: np.array(value) if isinstance(value, list) else value
-    for key, value in radon_data.items()
+    key: np.array(value) if isinstance(value, list) else value for key, value in radon_data.items()
 }
 
 coords = {
@@ -42,8 +41,6 @@ with pm.Model(coords=coords):
     y = pm.Normal("y", theta, sigma=sigma, observed=radon_data["y"], dims="obs_id")
 
     prior = pm.sample_prior_predictive(500)
-    trace = pm.sample(
-        1000, tune=500, target_accept=0.99, random_seed=117
-    )
+    trace = pm.sample(1000, tune=500, target_accept=0.99, random_seed=117)
     post_pred = pm.sample_posterior_predictive(trace)
     idata = az.from_pymc3(trace, prior=prior, posterior_predictive=post_pred)

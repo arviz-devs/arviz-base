@@ -1,4 +1,5 @@
 """ArviZ type definitions."""
+
 from collections.abc import Hashable, Iterable, Mapping
 from typing import TYPE_CHECKING, Any
 
