@@ -71,12 +71,10 @@ zarr = [
   "zarr"
 ]
 
-[tool.black]
-line-length = 100
-
 [tool.ruff]
 line-length = 100
-show-fixes = true
+
+[tool.ruff.lint]
 select = [
     "F",  # Pyflakes
     "E",  # Pycodestyle
@@ -94,14 +92,17 @@ ignore = [
 ]
 ignore-init-module-imports = true
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "src/arviz_base/__init__.py" = ["I", "F401", "E402", "F403"]
 "src/arviz_base/example_data/**/*" = ["F", "E", "W", "D", "I", "PL"]
 "tests/**/*" = ["D", "PLR2004"]
 "external_tests/**/*" = ["D", "PLR2004"]
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.ruff.format]
+docstring-code-format = false
 
 [tool.mypy]
 python_version = "3.10"
