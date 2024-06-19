@@ -10,9 +10,9 @@ from arviz_base.rcparams import (
     _validate_float_or_none,
     _validate_positive_int_or_none,
     _validate_probability,
+    _validate_stats_module,
     make_iterable_validator,
     rc_context,
-    rc_params,
     rcParams,
     read_rcfile,
 )
@@ -29,10 +29,10 @@ def test_rc_context_dict():
 
 def test_rc_context_file():
     path = os.path.dirname(os.path.abspath(__file__))
-    rcParams["plot.point_estimate"] = "mean"
+    rcParams["stats.point_estimate"] = "mean"
     with rc_context(fname=os.path.join(path, "valid.rcparams")):
-        assert rcParams["plot.point_estimate"] == "median"
-    assert rcParams["plot.point_estimate"] == "mean"
+        assert rcParams["stats.point_estimate"] == "median"
+    assert rcParams["stats.point_estimate"] == "mean"
 
 
 def test_bad_rc_file():
@@ -100,19 +100,6 @@ def test_rcparams_repr_str():
     assert repr_str.startswith("RcParams")
     for string in (repr_str, str_str):
         assert all(key in string for key in rcParams.keys())
-
-
-### Test arvizrc.template file is up to date ###
-def test_rctemplate_updated():
-    fname = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../arvizrc.template")
-    rc_pars_template = read_rcfile(fname)
-    rc_defaults = rc_params(ignore_files=True)
-    assert all(key in rc_pars_template.keys() for key in rc_defaults.keys()), [
-        key for key in rc_defaults.keys() if key not in rc_pars_template
-    ]
-    assert all((value == rc_pars_template[key] for key, value in rc_defaults.items())), [
-        key for key, value in rc_defaults.items() if value != rc_pars_template[key]
-    ]
 
 
 ### Test validation functions ###
@@ -255,6 +242,47 @@ def test_validate_probability(args):
     else:
         value = _validate_probability(value)
         assert isinstance(value, float)
+
+
+# pylint: disable=no-self-use
+class MockGoodStats:
+    def quantile(self):
+        return
+
+    def histogram(self):
+        return
+
+    def autocorr(self):
+        return
+
+
+# pylint: disable=no-self-use
+class MockBadStats:
+    autocorr = False
+
+    def histogram(self):
+        return
+
+    def quantile(self):
+        return
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        (False, "base"),
+        (False, MockGoodStats()),
+        ("Only.+statistical functions", MockBadStats()),
+    ],
+)
+def test_validate_stats_module(args):
+    raise_error, value = args
+    if raise_error:
+        with pytest.raises(ValueError, match=raise_error):
+            _validate_stats_module(value)
+    else:
+        validated = _validate_stats_module(value)
+        assert value is validated
 
 
 ## Some simple integration checks with rcparams

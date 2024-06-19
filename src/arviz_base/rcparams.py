@@ -150,6 +150,19 @@ def _add_none_to_validator(base_validator):
     return validate_with_none
 
 
+def _validate_stats_module(value):
+    if isinstance(value, str):
+        return value
+    quantile_method = getattr(value, "quantile", None)
+    autocorr_method = getattr(value, "autocorr", None)
+    histogram_method = getattr(value, "histogram", None)
+    if all(callable(meth) for meth in (quantile_method, autocorr_method, histogram_method)):
+        return value
+    raise ValueError(
+        "Only strings or Python objects with statistical functions as methods are valid"
+    )
+
+
 def _validate_bokeh_marker(value):
     """Validate the markers."""
     try:
@@ -223,16 +236,33 @@ _validate_dims = make_iterable_validator(str, length=None, allow_none=False, all
 defaultParams = {  # pylint: disable=invalid-name
     "data.http_protocol": ("https", _make_validate_choice({"https", "http"})),
     "data.index_origin": (0, _make_validate_choice({0, 1}, typeof=int)),
-    "data.log_likelihood": (True, _validate_boolean),
+    "data.log_likelihood": (False, _validate_boolean),
     "data.sample_dims": (("chain", "draw"), _validate_dims),
     "data.save_warmup": (False, _validate_boolean),
     "plot.backend": ("matplotlib", _make_validate_choice({"matplotlib", "bokeh"})),
     "plot.density_kind": ("kde", _make_validate_choice({"kde", "hist"})),
     "plot.max_subplots": (40, _validate_positive_int_or_none),
-    "plot.point_estimate": (
+    "stats.module": ("base", _validate_stats_module),
+    "stats.ci_kind": ("eti", _make_validate_choice({"eti", "hdi"})),
+    "stats.ci_prob": (0.88, _validate_probability),
+    "stats.information_criterion": (
+        "loo",
+        _make_validate_choice(set(get_args(ICKeyword))),
+    ),
+    "stats.ic_pointwise": (True, _validate_boolean),
+    "stats.ic_scale": (
+        "log",
+        _make_validate_choice(set(get_args(ScaleKeyword))),
+    ),
+    "stats.ic_compare_method": (
+        "stacking",
+        _make_validate_choice({"stacking", "bb-pseudo-bma", "pseudo-bma"}),
+    ),
+    "stats.point_estimate": (
         "mean",
         _make_validate_choice({"mean", "median", "mode"}, allow_none=True),
     ),
+    ###########  Bokeh specific rcParams: might be removed #########
     "plot.bokeh.bounds_x_range": ("auto", _validate_bokeh_bounds),
     "plot.bokeh.bounds_y_range": ("auto", _validate_bokeh_bounds),
     "plot.bokeh.figure.dpi": (60, _validate_positive_int),
@@ -264,27 +294,9 @@ defaultParams = {  # pylint: disable=invalid-name
     ),
     "plot.bokeh.marker": ("cross", _validate_bokeh_marker),
     "plot.bokeh.output_backend": ("webgl", _make_validate_choice({"canvas", "svg", "webgl"})),
-    "plot.bokeh.show": (True, _validate_boolean),
     "plot.bokeh.tools": (
         "reset,pan,box_zoom,wheel_zoom,lasso_select,undo,save,hover",
         lambda x: x,
-    ),
-    "plot.matplotlib.show": (False, _validate_boolean),
-    "stats.module": ("arviz_stats.base", _validate_str),
-    "stats.ci_kind": ("eti", _make_validate_choice({"eti", "hdi"})),
-    "stats.ci_prob": (0.83, _validate_probability),
-    "stats.information_criterion": (
-        "loo",
-        _make_validate_choice(set(get_args(ICKeyword))),
-    ),
-    "stats.ic_pointwise": (True, _validate_boolean),
-    "stats.ic_scale": (
-        "log",
-        _make_validate_choice(set(get_args(ScaleKeyword))),
-    ),
-    "stats.ic_compare_method": (
-        "stacking",
-        _make_validate_choice({"stacking", "bb-pseudo-bma", "pseudo-bma"}),
     ),
 }
 

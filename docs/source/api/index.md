@@ -167,10 +167,13 @@ which sometimes requires updating default values, for example to use new algorit
 
 ```{eval-rst}
 .. py:data:: stats.module
-    :type: str
-    :value: "arviz_stats.base"
+    :type: str or object
+    :value: "base"
 
-    Preferred module for stats computations
+    Preferred module for stats computations. It accepts a custom user-created
+    statistics class, which must have the necessary functions for stats and plots
+    to work properly. When validating the input though, only the ``autocorr``,
+    ``quantile`` and ``histogram`` methods are checked.
 
 .. py:data:: stats.ci_kind
     :type: str
@@ -180,7 +183,7 @@ which sometimes requires updating default values, for example to use new algorit
 
 .. py:data:: stats.ci_prob
     :type: float
-    :value: 0.83
+    :value: 0.88
 
     The default probability of computed credible intervals. Its default value here
     is also a friendly reminder of the arbitrary nature of commonly values like 95%
@@ -213,6 +216,12 @@ which sometimes requires updating default values, for example to use new algorit
     :data:`information criterion <stats.information_criterion>` values,
     one of "deviance" (common in the past and reason of the information criterion naming),
     "log" or "negative_log".
+
+.. py:data:: stats.point_estimate
+    :type: str
+    :value: "mean"
+
+    Default statistical summary for centrality, one of "mean", "median" or "mode".
 ```
 
 ### plots
@@ -235,10 +244,4 @@ which sometimes requires updating default values, for example to use new algorit
     :value: 40
 
     Maximum number of :term:`arviz_plots:plots` that can be generated at once.
-
-.. py:data:: plot.point_estimate
-    :type: str
-    :value: "mean"
-
-    Default statistical summary for centrality, one of "mean", "median" or "mode".
 ```
