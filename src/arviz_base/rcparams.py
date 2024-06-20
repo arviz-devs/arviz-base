@@ -154,10 +154,9 @@ def _add_none_to_validator(base_validator):
 def _validate_stats_module(value):
     if isinstance(value, str):
         return value
-    quantile_method = getattr(value, "quantile", None)
-    autocorr_method = getattr(value, "autocorr", None)
-    histogram_method = getattr(value, "histogram", None)
-    if all(callable(meth) for meth in (quantile_method, autocorr_method, histogram_method)):
+    eti_method = getattr(value, "eti", None)
+    rhat_method = getattr(value, "rhat", None)
+    if all(callable(meth) for meth in (eti_method, rhat_method)):
         return value
     raise ValueError(
         "Only strings or Python objects with statistical functions as methods are valid"

@@ -67,7 +67,7 @@ where `<option>` can be one of:
 
 
 You can install multiple bundles of optional dependencies separating them with commas.
-Thus, to install all user facing optional dependencies you should use `xarray-einstats[einops,numba]`
+Thus, to install all user facing optional dependencies you should use `arviz-base[netcdf,zarr]`
 
 :::{toctree}
 :hidden:
@@ -93,5 +93,5 @@ api/index
 
 Twitter <https://twitter.com/arviz_devs>
 Mastodon <https://bayes.club/@ArviZ>
-GitHub repository <https://github.com/arviz-devs/xarray-einstats>
+GitHub repository <https://github.com/arviz-devs/arviz-base>
 :::

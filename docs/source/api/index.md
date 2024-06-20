@@ -170,10 +170,10 @@ which sometimes requires updating default values, for example to use new algorit
     :type: str or object
     :value: "base"
 
-    Preferred module for stats computations. It accepts a custom user-created
-    statistics class, which must have the necessary functions for stats and plots
-    to work properly. When validating the input though, only the ``autocorr``,
-    ``quantile`` and ``histogram`` methods are checked.
+    Preferred module for :doc:`stats computations <arviz_stats:index>`.
+    It accepts a custom user-created statistics class, which must have the necessary
+    functions for stats and plots to work properly.
+    When validating the input though, only the ``eti`` and ``rhat`` methods are checked.
 
 .. py:data:: stats.ci_kind
     :type: str

@@ -42,7 +42,6 @@ funding = "https://opencollective.com/arviz"
 
 [project.optional-dependencies]
 test = [
-    "hypothesis",
     "pytest",
     "pytest-cov",
 ]
