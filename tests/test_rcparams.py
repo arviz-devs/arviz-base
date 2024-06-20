@@ -246,24 +246,18 @@ def test_validate_probability(args):
 
 # pylint: disable=no-self-use
 class MockGoodStats:
-    def quantile(self):
+    def eti(self):
         return
 
-    def histogram(self):
-        return
-
-    def autocorr(self):
+    def rhat(self):
         return
 
 
 # pylint: disable=no-self-use
 class MockBadStats:
-    autocorr = False
+    eti = False
 
-    def histogram(self):
-        return
-
-    def quantile(self):
+    def rhat(self):
         return
 
 
