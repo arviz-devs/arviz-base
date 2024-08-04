@@ -204,6 +204,38 @@ def _validate_bokeh_marker(value):
     return value
 
 
+# pylint: disable=unused-import
+def _validate_backend(value):
+    base_validator = _make_validate_choice({"auto", "none", "matplotlib", "bokeh", "plotly"})
+    value = base_validator(value)
+    if value != "auto":
+        return value
+    _log.info("Found 'auto' as default backend, checking available backends")
+    try:
+        import matplotlib
+    except ImportError:
+        _log.debug("Unable to import matplotlib", exc_info=True)
+    else:
+        _log.info("Matplotlib is available, defining as default backend")
+        return "matplotlib"
+    try:
+        import plotly
+    except ImportError:
+        _log.debug("Unable to import plotly", exc_info=True)
+    else:
+        _log.info("Plotly is available, defining as default backend")
+        return "plotly"
+    try:
+        import bokeh
+    except ImportError:
+        _log.debug("Unable to import bokeh", exc_info=True)
+    else:
+        _log.info("Bokeh is available, defining as default backend")
+        return "bokeh"
+    _log.info("No compatible plotting library installed, defining none as default backend")
+    return "none"
+
+
 def make_iterable_validator(scalar_validator, length=None, allow_none=False, allow_auto=False):
     """Validate value is an iterable datatype."""
     # based on matplotlib's _listify_validator function
@@ -239,7 +271,7 @@ defaultParams = {  # pylint: disable=invalid-name
     "data.log_likelihood": (False, _validate_boolean),
     "data.sample_dims": (("chain", "draw"), _validate_dims),
     "data.save_warmup": (False, _validate_boolean),
-    "plot.backend": ("matplotlib", _make_validate_choice({"matplotlib", "bokeh"})),
+    "plot.backend": ("auto", _validate_backend),
     "plot.density_kind": ("kde", _make_validate_choice({"kde", "hist"})),
     "plot.max_subplots": (40, _validate_positive_int_or_none),
     "stats.module": ("base", _validate_stats_module),
