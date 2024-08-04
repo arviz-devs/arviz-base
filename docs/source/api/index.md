@@ -229,9 +229,12 @@ which sometimes requires updating default values, for example to use new algorit
 ```{eval-rst}
 .. py:data:: plot.backend
     :type: str
-    :value: "matplotlib"
+    :value: "auto"
 
-    Default plotting backend for :mod:`arviz_plots`, one of "matplotlib", "bokeh" or "none".
+    Default plotting backend for :mod:`arviz_plots`, one of "matplotlib", "plotly", "bokeh", "none"
+    or "auto". If "auto" when setting the value (or when importing the library if using "auto" in a
+    template) the available backends will be checked in the order above, the first one that is found
+    to be available is set as the default plotting backend.
 
 .. py:data:: plot.density_kind
     :type: str
