@@ -195,6 +195,7 @@ def extract(
     var_names=None,
     filter_vars=None,
     num_samples=None,
+    weights=None,
     keep_dataset=False,
     rng=None,
 ):
@@ -224,14 +225,18 @@ def extract(
         instead of what to include
     num_samples : int, optional
         Extract only a subset of the samples. Only valid if ``combined=True``
+    weights : array-like, optional
+        Extract a weighted subset of the samples. Only valid if ``combined=True`` and
+        ``num_samples`` is not ``None``.
     keep_dataset : bool, optional
         If true, always return a DataSet. If false (default) return a DataArray
         when there is a single variable.
     rng : bool, int, numpy.Generator, optional
-        Shuffle the samples, only valid if ``combined=True``. By default,
-        samples are shuffled if ``num_samples`` is not ``None``, and are left
-        in the same order otherwise. This ensures that subsetting the samples doesn't return
+        Shuffle the samples ensuring subsetting the samples doesn't return
         only samples from a single chain and consecutive draws.
+        Only valid if ``combined=True``. Ignored if ``weights`` is not ``None``. 
+        By default samples are shuffled if ``num_samples`` is not ``None``, and are left
+        in the same order otherwise. 
 
     Returns
     -------
@@ -263,10 +268,13 @@ def extract(
     """
     if num_samples is not None and not combined:
         raise ValueError("num_samples is only compatible with combined=True")
+    if weights is not None and num_samples is None:
+        raise ValueError("weights are only compatible with num_samples")
     if rng is None:
         rng = num_samples is not None
     if rng is not False and not combined:
         raise ValueError("rng is only compatible with combined=True")
+    
     data = convert_to_dataset(data, group=group)
     var_names = _var_names(var_names, data, filter_vars)
     if var_names is not None:
@@ -279,19 +287,25 @@ def extract(
         if sample_dims is None:
             sample_dims = rcParams["data.sample_dims"]
         data = data.stack(sample=sample_dims)
-    # 0 is a valid seed se we need to check for rng being exactly boolean
-    if rng is not False:
-        if rng is True:
-            rng = np.random.default_rng()
-        # default_rng takes ints or sequences of ints
-        try:
-            rng = np.random.default_rng(rng)
-            random_subset = rng.permutation(np.arange(len(data["sample"])))
-        except TypeError as err:
-            raise TypeError("Unable to initializate numpy random Generator from rng") from err
-        except AttributeError as err:
-            raise AttributeError("Unable to use rng to generate a permutation") from err
-        data = data.isel(sample=random_subset)
-    if num_samples is not None:
-        data = data.isel(sample=slice(None, num_samples))
+
+    if weights is not None:
+        resample_indices = np.random.choice(np.arange(len(data["sample"])), size=num_samples, p=weights, replace=True)
+        data = data.isel(sample=resample_indices)
+    else:
+        # 0 is a valid seed se we need to check for rng being exactly boolean
+        if rng is not False:
+            if rng is True:
+                rng = np.random.default_rng()
+            # default_rng takes ints or sequences of ints
+            try:
+                rng = np.random.default_rng(rng)
+                random_subset = rng.permutation(np.arange(len(data["sample"])))
+            except TypeError as err:
+                raise TypeError("Unable to initializate numpy random Generator from rng") from err
+            except AttributeError as err:
+                raise AttributeError("Unable to use rng to generate a permutation") from err
+            data = data.isel(sample=random_subset)
+        if num_samples is not None:
+            data = data.isel(sample=slice(None, num_samples))
+
     return data
