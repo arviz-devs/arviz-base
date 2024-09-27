@@ -292,7 +292,11 @@ def extract(
             raise ValueError(f"Invalid random_seed value: {random_seed}")
         
         replace = True if weights is not None else False
-        resample_indices = rng.choice(np.arange(len(data["sample"])), size=num_samples, p=weights, replace=replace)
+        resample_indices = rng.choice(np.arange(len(data["sample"])), 
+                                      size=num_samples, 
+                                      p=weights, 
+                                      replace=replace,
+                                      )
         data = data.isel(sample=resample_indices)
 
     return data
