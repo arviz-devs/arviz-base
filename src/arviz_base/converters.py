@@ -267,7 +267,7 @@ def extract(
         raise ValueError("num_samples is only compatible with combined=True")
     if weights is not None and num_samples is None:
         raise ValueError("weights are only compatible with num_samples")
-    
+
     data = convert_to_dataset(data, group=group)
     var_names = _var_names(var_names, data, filter_vars)
     if var_names is not None:
@@ -284,19 +284,20 @@ def extract(
     if weights is not None or num_samples is not None:
         if random_seed is None:
             rng = np.random.default_rng()
-        elif isinstance(random_seed, (int, np.integer)):
+        elif isinstance(random_seed, int | np.integer):
             rng = np.random.default_rng(random_seed)
         elif isinstance(random_seed, np.random.Generator):
             rng = random_seed
         else:
             raise ValueError(f"Invalid random_seed value: {random_seed}")
-        
+
         replace = True if weights is not None else False
-        resample_indices = rng.choice(np.arange(len(data["sample"])), 
-                                      size=num_samples, 
-                                      p=weights, 
-                                      replace=replace,
-                                      )
+        resample_indices = rng.choice(
+            np.arange(len(data["sample"])),
+            size=num_samples,
+            p=weights,
+            replace=replace,
+        )
         data = data.isel(sample=resample_indices)
 
     return data
