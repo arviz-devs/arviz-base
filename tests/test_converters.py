@@ -227,8 +227,8 @@ class TestExtract:
         assert post.theta.size == (chains * draws * 8)
 
     def test_seed(self, centered_eight):
-        post = extract(centered_eight, rng=7)
-        post_pred = extract(centered_eight, group="posterior_predictive", rng=7)
+        post = extract(centered_eight, random_seed=7)
+        post_pred = extract(centered_eight, group="posterior_predictive", random_seed=7)
         assert all(post.sample == post_pred.sample)
 
     def test_no_combine(self, centered_eight, chains, draws):

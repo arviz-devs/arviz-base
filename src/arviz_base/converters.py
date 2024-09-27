@@ -197,7 +197,7 @@ def extract(
     num_samples=None,
     weights=None,
     keep_dataset=False,
-    rng=None,
+    random_seed=None,
 ):
     """Extract a group or group subset from a DataTree.
 
@@ -231,12 +231,9 @@ def extract(
     keep_dataset : bool, optional
         If true, always return a DataSet. If false (default) return a DataArray
         when there is a single variable.
-    rng : bool, int, numpy.Generator, optional
-        Shuffle the samples ensuring subsetting the samples doesn't return
-        only samples from a single chain and consecutive draws.
-        Only valid if ``combined=True``. Ignored if ``weights`` is not ``None``. 
-        By default samples are shuffled if ``num_samples`` is not ``None``, and are left
-        in the same order otherwise. 
+    random_seed : int, numpy.Generator, optional
+        Random number generator or seed. Only used if ``weights`` is not ``None``
+        or if ``num_samples`` is not ``None``.
 
     Returns
     -------
@@ -270,10 +267,6 @@ def extract(
         raise ValueError("num_samples is only compatible with combined=True")
     if weights is not None and num_samples is None:
         raise ValueError("weights are only compatible with num_samples")
-    if rng is None:
-        rng = num_samples is not None
-    if rng is not False and not combined:
-        raise ValueError("rng is only compatible with combined=True")
     
     data = convert_to_dataset(data, group=group)
     var_names = _var_names(var_names, data, filter_vars)
@@ -288,24 +281,18 @@ def extract(
             sample_dims = rcParams["data.sample_dims"]
         data = data.stack(sample=sample_dims)
 
-    if weights is not None:
-        resample_indices = np.random.choice(np.arange(len(data["sample"])), size=num_samples, p=weights, replace=True)
+    if weights is not None or num_samples is not None:
+        if random_seed is None:
+            rng = np.random.default_rng()
+        elif isinstance(random_seed, (int, np.integer)):
+            rng = np.random.default_rng(random_seed)
+        elif isinstance(random_seed, np.random.Generator):
+            rng = random_seed
+        else:
+            raise ValueError(f"Invalid random_seed value: {random_seed}")
+        
+        replace = True if weights is not None else False
+        resample_indices = rng.choice(np.arange(len(data["sample"])), size=num_samples, p=weights, replace=replace)
         data = data.isel(sample=resample_indices)
-    else:
-        # 0 is a valid seed se we need to check for rng being exactly boolean
-        if rng is not False:
-            if rng is True:
-                rng = np.random.default_rng()
-            # default_rng takes ints or sequences of ints
-            try:
-                rng = np.random.default_rng(rng)
-                random_subset = rng.permutation(np.arange(len(data["sample"])))
-            except TypeError as err:
-                raise TypeError("Unable to initializate numpy random Generator from rng") from err
-            except AttributeError as err:
-                raise AttributeError("Unable to use rng to generate a permutation") from err
-            data = data.isel(sample=random_subset)
-        if num_samples is not None:
-            data = data.isel(sample=slice(None, num_samples))
 
     return data
