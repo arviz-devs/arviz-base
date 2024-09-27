@@ -226,8 +226,8 @@ class TestExtract:
         assert post.theta.size == (chains * draws * 8)
 
     def test_seed(self, centered_eight):
-        post = extract(centered_eight, rng=7)
-        post_pred = extract(centered_eight, group="posterior_predictive", rng=7)
+        post = extract(centered_eight, random_seed=7)
+        post_pred = extract(centered_eight, group="posterior_predictive", random_seed=7)
         assert all(post.sample == post_pred.sample)
 
     def test_no_combine(self, centered_eight, chains, draws):
@@ -261,3 +261,13 @@ class TestExtract:
         assert isinstance(post, xr.DataArray)
         post = extract(centered_eight, var_names="theta")
         assert isinstance(post, xr.DataArray)
+
+    def test_weights(self, centered_eight):
+        rng = np.random.default_rng()
+        weights = rng.random(
+            centered_eight.posterior.sizes["chain"] * centered_eight.posterior.sizes["draw"]
+        )
+        weights /= weights.sum()
+        post = extract(centered_eight, num_samples=10, weights=weights)
+        assert post.sizes["sample"] == 10
+        assert post.attrs == centered_eight.posterior.attrs
