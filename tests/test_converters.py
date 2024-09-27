@@ -264,7 +264,10 @@ class TestExtract:
         assert isinstance(post, xr.DataArray)
 
     def test_weights(self, centered_eight):
-        weights = np.random.rand(centered_eight.posterior.sizes["chain"] * centered_eight.posterior.sizes["draw"])
+        rng = np.random.default_rng()
+        weights = rng.random(
+            centered_eight.posterior.sizes["chain"] * centered_eight.posterior.sizes["draw"]
+        )
         weights /= weights.sum()
         post = extract(centered_eight, num_samples=10, weights=weights)
         assert post.sizes["sample"] == 10
