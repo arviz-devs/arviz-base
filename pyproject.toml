@@ -73,9 +73,6 @@ zarr = [
 [tool.ruff]
 line-length = 100
 
-[tool.ruff.lint.flake8-tidy-imports]
-ban-relative-imports = "all"
-
 [tool.ruff.lint]
 select = [
     "F",  # Pyflakes
@@ -86,6 +83,7 @@ select = [
     "UP",  # pyupgrade
     "I",  # isort
     "PL",  # Pylint
+    "TID",  # Absolute imports
 ]
 ignore = [
     "PLR0912",  # too many branches
@@ -101,6 +99,9 @@ ignore = [
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"  # Disallow all relative imports.
 
 [tool.ruff.format]
 docstring-code-format = false
