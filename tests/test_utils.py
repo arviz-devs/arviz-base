@@ -1,6 +1,7 @@
 # pylint: disable=redefined-outer-name
 import numpy as np
 import pytest
+
 from arviz_base import dict_to_dataset
 from arviz_base.utils import _subset_list, _var_names
 

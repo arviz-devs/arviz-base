@@ -1,6 +1,7 @@
 # pylint: disable=redefined-outer-name
 import numpy as np
 import pytest
+
 from arviz_base import from_dict
 from arviz_base.testing import check_multiple_attrs
 

@@ -4,6 +4,7 @@ import os
 import numpy as np
 import pytest
 import xarray as xr
+
 from arviz_base import convert_to_dataset, convert_to_datatree, extract
 
 netcdf_nightlies_skip = pytest.mark.skipif(

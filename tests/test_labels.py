@@ -2,6 +2,7 @@
 """Tests for labeller classes."""
 
 import pytest
+
 from arviz_base.labels import (
     BaseLabeller,
     DimCoordLabeller,

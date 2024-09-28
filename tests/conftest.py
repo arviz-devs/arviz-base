@@ -3,6 +3,7 @@
 
 import numpy as np
 import pytest
+
 from arviz_base import from_dict
 
 

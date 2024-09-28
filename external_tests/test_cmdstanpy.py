@@ -4,12 +4,11 @@ from glob import glob
 
 import numpy as np
 import pytest
+
 from arviz_base import from_cmdstanpy
 from arviz_base.testing import check_multiple_attrs
 
-from .helpers import (  # pylint: disable=unused-import
-    importorskip,
-)
+from .helpers import importorskip  # pylint: disable=unused-import
 
 
 def _create_test_data(target_dir):
