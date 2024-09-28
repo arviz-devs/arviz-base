@@ -5,8 +5,8 @@ import warnings
 import numpy as np
 from datatree import DataTree
 
-from .base import dict_to_dataset
-from .rcparams import rc_context
+from arviz_base.base import dict_to_dataset
+from arviz_base.rcparams import rc_context
 
 
 def _verify_names(sampler, var_names, arg_names, slices):

@@ -10,7 +10,7 @@ from urllib.request import urlretrieve
 
 from datatree import open_datatree
 
-from .rcparams import rcParams
+from arviz_base.rcparams import rcParams
 
 __all__ = ["get_data_home", "clear_data_home", "list_datasets", "load_arviz_data"]
 

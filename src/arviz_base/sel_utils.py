@@ -5,8 +5,8 @@ from itertools import product, tee
 import numpy as np
 import xarray as xr
 
-from .labels import BaseLabeller
-from .rcparams import rcParams
+from arviz_base.labels import BaseLabeller
+from arviz_base.rcparams import rcParams
 
 __all__ = ["xarray_sel_iter", "xarray_var_iter", "xarray_to_ndarray"]
 
@@ -165,9 +165,11 @@ def xarray_sel_iter(
             new_dims = _dims(data, var_name, skip_dims)
             new_dimsidx = [dim_to_idx.get(dim) if dim in dim_to_idx else dim for dim in new_dims]
             vals = [
-                data[var_name].xindexes[dim_to_idx.get(dim)].to_pandas_index().unique().values
-                if dim in dim_to_idx
-                else data[var_name][dim].values
+                (
+                    data[var_name].xindexes[dim_to_idx.get(dim)].to_pandas_index().unique().values
+                    if dim in dim_to_idx
+                    else data[var_name][dim].values
+                )
                 for dim in new_dims
             ]
             dims = _zip_dims(new_dimsidx, vals)

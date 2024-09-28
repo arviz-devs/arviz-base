@@ -4,8 +4,8 @@ import warnings
 
 from datatree import DataTree
 
-from .base import dict_to_dataset
-from .rcparams import rcParams
+from arviz_base.base import dict_to_dataset
+from arviz_base.rcparams import rcParams
 
 
 def from_dict(

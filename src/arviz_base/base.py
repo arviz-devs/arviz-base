@@ -11,9 +11,9 @@ from typing import TYPE_CHECKING, Any, TypeVar
 import numpy as np
 import xarray as xr
 
-from ._version import __version__
-from .rcparams import rcParams
-from .types import CoordSpec, DictData, DimSpec
+from arviz_base._version import __version__
+from arviz_base.rcparams import rcParams
+from arviz_base.types import CoordSpec, DictData, DimSpec
 
 if TYPE_CHECKING:
     pass

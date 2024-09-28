@@ -4,9 +4,9 @@ import numpy as np
 import xarray as xr
 from datatree import DataTree, open_datatree
 
-from .base import dict_to_dataset
-from .rcparams import rcParams
-from .utils import _var_names
+from arviz_base.base import dict_to_dataset
+from arviz_base.rcparams import rcParams
+from arviz_base.utils import _var_names
 
 __all__ = ["convert_to_datatree", "convert_to_dataset", "extract"]
 

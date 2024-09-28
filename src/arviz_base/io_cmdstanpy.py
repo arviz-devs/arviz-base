@@ -7,8 +7,8 @@ from pathlib import Path
 import numpy as np
 from datatree import DataTree
 
-from .base import dict_to_dataset, infer_stan_dtypes, requires
-from .rcparams import rcParams
+from arviz_base.base import dict_to_dataset, infer_stan_dtypes, requires
+from arviz_base.rcparams import rcParams
 
 _log = logging.getLogger(__name__)
 
