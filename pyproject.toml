@@ -92,6 +92,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"docs/source/**/*.ipynb" = ["D", "E", "F", "I", "NPY", "PL", "TID", "UP", "W"]
 "src/arviz_base/__init__.py" = ["I", "F401", "E402", "F403"]
 "src/arviz_base/example_data/**/*" = ["F", "E", "W", "D", "I", "PL"]
 "tests/**/*" = ["D", "PLR2004"]

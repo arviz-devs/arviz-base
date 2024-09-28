@@ -3,6 +3,8 @@ import os
 
 import numpy as np
 import pytest
+from xarray.testing import assert_allclose
+
 from arviz_base import ndarray_to_dataarray
 from arviz_base.rcparams import (
     _make_validate_choice,
@@ -16,7 +18,6 @@ from arviz_base.rcparams import (
     rcParams,
     read_rcfile,
 )
-from xarray.testing import assert_allclose
 
 
 ### Test rcparams classes ###
@@ -119,7 +120,7 @@ def test_make_validate_choice(args, allow_none, typeof):
     validate_choice = _make_validate_choice(accepted_values, allow_none=allow_none, typeof=typeof)
     raise_error, value = args
     if value is None and not allow_none:
-        raise_error = "not one of" if typeof == str else "Could not convert"
+        raise_error = "not one of" if typeof is str else "Could not convert"
     if raise_error:
         with pytest.raises(ValueError, match=raise_error):
             validate_choice(value)
@@ -211,7 +212,13 @@ def test_make_iterable_validator_illegal(args):
 
 @pytest.mark.parametrize(
     "args",
-    [("Only positive", -1), ("Could not convert", "1.3"), (False, "2"), (False, None), (False, 1)],
+    [
+        ("Only positive", -1),
+        ("Could not convert", "1.3"),
+        (False, "2"),
+        (False, None),
+        (False, 1),
+    ],
 )
 def test_validate_positive_int_or_none(args):
     raise_error, value = args
