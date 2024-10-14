@@ -196,6 +196,7 @@ def extract(
     filter_vars=None,
     num_samples=None,
     weights=None,
+    resampling_method="multinomial",
     keep_dataset=False,
     random_seed=None,
 ):
@@ -228,6 +229,9 @@ def extract(
     weights : array-like, optional
         Extract a weighted subset of the samples. Only valid if ``combined=True`` and
         ``num_samples`` is not ``None``.
+    resampling_method : str: optional
+        Method to use for resampling. Default is "multinomial". Options are "multinomial"
+        and "stratified". For stratified resampling, weights must be provided.
     keep_dataset : bool, optional
         If true, always return a DataSet. If false (default) return a DataArray
         when there is a single variable.
@@ -268,6 +272,9 @@ def extract(
     if weights is not None and num_samples is None:
         raise ValueError("weights are only compatible with num_samples")
 
+    if resampling_method not in ["multinomial", "stratified"]:
+        raise ValueError(f"Invalid resampling_method: {resampling_method}")
+
     data = convert_to_dataset(data, group=group)
     var_names = _var_names(var_names, data, filter_vars)
     if var_names is not None:
@@ -292,12 +299,37 @@ def extract(
             raise ValueError(f"Invalid random_seed value: {random_seed}")
 
         replace = True if weights is not None else False
-        resample_indices = rng.choice(
-            np.arange(len(data["sample"])),
-            size=num_samples,
-            p=weights,
-            replace=replace,
-        )
+
+        if resampling_method == "multinomial":
+            resample_indices = rng.choice(
+                np.arange(len(data["sample"])),
+                size=num_samples,
+                p=weights,
+                replace=replace,
+            )
+        elif resampling_method == "stratified":
+            if weights is None:
+                raise ValueError("Weights must be provided for stratified resampling")
+            resample_indices = _stratified_resample(weights, rng)
+
         data = data.isel(sample=resample_indices)
 
     return data
+
+
+def _stratified_resample(weights, rng):
+    """Stratified resampling."""
+    N = len(weights)
+    single_uniform = (rng.random(N) + np.arange(N)) / N
+    indexes = np.zeros(N, dtype=int)
+    cum_sum = np.cumsum(weights)
+
+    i, j = 0, 0
+    while i < N:
+        if single_uniform[i] < cum_sum[j]:
+            indexes[i] = j
+            i += 1
+        else:
+            j += 1
+
+    return indexes
