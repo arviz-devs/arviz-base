@@ -260,8 +260,8 @@ class TestExtract:
         assert post.attrs == centered_eight.posterior.attrs
 
     def test_subset_single_sample_dims(self, centered_eight):
-        post = extract(centered_eight, sample_dims="draw", num_samples=10)
-        assert post.sizes["draw"] == 10
+        post = extract(centered_eight, sample_dims="draw", num_samples=4)
+        assert post.sizes["draw"] == 4
         assert post.attrs == centered_eight.posterior.attrs
 
     def test_dataarray_return(self, centered_eight):
