@@ -2,7 +2,7 @@
 
 import numpy as np
 import xarray as xr
-from datatree import DataTree, open_datatree
+from xarray import DataTree, open_datatree
 
 from arviz_base.base import dict_to_dataset
 from arviz_base.rcparams import rcParams
@@ -138,7 +138,7 @@ def convert_to_datatree(obj, **kwargs):
             f"not {obj.__class__.__name__}"
         )
 
-    return DataTree.from_dict(d={group: dataset})
+    return DataTree.from_dict({group: dataset})
 
 
 def convert_to_dataset(obj, *, group="posterior", **kwargs):

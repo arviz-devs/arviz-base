@@ -8,7 +8,7 @@ import shutil
 from collections import namedtuple
 from urllib.request import urlretrieve
 
-from datatree import open_datatree
+from xarray import open_datatree
 
 from arviz_base.rcparams import rcParams
 
