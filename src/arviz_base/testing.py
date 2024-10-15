@@ -1,6 +1,6 @@
 """ArviZ testing utilities."""
 
-from datatree import DataTree
+from xarray import DataTree
 
 
 def check_multiple_attrs(

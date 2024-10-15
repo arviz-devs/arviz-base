@@ -6,7 +6,7 @@ from urllib.parse import urlunsplit
 
 import numpy as np
 import pytest
-from datatree import DataTree
+from xarray import DataTree
 from xarray.testing import assert_allclose
 
 from arviz_base import (

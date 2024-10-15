@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 import numpy as np
-from datatree import DataTree
+from xarray import DataTree
 
 from arviz_base.base import dict_to_dataset, infer_stan_dtypes, requires
 from arviz_base.rcparams import rcParams
