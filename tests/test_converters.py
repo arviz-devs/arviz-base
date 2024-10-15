@@ -237,6 +237,10 @@ class TestExtract:
         assert post.sizes["chain"] == chains
         assert post.sizes["draw"] == draws
 
+    def test_single_sample_dims(self, centered_eight):
+        post = extract(centered_eight, sample_dims="draw")
+        xr.testing.assert_equal(post, centered_eight.posterior.to_dataset())
+
     def test_var_name_group(self, centered_eight):
         prior = extract(centered_eight, group="prior", var_names="the", filter_vars="like")
         assert {} == prior.attrs
@@ -255,6 +259,11 @@ class TestExtract:
         assert post.sizes["sample"] == 10
         assert post.attrs == centered_eight.posterior.attrs
 
+    def test_subset_single_sample_dims(self, centered_eight):
+        post = extract(centered_eight, sample_dims="draw", num_samples=10)
+        assert post.sizes["draw"] == 10
+        assert post.attrs == centered_eight.posterior.attrs
+
     def test_dataarray_return(self, centered_eight):
         post = extract(centered_eight.posterior["theta"])
         assert isinstance(post, xr.DataArray)
@@ -268,7 +277,10 @@ class TestExtract:
         weights = rng.random(
             centered_eight.posterior.sizes["chain"] * centered_eight.posterior.sizes["draw"]
         )
+        weights[:10] = 0
+        weight_0_idxs = [(0, i) for i in range(10)]
         weights /= weights.sum()
-        post = extract(centered_eight, num_samples=10, weights=weights)
-        assert post.sizes["sample"] == 10
+        post = extract(centered_eight, num_samples=len(weights), weights=weights)
+        assert post.sizes["sample"] == len(weights)
+        assert not any(idx in list(post.sample.to_numpy()) for idx in weight_0_idxs)
         assert post.attrs == centered_eight.posterior.attrs
