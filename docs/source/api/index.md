@@ -8,6 +8,8 @@
 
    arviz_base.convert_to_datatree
    arviz_base.extract
+   arviz_base.to_labelled_stacked_da
+   arviz_base.to_labelled_stacked_df
    arviz_base.from_dict
 ```
 
