@@ -1,14 +1,23 @@
 """Generalistic converters."""
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 from datatree import DataTree, open_datatree
 
 from arviz_base.base import dict_to_dataset
+from arviz_base.labels import BaseLabeller
 from arviz_base.rcparams import rcParams
+from arviz_base.sel_utils import xarray_sel_iter
 from arviz_base.utils import _var_names
 
-__all__ = ["convert_to_datatree", "convert_to_dataset", "extract"]
+__all__ = [
+    "convert_to_datatree",
+    "convert_to_dataset",
+    "extract",
+    "to_labelled_stacked_da",
+    "to_labelled_stacked_df",
+]
 
 
 # pylint: disable=too-many-return-statements
@@ -356,3 +365,145 @@ def _stratified_resample(weights, rng):
             j += 1
 
     return indexes
+
+
+def to_labelled_stacked_da(ds, sample_dims=None, labeller=None):
+    """Convert a Dataset to a stacked DataArray, using a labeller to set coordinate values.
+
+    Parameters
+    ----------
+    ds : Dataset
+    sample_dims : sequence of hashable, optional
+    labeller : labeller, optional
+
+    Returns
+    -------
+    DataArray
+
+    Examples
+    --------
+
+    .. jupyter-execute::
+
+        import xarray as xr
+        from arviz_base import load_arviz_data, to_labelled_stacked_da
+        xr.set_options(display_expand_data=False)
+
+        idata = load_arviz_data("centered_eight")
+        to_labelled_stacked_da(idata.posterior.ds)
+    """
+    if labeller is None:
+        labeller = BaseLabeller()
+    if sample_dims is None:
+        sample_dims = rcParams["data.sample_dims"]
+
+    labeled_stack = ds.to_stacked_array("label", sample_dims=sample_dims)
+    labels = [
+        labeller.make_label_flat(var_name, sel, isel)
+        for var_name, sel, isel in xarray_sel_iter(ds, skip_dims=set(sample_dims))
+    ]
+    indexes = [idx_name for idx_name in labeled_stack.xindexes if idx_name not in sample_dims]
+    labeled_stack = labeled_stack.drop_indexes(indexes).assign_coords(label=labels)
+    for idx_name in indexes:
+        if idx_name == "label":
+            continue
+        labeled_stack = labeled_stack.set_xindex(idx_name)
+    return labeled_stack
+
+
+def to_labelled_stacked_df(ds, sample_dims=None, labeller=None, multiindex=False):
+    """Convert a Dataset to a DataFrame via a stacked DataArray, using a labeller.
+
+    Parameters
+    ----------
+    ds : Dataset
+    sample_dims : sequence of hashable, optional
+    labeller : labeller, optional
+    multiindex : bool, default False
+
+    Returns
+    -------
+    pandas.DataFrame
+
+    Examples
+    --------
+    The output will have whatever is uses as `sample_dims` as the columns of
+    the DataFrame, so when these are much longer we might want to transpose the
+    output:
+
+    .. jupyter-execute::
+
+        from arviz_base import load_arviz_data, to_labelled_stacked_df
+        idata = load_arviz_data("centered_eight")
+        to_labelled_stacked_df(idata.posterior.ds).T
+
+    The default is to only return a single index, with the labels or tuples of coordinate
+    values in the stacked dimensions. To keep all data from all coordinates as a multiindex
+    use ``multiindex=True``
+
+    .. jupyter-execute::
+
+        to_labelled_stacked_df(idata.posterior.ds, multiindex=True).T
+
+    The only restriction on `sample_dims` is that it is present in all variables
+    of the dataset. Consequently, we can compute statistical summaries,
+    concatenate the results into a single dataset creating a new dimension
+
+    .. jupyter-execute::
+
+        import xarray as xr
+
+        dims = ["chain", "draw"]
+        post = idata.posterior.ds
+        summaries = xr.concat(
+            (
+                post.mean(dims).expand_dims(summary=["mean"]),
+                post.median(dims).expand_dims(summary=["median"]),
+                post.quantile([.25, .75], dim=dims).rename(
+                    quantile="summary"
+                ).assign_coords(summary=["1st quartile", "3rd quartile"])
+            ),
+            dim="summary"
+        )
+        summaries
+
+    Then convert the result into a DataFrame for ease of viewing.
+
+    .. jupyter-execute::
+
+        to_labelled_stacked_df(summaries, sample_dims=["summary"])
+
+    Note that if all summaries were scalar, it would not be necessary to use
+    :meth:`~xarray.Dataset.expand_dims` or renaming dimensions, using
+    :meth:`~xarray.Dataset.assign_coords` on the result to label the newly created
+    dimension would be enough. But using this approach we already generate a dimension
+    with coordinate values and can also combine non scalar summaries.
+    """
+    if sample_dims is None:
+        sample_dims = rcParams["data.sample_dims"]
+    da = to_labelled_stacked_da(ds, sample_dims=sample_dims, labeller=labeller)
+    sample_dim = sample_dims[0]
+    if len(sample_dims) > 1:
+        da = da.stack(sample=sample_dims)
+        sample_dim = "sample"
+    if multiindex:
+        idx_dict = {
+            idx_name: da[idx_name].to_numpy()
+            for idx_name in da.xindexes
+            if sample_dim in da[idx_name].dims
+        }
+        columns = pd.MultiIndex.from_arrays(list(idx_dict.values()), names=list(idx_dict.keys()))
+        idx_dict = {
+            idx_name: da[idx_name].to_numpy()
+            for idx_name in da.xindexes
+            if "label" in da[idx_name].dims
+        }
+        index = pd.MultiIndex.from_arrays(list(idx_dict.values()), names=list(idx_dict.keys()))
+    else:
+        columns = da[sample_dim]
+        index = da["label"]
+    df = pd.DataFrame(da.transpose("label", sample_dim).to_numpy(), columns=columns, index=index)
+    if not multiindex:
+        df.index.name = "label"
+        df.columns.name = sample_dim
+    return df
