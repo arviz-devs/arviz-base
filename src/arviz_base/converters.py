@@ -447,7 +447,7 @@ def to_labelled_stacked_df(ds, sample_dims=None, labeller=None, multiindex=False
 
     The only restriction on `sample_dims` is that it is present in all variables
     of the dataset. Consequently, we can compute statistical summaries,
-    concatenate the results into a single dataset creating a new dimension
+    concatenate the results into a single dataset creating a new dimension.
 
     .. jupyter-execute::
 
