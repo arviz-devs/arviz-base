@@ -2,7 +2,7 @@
 
 import warnings
 
-from datatree import DataTree
+from xarray import DataTree
 
 from arviz_base.base import dict_to_dataset
 from arviz_base.rcparams import rcParams
