@@ -4,6 +4,7 @@ import numpy as np
 import xarray as xr
 from datatree import DataTree, open_datatree
 
+from arviz_base import validate
 from arviz_base.base import dict_to_dataset
 from arviz_base.rcparams import rcParams
 from arviz_base.utils import _var_names
@@ -188,9 +189,10 @@ def convert_to_dataset(obj, *, group="posterior", **kwargs):
 
 
 # TODO: remove this ignore about too many statements once the code uses validator functions
+@validate.extract
 def extract(  # noqa: PLR0915
     data,
-    group="posterior",
+    group: str = "posterior",
     sample_dims=None,
     *,
     combined=True,
@@ -272,18 +274,6 @@ def extract(  # noqa: PLR0915
 
     """
     # TODO: use validator function
-    if sample_dims is None:
-        sample_dims = rcParams["data.sample_dims"]
-    if isinstance(sample_dims, str):
-        sample_dims = [sample_dims]
-    if len(sample_dims) == 1:
-        combined = True
-    if num_samples is not None and not combined:
-        raise ValueError(
-            "num_samples is only compatible with combined=True or length 1 sample_dims"
-        )
-    if weights is not None and num_samples is None:
-        raise ValueError("weights are only compatible with num_samples")
 
     data = convert_to_dataset(data, group=group)
     var_names = _var_names(var_names, data, filter_vars)
