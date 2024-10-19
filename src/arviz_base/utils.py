@@ -51,6 +51,8 @@ def _var_names(var_names, data, filter_vars=None):
                 "Please double check your results to ensure all variables are included"
             )
 
+        # FIXME: This error is handled by xarray, and should be removed in favor of having xarray
+        #        handle it.
         try:
             var_names = _subset_list(var_names, all_vars, filter_items=filter_vars, warn=False)
         except KeyError as err:

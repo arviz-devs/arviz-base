@@ -1,12 +1,14 @@
 """Generalistic converters."""
 
+from typing import Hashable, Literal, Sequence
+
 import numpy as np
+import numpy.typing as npt
 import xarray as xr
 from datatree import DataTree, open_datatree
 
 from arviz_base import validate
 from arviz_base.base import dict_to_dataset
-from arviz_base.rcparams import rcParams
 from arviz_base.utils import _var_names
 
 __all__ = ["convert_to_datatree", "convert_to_dataset", "extract"]
@@ -189,61 +191,61 @@ def convert_to_dataset(obj, *, group="posterior", **kwargs):
 
 
 # TODO: remove this ignore about too many statements once the code uses validator functions
-@validate.extract
+@validate.extract_inputs
 def extract(  # noqa: PLR0915
     data,
     group: str = "posterior",
-    sample_dims=None,
+    sample_dims: Sequence[Hashable] | None = None,
     *,
-    combined=True,
-    var_names=None,
-    filter_vars=None,
-    num_samples=None,
-    weights=None,
-    resampling_method=None,
-    keep_dataset=False,
+    combined: bool = True,
+    var_names: str | list[str] | None = None,
+    filter_vars: Literal[None, "like", "regex"] = None,
+    num_samples: int | None = None,
+    weights: npt.ArrayLike | None = None,
+    resampling_method: Literal[None, "multinomial", "stratified"] = None,
+    return_as_dataset: bool = False,
     random_seed=None,
 ):
     """Extract a group or group subset from a DataTree.
 
     Parameters
     ----------
-    idata : DataTree_like
+    data : DataTree_like
         DataTree from which to extract the data.
-    group : str, optional
+    group : str, default is `posterior`
         Which group to extract data from.
-    sample_dims : sequence of hashable, optional
-        List of dimensions that should be considered sampling dimensions.
-        Random subsets and potential stacking if ``combine=True`` happen
-        over these dimensions only. Defaults to ``rcParams["data.sample_dims"]``.
-    combined : bool, optional
-        Combine `sample_dims` dimensions into ``sample``. Won't work if
-        a dimension named ``sample`` already exists.
-        It is irrelevant and ignored when `sample_dims` is a single dimension.
-    var_names : str or list of str, optional
+    sample_dims : Sequence[Hashable] | None, default is `None`
+        List of dimensions that should be considered sampling dimensions. Random subsets and
+        potential stacking if ``combine=True`` happen over these dimensions only. If the default
+        is left as `None`, then the default is set to ``rcParams["data.sample_dims"]``.
+    combined : bool, default is `True`
+        Combine `sample_dims` dimensions into ``sample``. Won't work if a dimension named
+        ``sample`` already exists. It is irrelevant and ignored when `sample_dims` is a single
+        dimension.
+    var_names : str | list[str] | None, default is `None`
         Variables to be extracted. Prefix the variables by `~` when you want to exclude them.
-    filter_vars: {None, "like", "regex"}, optional
+    filter_vars: {None, "like", "regex"}, default is `None`
         If `None` (default), interpret var_names as the real variables names. If "like",
-        interpret var_names as substrings of the real variables names. If "regex",
-        interpret var_names as regular expressions on the real variables names. A la
-        `pandas.filter`.
-        Like with plotting, sometimes it's easier to subset saying what to exclude
-        instead of what to include
-    num_samples : int, optional
-        Extract only a subset of the samples. Only valid if ``combined=True`` or
-        `sample_dims` represents a single dimension.
-    weights : array-like, optional
+        interpret var_names as substrings of the real variables names. If "regex", interpret
+        var_names as regular expressions on the real variables names. A la `pandas.filter`.
+        Like with plotting, sometimes it's easier to subset saying what to exclude instead of
+        what to include.
+    num_samples : int | None, default is `None`
+        Extract only a subset of the samples. Only valid if ``combined=True`` or `sample_dims`
+        represents a single dimension.
+    weights : npt.ArrayLike | None, default is `None`
         Extract a weighted subset of the samples. Only valid if `num_samples` is not ``None``.
-    resampling_method : str, optional
-        Method to use for resampling. Default is "multinomial". Options are "multinomial"
-        and "stratified". For stratified resampling, weights must be provided.
-        Default is "stratified" if weights are provided, "multinomial" otherwise.
-    keep_dataset : bool, optional
-        If true, always return a DataSet. If false (default) return a DataArray
-        when there is a single variable.
+    resampling_method : Literal[None,"multinomial", "stratified"], default is `None`
+        Method to use for resampling. If the default of `None` is kept, then the resampling
+        method is set to "multinomial". Options are "multinomial" and "stratified". For stratified
+        resampling, weights must be provided. Default is "stratified" if weights are provided,
+        "multinomial" otherwise.
+    return_as_dataset : bool, default is `False`
+        If true, always return a DataSet. If false (default) return a DataArray when there is
+        a single variable.
     random_seed : int, numpy.Generator, optional
-        Random number generator or seed. Only used if ``weights`` is not ``None``
-        or if ``num_samples`` is not ``None``.
+        Random number generator or seed. Only used if ``weights`` is not ``None`` or if
+        ``num_samples`` is not ``None``.
 
     Returns
     -------
@@ -251,8 +253,8 @@ def extract(  # noqa: PLR0915
 
     Examples
     --------
-    The default behaviour is to return the posterior group after stacking the chain and
-    draw dimensions.
+    The default behaviour is to return the posterior group after stacking the chain and draw
+    dimensions.
 
     .. jupyter-execute::
 
@@ -273,16 +275,17 @@ def extract(  # noqa: PLR0915
         az.extract(idata, group="prior", combined=False)
 
     """
-    # TODO: use validator function
-
     data = convert_to_dataset(data, group=group)
+
     var_names = _var_names(var_names, data, filter_vars)
     if var_names is not None:
-        if len(var_names) == 1 and not keep_dataset:
+        if len(var_names) == 1 and not return_as_dataset:
             var_names = var_names[0]
         data = data[var_names]
     elif len(data.data_vars) == 1:
         data = data[list(data.data_vars)[0]]
+
+    # NOTE: sample_dims is a list of strings or tuples thanks to the validation decorator.
 
     if weights is not None:
         resampling_method = "stratified" if resampling_method is None else resampling_method
@@ -291,9 +294,6 @@ def extract(  # noqa: PLR0915
             raise ValueError("Weights must have the same size as `sample_dims`")
     else:
         resampling_method = "multinomial" if resampling_method is None else resampling_method
-
-    if resampling_method not in ("multinomial", "stratified"):
-        raise ValueError(f"Invalid resampling_method: {resampling_method}")
 
     if combined and len(sample_dims) != 1:
         data = data.stack(sample=sample_dims)

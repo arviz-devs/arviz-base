@@ -246,9 +246,13 @@ class TestExtract:
         assert {} == prior.attrs
         assert "theta" in prior.name
 
-    def test_keep_dataset(self, centered_eight):
+    def test_return_as_dataset(self, centered_eight):
         prior = extract(
-            centered_eight, group="prior", var_names="the", filter_vars="like", keep_dataset=True
+            centered_eight,
+            group="prior",
+            var_names="the",
+            filter_vars="like",
+            return_as_dataset=True,
         )
         assert prior.attrs == centered_eight.prior.attrs
         assert "theta" in prior.data_vars
