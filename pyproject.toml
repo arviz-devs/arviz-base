@@ -27,7 +27,7 @@ dynamic = ["version", "description"]
 dependencies = [
   "numpy>=1.23",
   "xarray>=2022.6.0,<2024.9.1",
-  "xarray-datatree",
+  "xarray-datatree<0.0.15",
   "typing-extensions>=3.10",
 ]
 
