@@ -1,22 +1,20 @@
 jobs:
 - job: ExternalTests
   pool:
-    vmImage: 'ubuntu-22.04'
+    vmImage: 'ubuntu-24.04'
   variables:
-    - name: NUMBA_DISABLE_JIT
-      value: 1
     - name: ARVIZ_CI_MACHINE
       value: 1
   timeoutInMinutes: 360
   strategy:
     matrix:
-      Python_310_Latest:
-        python.version: "3.10"
+      Python_312_Latest:
+        python.version: "3.12"
         cmdstanpy.version: "latest"
         name: "External latest"
 
-      Python_310_Special_versions:
-        python.version: "3.10"
+      Python_312_Special_versions:
+        python.version: "3.12"
         cmdstanpy.version: "github"
         name: "External special"
 
