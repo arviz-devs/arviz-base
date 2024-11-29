@@ -122,4 +122,4 @@ class TestDsToDf:
         post_ds = centered_eight.posterior.ds
         post_df = dataset_to_dataframe(post_ds)
         assert isinstance(post_df, pd.DataFrame)
-        assert post_df.shape == (10, post_ds.sizes["chain"] * post_ds.sizes["draw"])
+        assert post_df.shape == (post_ds.sizes["chain"] * post_ds.sizes["draw"], 10)

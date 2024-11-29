@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 
 from arviz_base.converters import convert_to_dataset
 from arviz_base.labels import BaseLabeller
@@ -10,9 +11,10 @@ from arviz_base.sel_utils import xarray_sel_iter
 from arviz_base.utils import _var_names
 
 __all__ = [
-    "extract",
     "dataset_to_dataarray",
     "dataset_to_dataframe",
+    "explode_dataset_dims",
+    "extract",
 ]
 
 
@@ -255,7 +257,7 @@ def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False):
 
         from arviz_base import load_arviz_data, dataset_to_dataframe
         idata = load_arviz_data("centered_eight")
-        dataset_to_dataframe(idata.posterior.ds).T
+        dataset_to_dataframe(idata.posterior.ds)
 
     The default is to only return a single index, with the labels or tuples of coordinate
     values in the stacked dimensions. To keep all data from all coordinates as a multiindex
@@ -263,7 +265,7 @@ def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False):
 
     .. jupyter-execute::
 
-        dataset_to_dataframe(idata.posterior.ds, multiindex=True).T
+        dataset_to_dataframe(idata.posterior.ds, multiindex=True)
 
     The only restriction on `sample_dims` is that it is present in all variables
     of the dataset. Consequently, we can compute statistical summaries,
@@ -291,7 +293,7 @@ def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False):
 
     .. jupyter-execute::
 
-        dataset_to_dataframe(summaries, sample_dims=["summary"])
+        dataset_to_dataframe(summaries, sample_dims=["summary"]).T
 
     Note that if all summaries were scalar, it would not be necessary to use
     :meth:`~xarray.Dataset.expand_dims` or renaming dimensions, using
@@ -312,18 +314,62 @@ def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False):
             for idx_name in da.xindexes
             if sample_dim in da[idx_name].dims
         }
-        columns = pd.MultiIndex.from_arrays(list(idx_dict.values()), names=list(idx_dict.keys()))
+        sample_idx = pd.MultiIndex.from_arrays(list(idx_dict.values()), names=list(idx_dict.keys()))
         idx_dict = {
             idx_name: da[idx_name].to_numpy()
             for idx_name in da.xindexes
             if "label" in da[idx_name].dims
         }
-        index = pd.MultiIndex.from_arrays(list(idx_dict.values()), names=list(idx_dict.keys()))
+        label_idx = pd.MultiIndex.from_arrays(list(idx_dict.values()), names=list(idx_dict.keys()))
     else:
-        columns = da[sample_dim]
-        index = da["label"]
-    df = pd.DataFrame(da.transpose("label", sample_dim).to_numpy(), columns=columns, index=index)
+        sample_idx = da[sample_dim]
+        label_idx = da["label"]
+    df = pd.DataFrame(da.transpose(sample_dim, "label").to_numpy(), columns=label_idx, index=sample_idx)
     if not multiindex:
-        df.index.name = "label"
-        df.columns.name = sample_dim
+        df.columns.name = "label"
+        df.index.name = sample_dim
     return df
+
+
+def explode_dataset_dims(ds, dim, labeller=None):
+    """Explode dims of a dataset so each slice along them becomes its own variable.
+
+    Parameters
+    ----------
+    ds : Dataset
+    dim : hashable or sequence of hashable
+        Dimension or dimensions along which slices to be stored as independent variables should
+        be defined.
+    labeller : labeller, optional
+        Instance of a labeller class used to label the slices generated when exploding along `dim`. 
+        The method ``make_label_flat`` is used.
+
+    Returns
+    -------
+    Dataset
+        The dataset with all variables that have `dim` exploded into the respective slices
+        as new variables.
+
+    Examples
+    --------
+    In some cases, instead of ``theta`` as a ``(..., school)`` shape variable we'll want
+    independent variables for each slice:
+
+    .. jupyter-execute::
+
+        from arviz_base import load_arviz_data, explode_dataset_dims
+        import xarray as xr
+
+        idata = load_arviz_data("centered_eight")
+        explode_dataset_dims(idata.posterior.ds, "school")
+    """
+    if isinstance(dim, str):
+        dim = [dim]
+    if labeller is None:
+        labeller = BaseLabeller()
+    return xr.Dataset(
+        {
+            labeller.make_label_flat(var_name, sel, isel): ds[var_name].sel(sel, drop=True)
+            for var_name, sel, isel in xarray_sel_iter(ds, skip_dims={d for d in ds.dims if d not in dim})
+        }
+    )
