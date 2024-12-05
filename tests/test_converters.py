@@ -3,9 +3,8 @@ import os
 
 import numpy as np
 import pytest
-import xarray as xr
 
-from arviz_base import convert_to_dataset, convert_to_datatree, extract
+from arviz_base import convert_to_dataset, convert_to_datatree
 
 netcdf_nightlies_skip = pytest.mark.skipif(
     os.environ.get("NIGHTLIES", False) == "TRUE",
@@ -217,70 +216,3 @@ class TestDataConvert:
         assert dataset.chain.shape == (chains,)
         assert dataset.school.shape == (8,)
         assert dataset.theta.shape == (chains, draws, 8)
-
-
-class TestExtract:
-    def test_default(self, centered_eight, chains, draws):
-        post = extract(centered_eight)
-        assert isinstance(post, xr.Dataset)
-        assert "sample" in post.sizes
-        assert post.theta.size == (chains * draws * 8)
-
-    def test_seed(self, centered_eight):
-        post = extract(centered_eight, random_seed=7)
-        post_pred = extract(centered_eight, group="posterior_predictive", random_seed=7)
-        assert all(post.sample == post_pred.sample)
-
-    def test_no_combine(self, centered_eight, chains, draws):
-        post = extract(centered_eight, combined=False)
-        assert "sample" not in post.sizes
-        assert post.sizes["chain"] == chains
-        assert post.sizes["draw"] == draws
-
-    def test_single_sample_dims(self, centered_eight):
-        post = extract(centered_eight, sample_dims="draw")
-        xr.testing.assert_equal(post, centered_eight.posterior.to_dataset())
-
-    def test_var_name_group(self, centered_eight):
-        prior = extract(centered_eight, group="prior", var_names="the", filter_vars="like")
-        assert {} == prior.attrs
-        assert "theta" in prior.name
-
-    def test_keep_dataset(self, centered_eight):
-        prior = extract(
-            centered_eight, group="prior", var_names="the", filter_vars="like", keep_dataset=True
-        )
-        assert prior.attrs == centered_eight.prior.attrs
-        assert "theta" in prior.data_vars
-        assert "mu" not in prior.data_vars
-
-    def test_subset_samples(self, centered_eight):
-        post = extract(centered_eight, num_samples=10)
-        assert post.sizes["sample"] == 10
-        assert post.attrs == centered_eight.posterior.attrs
-
-    def test_subset_single_sample_dims(self, centered_eight):
-        post = extract(centered_eight, sample_dims="draw", num_samples=4)
-        assert post.sizes["draw"] == 4
-        assert post.attrs == centered_eight.posterior.attrs
-
-    def test_dataarray_return(self, centered_eight):
-        post = extract(centered_eight.posterior["theta"])
-        assert isinstance(post, xr.DataArray)
-        post = extract(centered_eight.posterior.to_dataset()[["theta"]])
-        assert isinstance(post, xr.DataArray)
-        post = extract(centered_eight, var_names="theta")
-        assert isinstance(post, xr.DataArray)
-
-    def test_weights(self, centered_eight):
-        rng = np.random.default_rng()
-        weights = rng.random(
-            centered_eight.posterior.sizes["chain"] * centered_eight.posterior.sizes["draw"]
-        )
-        weights[:10] = 0
-        weight_0_idxs = [(0, i) for i in range(10)]
-        weights /= weights.sum()
-        post = extract(centered_eight, num_samples=len(weights), weights=weights)
-        assert post.sizes["sample"] == len(weights)
-        assert not any(idx in list(post.sample.to_numpy()) for idx in weight_0_idxs)
-        assert post.attrs == centered_eight.posterior.attrs

@@ -1,5 +1,16 @@
 # API reference
 
+## Data reoganization
+
+```{eval-rst}
+.. autosummary::
+   :toctree: generated/
+
+   arviz_base.extract
+   arviz_base.dataset_to_dataarray
+   arviz_base.dataset_to_dataframe
+```
+
 ## User facing converters
 
 ```{eval-rst}
@@ -7,7 +18,6 @@
    :toctree: generated/
 
    arviz_base.convert_to_datatree
-   arviz_base.extract
    arviz_base.from_dict
 ```
 
