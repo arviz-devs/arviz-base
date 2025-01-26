@@ -324,7 +324,9 @@ def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False):
     else:
         sample_idx = da[sample_dim]
         label_idx = da["label"]
-    df = pd.DataFrame(da.transpose(sample_dim, "label").to_numpy(), columns=label_idx, index=sample_idx)
+    df = pd.DataFrame(
+        da.transpose(sample_dim, "label").to_numpy(), columns=label_idx, index=sample_idx
+    )
     if not multiindex:
         df.columns.name = "label"
         df.index.name = sample_dim
@@ -341,7 +343,7 @@ def explode_dataset_dims(ds, dim, labeller=None):
         Dimension or dimensions along which slices to be stored as independent variables should
         be defined.
     labeller : labeller, optional
-        Instance of a labeller class used to label the slices generated when exploding along `dim`. 
+        Instance of a labeller class used to label the slices generated when exploding along `dim`.
         The method ``make_label_flat`` is used.
 
     Returns
@@ -370,6 +372,8 @@ def explode_dataset_dims(ds, dim, labeller=None):
     return xr.Dataset(
         {
             labeller.make_label_flat(var_name, sel, isel): ds[var_name].sel(sel, drop=True)
-            for var_name, sel, isel in xarray_sel_iter(ds, skip_dims={d for d in ds.dims if d not in dim})
+            for var_name, sel, isel in xarray_sel_iter(
+                ds, skip_dims={d for d in ds.dims if d not in dim}
+            )
         }
     )
