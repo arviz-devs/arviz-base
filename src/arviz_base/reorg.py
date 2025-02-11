@@ -123,7 +123,10 @@ def extract(  # noqa: PLR0915
             var_names = var_names[0]
         data = data[var_names]
     elif len(data.data_vars) == 1:
-        data = data[list(data.data_vars)[0]]
+        if keep_dataset:
+            data
+        else:
+            data = data[list(data.data_vars)[0]]
 
     if weights is not None:
         resampling_method = "stratified" if resampling_method is None else resampling_method
