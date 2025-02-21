@@ -25,28 +25,28 @@
         "filename": "regression1d.nc",
         "url": "http://ndownloader.figshare.com/files/16254899",
         "checksum": "909e8ffe344e196dad2730b1542881ab5729cb0977dd20ba645a532ffa427278",
-        "description": "A synthetic one dimensional linear regression dataset with latent slope, intercept, and noise (\"eps\"). One hundred data points, fit with PyMC3.\n\nTrue slope and intercept are included as deterministic variables."
+        "description": "A synthetic one dimensional linear regression dataset with latent slope, intercept, and noise (\"eps\"). One hundred data points, fit with PyMC.\n\nTrue slope and intercept are included as deterministic variables."
     },
     {
         "name": "regression10d",
         "filename": "regression10d.nc",
         "url": "http://ndownloader.figshare.com/files/16255736",
         "checksum": "c6716ec7e19926ad2a52d6ae4c1d1dd5ddb747e204c0d811757c8e93fcf9f970",
-        "description": "A synthetic multi-dimensional (10 dimensions) linear regression dataset with latent weights (\"w\"), intercept, and noise (\"eps\"). Five hundred data points, fit with PyMC3.\n\nTrue weights and intercept are included as deterministic variables."
+        "description": "A synthetic multi-dimensional (10 dimensions) linear regression dataset with latent weights (\"w\"), intercept, and noise (\"eps\"). Five hundred data points, fit with PyMC.\n\nTrue weights and intercept are included as deterministic variables."
     },
     {
         "name": "classification1d",
         "filename": "classification1d.nc",
         "url": "http://ndownloader.figshare.com/files/16256678",
         "checksum": "1cf3806e72c14001f6864bb69d89747dcc09dd55bcbca50aba04e9939daee5a0",
-        "description": "A synthetic one dimensional logistic regression dataset with latent slope and intercept, passed into a Bernoulli random variable. One hundred data points, fit with PyMC3.\n\nTrue slope and intercept are included as deterministic variables."
+        "description": "A synthetic one dimensional logistic regression dataset with latent slope and intercept, passed into a Bernoulli random variable. One hundred data points, fit with PyMC.\n\nTrue slope and intercept are included as deterministic variables."
     },
     {
         "name": "classification10d",
         "filename": "classification10d.nc",
         "url": "http://ndownloader.figshare.com/files/16256681",
         "checksum": "16c9a45e1e6e0519d573cafc4d266d761ba347e62b6f6a79030aaa8e2fde1367",
-        "description": "A synthetic multi dimensional (10 dimensions) logistic regression dataset with latent weights (\"w\") and intercept, passed into a Bernoulli random variable. Five hundred data points, fit with PyMC3.\n\nTrue weights and intercept are included as deterministic variables."
+        "description": "A synthetic multi dimensional (10 dimensions) logistic regression dataset with latent weights (\"w\") and intercept, passed into a Bernoulli random variable. Five hundred data points, fit with PyMC.\n\nTrue weights and intercept are included as deterministic variables."
     },
     {
         "name": "glycan_torsion_angles",
@@ -54,5 +54,19 @@
         "url": "http://ndownloader.figshare.com/files/22882652",
         "checksum": "4622621fe7a1d3075c18c4c34af8cc57c59eabbb3501b20c6e2d9c6c4737034c",
         "description": "Torsion angles phi and psi are critical for determining the three dimensional structure of bio-molecules. Combinations of phi and psi torsion angles that produce clashes between atoms in the bio-molecule result in high energy, unlikely structures.\n\nThis model uses a Von Mises distribution to propose torsion angles for the structure of a glycan molecule (pdb id: 2LIQ), and a Potential to estimate the proposed structure's energy. Said Potential is bound by Boltzman's law."
+    },
+    {
+        "name": "crabs_poisson",
+        "filename": "crabs_poisson.nc",
+        "url": "http://figshare.com/ndownloader/files/52519649",
+        "checksum": "0f2a5d0aa310c4fa5ad1706d394996a0504784959a99a3ae43c4f5a7aca24fe3",
+        "description": "Horseshoe crabs arrive at the beach in pairs for their spawning ritual. Solitary males gather around the nesting couples and vying to fertilize the eggs. These individuals, known as satellite males, often congregate near certain nesting pairs while disregarding others.\n\nWe use Bambi to create a hurdle-negative binomial model for the number of male satellites as a function of the carapace width and color of the female.\n\nFor details see https://doi.org/10.1111/j.1439-0310.1996.tb01099.x and https://bap.com.ar."
+    },
+    {
+        "name": "crabs_hurdle_nb",
+        "filename": "crabs_hurdle_nb.nc",
+        "url": "http://figshare.com/ndownloader/files/52519667",
+        "checksum": "926af2105e2b9e130613f31e24b9043785f2e916dec48f9462be2a5952243e78",
+        "description": "Horseshoe crabs arrive at the beach in pairs for their spawning ritual. Solitary males gather around the nesting couples and vying to fertilize the eggs. These individuals, known as satellite males, often congregate near certain nesting pairs while disregarding others.\n\nWe use Bambi to create a hurdle-negative binomial model for the number of male satellites as a function of the carapace width and color of the female.\n\nFor details see https://doi.org/10.1111/j.1439-0310.1996.tb01099.x and https://bap.com.ar."
     }
 ]
