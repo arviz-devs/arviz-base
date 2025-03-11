@@ -68,5 +68,12 @@
         "url": "http://figshare.com/ndownloader/files/52519667",
         "checksum": "926af2105e2b9e130613f31e24b9043785f2e916dec48f9462be2a5952243e78",
         "description": "Horseshoe crabs arrive at the beach in pairs for their spawning ritual. Solitary males gather around the nesting couples and vying to fertilize the eggs. These individuals, known as satellite males, often congregate near certain nesting pairs while disregarding others.\n\nWe use Bambi to create a hurdle-negative binomial model for the number of male satellites as a function of the carapace width and color of the female.\n\nFor details see https://doi.org/10.1111/j.1439-0310.1996.tb01099.x and https://bap.com.ar."
+    },
+    {
+        "name": "sbc",
+        "filename": "sbc.nc",
+        "url": "http://figshare.com/ndownloader/files/52914299",
+        "checksum": "5b54a12999a8401d4fb4b635dfcc27fc337f806cde1549cf5097dbe82ec010d4",
+        "description": "Simulated Based Calibration with the eight-school dataset and PyMC with NUTS sampler. 100 very short simulations were carried-out"
     }
 ]
