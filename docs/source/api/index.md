@@ -193,7 +193,7 @@ which sometimes requires updating default values, for example to use new algorit
 
 .. py:data:: stats.ci_prob
     :type: float
-    :value: 0.88
+    :value: 0.94
 
     The default probability of computed credible intervals. Its default value here
     is also a friendly reminder of the arbitrary nature of commonly values like 95%
