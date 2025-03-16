@@ -29,6 +29,7 @@
 
    arviz_base.from_cmdstanpy
    arviz_base.from_emcee
+   arviz_base.from_numpyro
 ```
 
 More coming soon...

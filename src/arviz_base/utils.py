@@ -182,3 +182,11 @@ def _get_coords(data, coords):
         except KeyError as err:
             raise KeyError(f"Error in data[{idx}]: {err}") from err
     return data_subset
+
+
+def expand_dims(x):
+    """Jitting numpy expand_dims."""
+    if not isinstance(x, np.ndarray):
+        return np.expand_dims(x, 0)
+    shape = x.shape
+    return x.reshape(shape[:0] + (1,) + shape[0:])
