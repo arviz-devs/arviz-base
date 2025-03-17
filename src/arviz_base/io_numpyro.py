@@ -86,7 +86,7 @@ class NumPyroConverter:
             samples = jax.device_get(self.posterior.get_samples(group_by_chain=True))
             if hasattr(samples, "_asdict"):
                 # In case it is easy to convert to a dictionary, as in the case of namedtuples
-                samples = samples._asdict()
+                samples = {k: expand_dims(v) for k, v in samples._asdict().items()}
             if not isinstance(samples, dict):
                 # handle the case we run MCMC with a general potential_fn
                 # (instead of a NumPyro model) whose args is not a dictionary
