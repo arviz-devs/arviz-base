@@ -1,14 +1,6 @@
 # arviz-base
 ArviZ base features and converters.
 
-:::{important}
-This package is still in a very early development stage.
-Testing and feedback are extremely welcome, but for
-general applications, the main
-[ArviZ Python library](https://python.arviz.org)
-should be used.
-:::
-
 ## Installation
 
 It currently can only be installed with pip:
@@ -31,8 +23,7 @@ pip install arviz-base @ git+https://github.com/arviz-devs/arviz-base
 ::::
 
 Note that `arviz-base` is a minimal package, which only depends on
-xarray (and xarray-datatree which will at some point be merged into xarray),
-NumPy and typing-extensions.
+xarray NumPy and typing-extensions.
 
 Everything else (netcdf, zarr, dask...) are optional dependencies.
 This allows installing only those that are needed, e.g. if you
@@ -70,18 +61,16 @@ You can install multiple bundles of optional dependencies separating them with c
 Thus, to install all user facing optional dependencies you should use `arviz-base[netcdf,zarr]`
 
 :::{toctree}
-:hidden:
-
-tutorial/WorkingWithDataTree
-:::
-
-:::{toctree}
+:caption: Tutorials
 :hidden:
 
 how_to/ConversionGuideEmcee
+tutorial/WorkingWithDataTree
+ArviZ in Context <https://arviz-devs.github.io/Exploratory-Analysis-of-Bayesian-Models/>
 :::
 
 :::{toctree}
+:caption: Reference
 :hidden:
 
 api/index
@@ -91,7 +80,7 @@ api/index
 :caption: About
 :hidden:
 
-Twitter <https://twitter.com/arviz_devs>
+BlueSky <https://bsky.app/profile/arviz.bsky.social>
 Mastodon <https://bayes.club/@ArviZ>
 GitHub repository <https://github.com/arviz-devs/arviz-base>
 :::
