@@ -59,14 +59,14 @@
         "name": "crabs_poisson",
         "filename": "crabs_poisson.nc",
         "url": "http://figshare.com/ndownloader/files/52519649",
-        "checksum": "991f2abff5e16ba67f5741899a5c55b183690ef6be7b1c36c663ee9e0e31d736",
+        "checksum": "0f2a5d0aa310c4fa5ad1706d394996a0504784959a99a3ae43c4f5a7aca24fe3",
         "description": "Horseshoe crabs arrive at the beach in pairs for their spawning ritual. Solitary males gather around the nesting couples and vying to fertilize the eggs. These individuals, known as satellite males, often congregate near certain nesting pairs while disregarding others.\n\nWe use Bambi to create a hurdle-negative binomial model for the number of male satellites as a function of the carapace width and color of the female.\n\nFor details see https://doi.org/10.1111/j.1439-0310.1996.tb01099.x and https://bap.com.ar."
     },
     {
         "name": "crabs_hurdle_nb",
         "filename": "crabs_hurdle_nb.nc",
         "url": "http://figshare.com/ndownloader/files/52519667",
-        "checksum": "c7e2d0dde938be90444ad6e8da39136b20ee9c58ab0172ed238dac0e28fa1731",
+        "checksum": "926af2105e2b9e130613f31e24b9043785f2e916dec48f9462be2a5952243e78",
         "description": "Horseshoe crabs arrive at the beach in pairs for their spawning ritual. Solitary males gather around the nesting couples and vying to fertilize the eggs. These individuals, known as satellite males, often congregate near certain nesting pairs while disregarding others.\n\nWe use Bambi to create a hurdle-negative binomial model for the number of male satellites as a function of the carapace width and color of the female.\n\nFor details see https://doi.org/10.1111/j.1439-0310.1996.tb01099.x and https://bap.com.ar."
     },
     {
