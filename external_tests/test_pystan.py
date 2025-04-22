@@ -171,7 +171,7 @@ class TestDataPyStan:
             "observed_data": ["y"],
             "sample_stats_prior": ["diverging"],
             "sample_stats": ["diverging", "lp"],
-            # "log_likelihood": ["log_lik"],
+            "log_likelihood": ["log_lik"],
             "prior_predictive": ["y_hat"],
         }
         fails = check_multiple_attrs(test_dict, inference_data2)
