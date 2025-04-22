@@ -188,7 +188,7 @@ def load_cached_models(eight_schools_data, draws, chains, libs=None):
     """Load pystan, emcee, and pyro models from pickle."""
     here = os.path.dirname(os.path.abspath(__file__))
     supported = (
-        # ("pystan", pystan_noncentered_schools),
+        ("pystan", pystan_noncentered_schools),
         ("emcee", emcee_schools_model),
         # ("pyro", pyro_noncentered_schools),
         ("numpyro", numpyro_schools_model),
