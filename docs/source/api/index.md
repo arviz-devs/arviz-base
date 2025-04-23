@@ -1,6 +1,6 @@
 # API reference
 
-## Data reoganization
+## Data reorganization
 
 ```{eval-rst}
 .. autosummary::
