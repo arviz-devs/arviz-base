@@ -66,7 +66,7 @@ Thus, to install all user facing optional dependencies you should use `arviz-bas
 
 how_to/ConversionGuideEmcee
 tutorial/WorkingWithDataTree
-ArviZ in Context <https://arviz-devs.github.io/Exploratory-Analysis-of-Bayesian-Models/>
+ArviZ in Context <https://arviz-devs.github.io/EABM/>
 :::
 
 :::{toctree}
