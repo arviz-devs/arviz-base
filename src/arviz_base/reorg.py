@@ -1,4 +1,5 @@
 """Helper functions to reorganize data."""
+from numbers import Number
 
 import numpy as np
 import pandas as pd
@@ -207,6 +208,7 @@ def dataset_to_dataarray(ds, sample_dims=None, labeller=None):
 
     Examples
     --------
+    Convert the posterior group into a stacked and labelled dataarray:
 
     .. jupyter-execute::
 
@@ -215,7 +217,7 @@ def dataset_to_dataarray(ds, sample_dims=None, labeller=None):
         xr.set_options(display_expand_data=False)
 
         idata = load_arviz_data("centered_eight")
-        dataset_to_dataarray(idata.posterior.ds)
+        dataset_to_dataarray(idata.posterior.dataset)
     """
     if labeller is None:
         labeller = BaseLabeller()
@@ -260,7 +262,7 @@ def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False):
 
         from arviz_base import load_arviz_data, dataset_to_dataframe
         idata = load_arviz_data("centered_eight")
-        dataset_to_dataframe(idata.posterior.ds)
+        dataset_to_dataframe(idata.posterior.dataset)
 
     The default is to only return a single index, with the labels or tuples of coordinate
     values in the stacked dimensions. To keep all data from all coordinates as a multiindex
@@ -268,7 +270,7 @@ def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False):
 
     .. jupyter-execute::
 
-        dataset_to_dataframe(idata.posterior.ds, multiindex=True)
+        dataset_to_dataframe(idata.posterior.dataset, multiindex=True)
 
     The only restriction on `sample_dims` is that it is present in all variables
     of the dataset. Consequently, we can compute statistical summaries,
@@ -279,7 +281,7 @@ def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False):
         import xarray as xr
 
         dims = ["chain", "draw"]
-        post = idata.posterior.ds
+        post = idata.posterior.dataset
         summaries = xr.concat(
             (
                 post.mean(dims).expand_dims(summary=["mean"]),
@@ -366,7 +368,7 @@ def explode_dataset_dims(ds, dim, labeller=None):
         import xarray as xr
 
         idata = load_arviz_data("centered_eight")
-        explode_dataset_dims(idata.posterior.ds, "school")
+        explode_dataset_dims(idata.posterior.dataset, "school")
     """
     if isinstance(dim, str):
         dim = [dim]
@@ -380,3 +382,113 @@ def explode_dataset_dims(ds, dim, labeller=None):
             )
         }
     )
+
+def references_to_dataset(references, ds, sample_dims=None):
+    """Generate an :class:`~xarray.Dataset` compabible with `ds` from `references`.
+
+    Parameters
+    ----------
+    references : scalar, array-like, dict, DataArray, Dataset
+        References to cast into a compatible dataset.
+
+        * scalar inputs are interpreted as a reference line in each variable+coordinate not in
+          `sample_dims` combination.
+        * array-like inputs are interpreted as multiple reference lines in each variable+coordinate
+          not in `sample_dims` combination. All subset having the same references
+          and all references linked to every subset.
+        * dict inputs are interpreted as scalar or array-like, depending on the dictionary values
+          but only for the variable matching the dictionary key.
+        * DataArray inputs are interpreted as an array-like if unnamed or as a single key
+          dictionary if named.
+        * Dataset inputs are returned as is but won't raise an error.
+
+    ds : Dataset
+        Dataset containing the data `references` should be compatible with.
+    sample_dims : iterable of hashable, optional
+        Sample dimensions in `ds`. The dimensions in the output will be the dimensions
+        in `ds` minus `sample_dims` plus optionally a "ref_line_dim" for non-scalar references.
+
+    Returns
+    -------
+    Dataset
+        A Dataset with a subset of the variables, dimensions and coordinate names in `ds`,
+        with only an extra dimension "ref_line_dim" added when multiple references are requested
+        for one or some of the variables.
+
+    Examples
+    --------
+    Generate a reference dataset with 0 compatible with the centered eight example data:
+
+    .. jupyter-execute::
+
+        from arviz_base import load_arviz_data, dataset_to_dataframe
+        idata = load_arviz_data("centered_eight")
+        references_to_dataset(0, idata.posterior.dataset)
+
+    Generate a reference dataset with different references for each variable:
+
+    .. jupyter-execute::
+
+        references_to_dataset({"mu": -1, "tau": 1, "theta": 0}, idata.posterior.dataset)
+
+    Or a similar case but with different number of references for each variable:
+
+    .. jupyter-execute::
+
+        ref_ds = references_to_dataset(
+            {"mu": [-1, 0, 1], "tau": [1, 10], "theta": 0},
+            idata.posterior.dataset
+        )
+        ref_ds
+
+    Once we have a compatible dataset, we can for example compute the probability
+    of the samples being above the reference value(s):
+
+    .. jupyter-execute::
+
+        (idata.posterior.dataset > ref_ds).mean()
+    """
+    # quick exit if dataset input
+    if isinstance(references, xr.Dataset):
+        return references
+    # process argument defaults
+    if sample_dims is None:
+        sample_dims = rcParams["data.sample_dims"]
+    if isinstance(sample_dims, str):
+        sample_dims = [sample_dims]
+
+    # start covering cases, for dataarray, if its name is a variable convert to dataset
+    # if it has no name treat is an array-like
+    if isinstance(references, xr.DataArray):
+        name = references.name
+        if name is not None:
+            if name not in ds.data_vars:
+                raise ValueError(
+                    "Input is a named DataArray whose name doesn't match any variable in `ds`. "
+                    "Either use an unamed DataArray or ndarray or make sure the name matches."
+                )
+            return references.to_dataset()
+        references = references.values
+    # for scalars generate a dataset with requested shape full of reference value
+    # check for numerical scalar following advise from
+    # https://numpy.org/doc/2.2/reference/generated/numpy.isscalar.html
+    if isinstance(references, Number):
+        aux_ds = ds if sample_dims is None else ds.isel({dim: 0 for dim in sample_dims})
+        return xr.full_like(aux_ds, references, dtype=np.array(references).dtype)
+    # for array-like convert to dict so it is handled later on
+    if isinstance(references, list | tuple | np.ndarray):
+        references = {var_name: references for var_name in ds.data_vars}
+    if isinstance(references, dict):
+        ref_dict = {}
+        for var_name, da in ds.items():
+            if var_name not in references:
+                continue
+            ref_values = references[var_name]
+            sizes = {dim: length for dim, length in da.sizes.items() if dim not in sample_dims}
+            ref_dict[var_name] = xr.DataArray(
+                np.full(list(sizes.values()) + [len(ref_values)], ref_values),
+                dims=list(sizes) + ["ref_line_dim"],
+                coords={"ref_line_dim": np.arange(len(ref_values))} | {coord_name: coord_da for coord_name, coord_da in da.coords.items() if coord_da.dims[0] not in sample_dims}
+            )
+        return xr.Dataset(ref_dict)
+    raise TypeError("Unrecognized input type for `references`")

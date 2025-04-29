@@ -9,6 +9,8 @@
    arviz_base.extract
    arviz_base.dataset_to_dataarray
    arviz_base.dataset_to_dataframe
+   arviz_base.explode_dataset_dims
+   arviz_base.references_to_dataset
 ```
 
 ## User facing converters
@@ -77,6 +79,7 @@ Otherwise, datasets are stored at `~/arviz_data/`
    arviz_base.ndarray_to_dataarray
 ```
 
+(arviz_configuration)=
 ## Configuration
 Most ArviZ default values are regulated by {class}`arviz_base.rcParams`, a class similar
 to a dictionary storing key-value pairs inspired by the one in matplotlib.
