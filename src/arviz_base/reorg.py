@@ -395,7 +395,7 @@ def references_to_dataset(references, ds, sample_dims=None):
 
     Parameters
     ----------
-    references : scalar, array-like, dict of {hashable : array-like}, DataArray, Dataset
+    references : scalar, 1D array-like, dict, DataArray, Dataset
         References to cast into a compatible dataset.
 
         * scalar inputs are interpreted as a reference line in each variable+coordinate not in
@@ -403,8 +403,8 @@ def references_to_dataset(references, ds, sample_dims=None):
         * array-like inputs are interpreted as multiple reference lines in each variable+coordinate
           not in `sample_dims` combination. All subset having the same references
           and all references linked to every subset.
-        * dict inputs are interpreted as scalar or array-like, depending on the dictionary values
-          but only for the variable matching the dictionary key.
+        * dict inputs are interpreted as array-like with each array matched to the variable
+          corresponding to that dictionary key.
         * DataArray inputs are interpreted as an array-like if unnamed or as a single key
           dictionary if named.
         * Dataset inputs are returned as is but won't raise an error.
@@ -488,6 +488,11 @@ def references_to_dataset(references, ds, sample_dims=None):
         return xr.full_like(aux_ds, references, dtype=np.array(references).dtype)
     # for array-like convert to dict so it is handled later on
     if isinstance(references, list | tuple | np.ndarray):
+        if np.ndim(references) > 1:
+            raise ValueError(
+                "Only 1D arrays are allowed. To generate more complex reference datasets "
+                "the xarray.Dataset constructor should be used."
+            )
         references = {var_name: references for var_name in ds.data_vars}
     if isinstance(references, dict):
         ref_dict = {}
@@ -495,6 +500,12 @@ def references_to_dataset(references, ds, sample_dims=None):
             if var_name not in references:
                 continue
             ref_values = np.atleast_1d(references[var_name])
+            if np.ndim(ref_values) > 1:
+                raise ValueError(
+                    f"Only 1D arrays are allowed but the values for {var_name} variable have "
+                    "more dimensions. To generate more complex reference datasets the "
+                    "xarray.Dataset constructor should be used."
+                )
             sizes = {dim: length for dim, length in da.sizes.items() if dim not in sample_dims}
             ref_dict[var_name] = xr.DataArray(
                 np.full(list(sizes.values()) + [len(ref_values)], ref_values),
