@@ -13,7 +13,7 @@ author = _metadata["Author-email"].split("<", 1)[0].strip()
 copyright = f"2022, {author}"
 
 version = _metadata["Version"]
-if os.environ.get("READTHEDOCS", False):
+if os.environ.get("READTHEDOCS", None):
     rtd_version = os.environ.get("READTHEDOCS_VERSION", "")
     if "." not in rtd_version and rtd_version.lower() != "stable":
         version = "dev"

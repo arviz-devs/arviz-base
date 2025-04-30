@@ -7,7 +7,7 @@ import pytest
 from arviz_base import convert_to_dataset, convert_to_datatree
 
 netcdf_nightlies_skip = pytest.mark.skipif(
-    os.environ.get("NIGHTLIES", False) == "TRUE",
+    os.environ.get("NIGHTLIES", "FALSE") == "TRUE",
     reason="Skip netcdf4 dependent tests from nightlies as it generally takes longer to update.",
 )
 

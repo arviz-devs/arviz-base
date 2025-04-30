@@ -139,7 +139,7 @@ def convert_to_datatree(obj, **kwargs):
             # "beanmachine montecarlosamples",
         )
         raise ValueError(
-            f'Can only convert {", ".join(allowable_types)} to InferenceData, '
+            f"Can only convert {', '.join(allowable_types)} to InferenceData, "
             f"not {obj.__class__.__name__}"
         )
 
@@ -187,6 +187,6 @@ def convert_to_dataset(obj, *, group="posterior", **kwargs):
     dataset = getattr(inference_data, group, None)
     if dataset is None:
         raise ValueError(
-            f"Can not extract {group} from {obj}! See docs for other " "conversion utilities."
+            f"Can not extract {group} from {obj}! See docs for other conversion utilities."
         )
     return dataset.to_dataset()

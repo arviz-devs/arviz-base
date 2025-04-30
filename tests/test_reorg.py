@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from arviz_base import dataset_to_dataarray, dataset_to_dataframe, extract
+from arviz_base import dataset_to_dataarray, dataset_to_dataframe, extract, references_to_dataset
 from arviz_base.labels import DimCoordLabeller
 
 
@@ -76,7 +76,7 @@ class TestExtract:
 
 class TestDsToDa:
     def test_default(self, centered_eight):
-        post_ds = centered_eight.posterior.ds
+        post_ds = centered_eight.posterior.dataset
         post_da = dataset_to_dataarray(post_ds)
         assert isinstance(post_da, xr.DataArray)
         assert "chain" in post_da.dims
@@ -92,7 +92,7 @@ class TestDsToDa:
         assert "mu" in post_da.coords["variable"].to_numpy()
 
     def test_sample_dims(self, centered_eight):
-        post_ds = centered_eight.posterior.ds
+        post_ds = centered_eight.posterior.dataset
         post_da = dataset_to_dataarray(post_ds, sample_dims=["draw"])
         assert isinstance(post_da, xr.DataArray)
         assert "draw" in post_da.dims
@@ -107,7 +107,7 @@ class TestDsToDa:
         assert "mu" in post_da.coords["variable"].to_numpy()
 
     def test_labeller(self, centered_eight):
-        post_ds = centered_eight.posterior.ds
+        post_ds = centered_eight.posterior.dataset
         post_da = dataset_to_dataarray(post_ds, labeller=DimCoordLabeller())
         assert isinstance(post_da, xr.DataArray)
         assert "label" in post_da.dims
@@ -119,7 +119,52 @@ class TestDsToDa:
 
 class TestDsToDf:
     def test_default(self, centered_eight):
-        post_ds = centered_eight.posterior.ds
+        post_ds = centered_eight.posterior.dataset
         post_df = dataset_to_dataframe(post_ds)
         assert isinstance(post_df, pd.DataFrame)
         assert post_df.shape == (post_ds.sizes["chain"] * post_ds.sizes["draw"], 10)
+
+
+class TestRefToDs:
+    def test_ds(self, centered_eight):
+        ds_in = centered_eight.posterior.dataset.mean(["chain", "draw"])
+        ds_out = references_to_dataset(ds_in, None)
+        assert ds_in is ds_out
+
+    def test_scalar(self, centered_eight):
+        post_ds = centered_eight.posterior.dataset
+        ref_ds = references_to_dataset(0, post_ds, sample_dims=["chain", "draw"])
+        assert isinstance(ref_ds, xr.Dataset)
+        assert all(var_name in ref_ds.data_vars for var_name in ("mu", "theta", "tau"))
+        assert "chain" not in ref_ds.dims
+        assert "draw" not in ref_ds.dims
+        assert "ref_line_dim" not in ref_ds.dims
+        assert "school" in ref_ds.dims
+
+    def test_array(self, centered_eight):
+        post_ds = centered_eight.posterior.dataset
+        ref_ds = references_to_dataset(np.array([-1, 0, 1]), post_ds, sample_dims=["chain", "draw"])
+        assert isinstance(ref_ds, xr.Dataset)
+        assert all(var_name in ref_ds.data_vars for var_name in ("mu", "theta", "tau"))
+        assert "chain" not in ref_ds.dims
+        assert "draw" not in ref_ds.dims
+        assert "school" in ref_ds.dims
+        assert "ref_line_dim" in ref_ds.dims
+        assert ref_ds.sizes["ref_line_dim"] == 3
+
+    def test_dict(self, centered_eight):
+        post_ds = centered_eight.posterior.dataset
+        ref_ds = references_to_dataset(
+            {"mu": np.array([-1, 0, 1]), "theta": 0}, post_ds, sample_dims=["chain", "draw"]
+        )
+        assert isinstance(ref_ds, xr.Dataset)
+        assert all(var_name in ref_ds.data_vars for var_name in ("mu", "theta"))
+        assert "tau" not in ref_ds.data_vars
+        assert "chain" not in ref_ds.dims
+        assert "draw" not in ref_ds.dims
+        assert "school" in ref_ds.dims
+        assert "ref_line_dim" in ref_ds.dims
+        assert ref_ds.sizes["ref_line_dim"] == 3
+        assert not np.any(np.isnan(ref_ds["mu"]))
+        assert np.allclose(ref_ds["theta"].isel(ref_line_dim=0), 0)
+        assert np.all(np.isnan(ref_ds["theta"].isel(ref_line_dim=[1, 2])))

@@ -72,8 +72,7 @@ def _verify_names(sampler, var_names, arg_names, slices):
 
     if len(arg_names) != num_args:
         raise ValueError(
-            f"The sampler has {num_args} args, "
-            f"but only {len(arg_names)} arg_names were provided!"
+            f"The sampler has {num_args} args, but only {len(arg_names)} arg_names were provided!"
         )
     return var_names, arg_names, slices
 

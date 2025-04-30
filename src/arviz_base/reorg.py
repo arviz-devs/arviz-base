@@ -1,4 +1,5 @@
 """Helper functions to reorganize data."""
+
 from numbers import Number
 
 import numpy as np
@@ -16,6 +17,7 @@ __all__ = [
     "dataset_to_dataframe",
     "explode_dataset_dims",
     "extract",
+    "references_to_dataset",
 ]
 
 
@@ -383,12 +385,17 @@ def explode_dataset_dims(ds, dim, labeller=None):
         }
     )
 
+
 def references_to_dataset(references, ds, sample_dims=None):
     """Generate an :class:`~xarray.Dataset` compabible with `ds` from `references`.
 
+    Cast common formats to provide references to a compatible Dataset.
+    This function does not aim to be exhaustive, anything somewhat peculiar or complex
+    will probably be better off building a Dataset manually instead.
+
     Parameters
     ----------
-    references : scalar, array-like, dict, DataArray, Dataset
+    references : scalar, array-like, dict of {hashable : array-like}, DataArray, Dataset
         References to cast into a compatible dataset.
 
         * scalar inputs are interpreted as a reference line in each variable+coordinate not in
@@ -415,13 +422,17 @@ def references_to_dataset(references, ds, sample_dims=None):
         with only an extra dimension "ref_line_dim" added when multiple references are requested
         for one or some of the variables.
 
+    See Also
+    --------
+    xarray.Dataset : Dataset constructor
+
     Examples
     --------
     Generate a reference dataset with 0 compatible with the centered eight example data:
 
     .. jupyter-execute::
 
-        from arviz_base import load_arviz_data, dataset_to_dataframe
+        from arviz_base import load_arviz_data, references_to_dataset
         idata = load_arviz_data("centered_eight")
         references_to_dataset(0, idata.posterior.dataset)
 
@@ -483,12 +494,17 @@ def references_to_dataset(references, ds, sample_dims=None):
         for var_name, da in ds.items():
             if var_name not in references:
                 continue
-            ref_values = references[var_name]
+            ref_values = np.atleast_1d(references[var_name])
             sizes = {dim: length for dim, length in da.sizes.items() if dim not in sample_dims}
             ref_dict[var_name] = xr.DataArray(
                 np.full(list(sizes.values()) + [len(ref_values)], ref_values),
                 dims=list(sizes) + ["ref_line_dim"],
-                coords={"ref_line_dim": np.arange(len(ref_values))} | {coord_name: coord_da for coord_name, coord_da in da.coords.items() if coord_da.dims[0] not in sample_dims}
+                coords={"ref_line_dim": np.arange(len(ref_values))}
+                | {
+                    coord_name: coord_da
+                    for coord_name, coord_da in da.coords.items()
+                    if coord_da.dims[0] not in sample_dims
+                },
             )
         return xr.Dataset(ref_dict)
     raise TypeError("Unrecognized input type for `references`")
