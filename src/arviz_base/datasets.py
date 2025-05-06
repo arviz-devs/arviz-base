@@ -116,7 +116,7 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
     """
     if dataset in LOCAL_DATASETS:
         resource = LOCAL_DATASETS[dataset]
-        return open_datatree(resource.filename, **kwargs)
+        return open_datatree(resource.filename, **kwargs).load()
 
     if dataset in REMOTE_DATASETS:
         remote = REMOTE_DATASETS[dataset]
@@ -137,7 +137,7 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
                 "({remote.checksum}), file may be corrupted. "
                 "Run `arviz.clear_data_home()` and try again, or please open an issue."
             )
-        return open_datatree(file_path, **kwargs)
+        return open_datatree(file_path, **kwargs).load()
     if dataset is None:
         return dict(itertools.chain(LOCAL_DATASETS.items(), REMOTE_DATASETS.items()))
     raise ValueError(
