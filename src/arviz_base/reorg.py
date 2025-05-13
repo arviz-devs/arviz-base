@@ -414,15 +414,17 @@ def references_to_dataset(references, ds, sample_dims=None, ref_dim=None):
     sample_dims : iterable of hashable, optional
         Sample dimensions in `ds`. The dimensions in the output will be the dimensions
         in `ds` minus `sample_dims` plus optionally a "ref_line_dim" for non-scalar references.
-    ref_dim : str, list optional
-        Name for the new dimensions created during reference value broadcasting.
+    ref_dim : str or list optional
+        Names for the new dimensions created during reference value broadcasting. Defaults to None.
+        By default, "ref_dim" is added for 1D references and "ref_dim_x" for N-dimensional
+        references when broadcasting over one or more variables.
 
     Returns
     -------
     Dataset
-       A dataset containing a subset of the variables, dimensions, and coordinate names from ds,
-       with an additional dimension "ref_dim" added when multiple references are requested for
-       one or more variables. If references is an N-D array, "ref_dim_x" will be added instead.
+       A Dataset containing a subset of the variables, dimensions, and coordinate names from ds,
+       with additional "ref_dim" dimensions added when multiple references are requested for one
+       or more variables.
 
     See Also
     --------
@@ -469,8 +471,6 @@ def references_to_dataset(references, ds, sample_dims=None, ref_dim=None):
         sample_dims = rcParams["data.sample_dims"]
     if isinstance(sample_dims, str):
         sample_dims = [sample_dims]
-    if ref_dim is None:
-        ref_dim = ["ref_dim"]
     if isinstance(ref_dim, str):
         ref_dim = [ref_dim]
 
@@ -502,14 +502,14 @@ def references_to_dataset(references, ds, sample_dims=None, ref_dim=None):
                 continue
             ref_values = np.atleast_1d(references[var_name])
             new_dims = ref_values.shape
-            if ref_dim == ["ref_dim"]:
+            if ref_dim is None:
                 new_dim_names = (
                     ["ref_dim"]
                     if len(new_dims) == 1
                     else [f"ref_dim_{i}" for i in range(len(new_dims))]
                 )
             else:
-                if len(ref_dim) < len(new_dims):
+                if len(ref_dim) != len(new_dims):
                     raise ValueError(
                         f"ref_dim length ({len(ref_dim)}) does not match reference values "
                         f"length ({len(new_dims)}) for data variable {var_name}"
