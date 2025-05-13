@@ -488,11 +488,6 @@ def references_to_dataset(references, ds, sample_dims=None):
         return xr.full_like(aux_ds, references, dtype=np.array(references).dtype)
     # for array-like convert to dict so it is handled later on
     if isinstance(references, list | tuple | np.ndarray):
-        if np.ndim(references) > 1:
-            raise ValueError(
-                "Only 1D arrays are allowed. To generate more complex reference datasets "
-                "the xarray.Dataset constructor should be used."
-            )
         references = {var_name: references for var_name in ds.data_vars}
     if isinstance(references, dict):
         ref_dict = {}
@@ -500,22 +495,22 @@ def references_to_dataset(references, ds, sample_dims=None):
             if var_name not in references:
                 continue
             ref_values = np.atleast_1d(references[var_name])
-            if np.ndim(ref_values) > 1:
-                raise ValueError(
-                    f"Only 1D arrays are allowed but the values for {var_name} variable have "
-                    "more dimensions. To generate more complex reference datasets the "
-                    "xarray.Dataset constructor should be used."
-                )
+            new_dims = ref_values.shape
+            new_dim_names = [f"ref_dim_{i}" for i in range(len(new_dims))]
             sizes = {dim: length for dim, length in da.sizes.items() if dim not in sample_dims}
+            full_shape = list(sizes.values()) + list(new_dims)
+            data = np.broadcast_to(ref_values, full_shape)
+
             ref_dict[var_name] = xr.DataArray(
-                np.full(list(sizes.values()) + [len(ref_values)], ref_values),
-                dims=list(sizes) + ["ref_line_dim"],
-                coords={"ref_line_dim": np.arange(len(ref_values))}
+                data,
+                dims=list(sizes) + new_dim_names,
+                coords=dict(zip(new_dim_names, [np.arange(size) for size in new_dims]))
                 | {
                     coord_name: coord_da
                     for coord_name, coord_da in da.coords.items()
-                    if coord_da.dims[0] not in sample_dims
+                    if not set(coord_da.dims).intersection(sample_dims)
                 },
             )
+
         return xr.Dataset(ref_dict)
     raise TypeError("Unrecognized input type for `references`")

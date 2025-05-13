@@ -138,7 +138,7 @@ class TestRefToDs:
         assert all(var_name in ref_ds.data_vars for var_name in ("mu", "theta", "tau"))
         assert "chain" not in ref_ds.dims
         assert "draw" not in ref_ds.dims
-        assert "ref_line_dim" not in ref_ds.dims
+        assert "ref_dim_0" not in ref_ds.dims
         assert "school" in ref_ds.dims
 
     def test_array(self, centered_eight):
@@ -149,8 +149,23 @@ class TestRefToDs:
         assert "chain" not in ref_ds.dims
         assert "draw" not in ref_ds.dims
         assert "school" in ref_ds.dims
-        assert "ref_line_dim" in ref_ds.dims
-        assert ref_ds.sizes["ref_line_dim"] == 3
+        assert "ref_dim_0" in ref_ds.dims
+        assert ref_ds.sizes["ref_dim_0"] == 3
+
+    def test_2darray(self, centered_eight):
+        post_ds = centered_eight.posterior.dataset
+        ref_ds = references_to_dataset(
+            np.array([[-1, 0, 1], [0, 1, 2]]), post_ds, sample_dims=["chain", "draw"]
+        )
+        assert isinstance(ref_ds, xr.Dataset)
+        assert all(var_name in ref_ds.data_vars for var_name in ("mu", "theta", "tau"))
+        assert "chain" not in ref_ds.dims
+        assert "draw" not in ref_ds.dims
+        assert "school" in ref_ds.dims
+        assert "ref_dim_0" in ref_ds.dims
+        assert ref_ds.sizes["ref_dim_0"] == 2
+        assert "ref_dim_1" in ref_ds.dims
+        assert ref_ds.sizes["ref_dim_1"] == 3
 
     def test_dict(self, centered_eight):
         post_ds = centered_eight.posterior.dataset
@@ -163,8 +178,8 @@ class TestRefToDs:
         assert "chain" not in ref_ds.dims
         assert "draw" not in ref_ds.dims
         assert "school" in ref_ds.dims
-        assert "ref_line_dim" in ref_ds.dims
-        assert ref_ds.sizes["ref_line_dim"] == 3
+        assert "ref_dim_0" in ref_ds.dims
+        assert ref_ds.sizes["ref_dim_0"] == 3
         assert not np.any(np.isnan(ref_ds["mu"]))
-        assert np.allclose(ref_ds["theta"].isel(ref_line_dim=0), 0)
-        assert np.all(np.isnan(ref_ds["theta"].isel(ref_line_dim=[1, 2])))
+        assert np.allclose(ref_ds["theta"].isel(ref_dim_0=0), 0)
+        assert np.all(np.isnan(ref_ds["theta"].isel(ref_dim_0=[1, 2])))
