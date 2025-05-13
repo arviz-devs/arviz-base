@@ -414,7 +414,7 @@ def references_to_dataset(references, ds, sample_dims=None, ref_dim=None):
     sample_dims : iterable of hashable, optional
         Sample dimensions in `ds`. The dimensions in the output will be the dimensions
         in `ds` minus `sample_dims` plus optionally a "ref_line_dim" for non-scalar references.
-    ref_dim : list optional
+    ref_dim : str, list optional
         Name for the new dimensions created during reference value broadcasting.
 
     Returns
@@ -469,6 +469,10 @@ def references_to_dataset(references, ds, sample_dims=None, ref_dim=None):
         sample_dims = rcParams["data.sample_dims"]
     if isinstance(sample_dims, str):
         sample_dims = [sample_dims]
+    if ref_dim is None:
+        ref_dim = ["ref_dim"]
+    if isinstance(ref_dim, str):
+        ref_dim = [ref_dim]
 
     # start covering cases, for dataarray, if its name is a variable convert to dataset
     # if it has no name treat is an array-like
@@ -498,7 +502,7 @@ def references_to_dataset(references, ds, sample_dims=None, ref_dim=None):
                 continue
             ref_values = np.atleast_1d(references[var_name])
             new_dims = ref_values.shape
-            if ref_dim is None:
+            if ref_dim == ["ref_dim"]:
                 new_dim_names = (
                     ["ref_dim"]
                     if len(new_dims) == 1
