@@ -386,7 +386,7 @@ def explode_dataset_dims(ds, dim, labeller=None):
     )
 
 
-def references_to_dataset(references, ds, sample_dims=None):
+def references_to_dataset(references, ds, sample_dims=None, ref_dim=None):
     """Generate an :class:`~xarray.Dataset` compabible with `ds` from `references`.
 
     Cast common formats to provide references to a compatible Dataset.
@@ -414,13 +414,15 @@ def references_to_dataset(references, ds, sample_dims=None):
     sample_dims : iterable of hashable, optional
         Sample dimensions in `ds`. The dimensions in the output will be the dimensions
         in `ds` minus `sample_dims` plus optionally a "ref_line_dim" for non-scalar references.
+    ref_dim : list optional
+        Name for the new dimensions created during reference value broadcasting.
 
     Returns
     -------
     Dataset
-        A Dataset with a subset of the variables, dimensions and coordinate names in `ds`,
-        with only an extra dimension "ref_line_dim" added when multiple references are requested
-        for one or some of the variables.
+       A dataset containing a subset of the variables, dimensions, and coordinate names from ds,
+       with an additional dimension "ref_dim" added when multiple references are requested for
+       one or more variables. If references is an N-D array, "ref_dim_x" will be added instead.
 
     See Also
     --------
@@ -496,7 +498,19 @@ def references_to_dataset(references, ds, sample_dims=None):
                 continue
             ref_values = np.atleast_1d(references[var_name])
             new_dims = ref_values.shape
-            new_dim_names = [f"ref_dim_{i}" for i in range(len(new_dims))]
+            if ref_dim is None:
+                new_dim_names = (
+                    ["ref_dim"]
+                    if len(new_dims) == 1
+                    else [f"ref_dim_{i}" for i in range(len(new_dims))]
+                )
+            else:
+                if len(ref_dim) < len(new_dims):
+                    raise ValueError(
+                        f"ref_dim length ({len(ref_dim)}) does not match reference values "
+                        f"length ({len(new_dims)}) for data variable {var_name}"
+                    )
+                new_dim_names = ref_dim[: len(new_dims)]
             sizes = {dim: length for dim, length in da.sizes.items() if dim not in sample_dims}
             full_shape = list(sizes.values()) + list(new_dims)
             data = np.broadcast_to(ref_values, full_shape)
