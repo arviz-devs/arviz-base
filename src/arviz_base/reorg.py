@@ -40,7 +40,7 @@ def extract(  # noqa: PLR0915
 
     Parameters
     ----------
-    idata : DataTree_like
+    idata : DataTree-like
         DataTree from which to extract the data.
     group : str, optional
         Which group to extract data from.
@@ -54,7 +54,7 @@ def extract(  # noqa: PLR0915
         It is irrelevant and ignored when `sample_dims` is a single dimension.
     var_names : str or list of str, optional
         Variables to be extracted. Prefix the variables by `~` when you want to exclude them.
-    filter_vars: {None, "like", "regex"}, optional
+    filter_vars : {None, "like", "regex"}, optional
         If `None` (default), interpret var_names as the real variables names. If "like",
         interpret var_names as substrings of the real variables names. If "regex",
         interpret var_names as regular expressions on the real variables names. A la
@@ -125,11 +125,8 @@ def extract(  # noqa: PLR0915
         if len(var_names) == 1 and not keep_dataset:
             var_names = var_names[0]
         data = data[var_names]
-    elif len(data.data_vars) == 1:
-        if keep_dataset:
-            data
-        else:
-            data = data[list(data.data_vars)[0]]
+    elif len(data.data_vars) == 1 and not keep_dataset:
+        data = data[list(data.data_vars)[0]]
 
     if weights is not None:
         resampling_method = "stratified" if resampling_method is None else resampling_method
@@ -414,7 +411,7 @@ def references_to_dataset(references, ds, sample_dims=None, ref_dim=None):
     sample_dims : iterable of hashable, optional
         Sample dimensions in `ds`. The dimensions in the output will be the dimensions
         in `ds` minus `sample_dims` plus optionally a "ref_line_dim" for non-scalar references.
-    ref_dim : str or list optional
+    ref_dim : str or list, optional
         Names for the new dimensions created during reference value broadcasting. Defaults to None.
         By default, "ref_dim" is added for 1D references and "ref_dim_x" for N-dimensional
         references when broadcasting over one or more variables.

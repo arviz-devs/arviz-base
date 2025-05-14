@@ -79,6 +79,21 @@ Otherwise, datasets are stored at `~/arviz_data/`
    arviz_base.ndarray_to_dataarray
 ```
 
+## Labels
+
+```{eval-rst}
+.. autosummary::
+   :toctree: generated/
+
+   arviz_base.labels.BaseLabeller
+   arviz_base.labels.DimCoordLabeller
+   arviz_base.labels.IdxLabeller
+   arviz_base.labels.DimIdxLabeller
+   arviz_base.labels.MapLabeller
+   arviz_base.labels.NoVarLabeller
+   arviz_base.labels.mix_labellers
+```
+
 (arviz_configuration)=
 ## Configuration
 Most ArviZ default values are regulated by {class}`arviz_base.rcParams`, a class similar

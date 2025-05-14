@@ -30,7 +30,7 @@ def generate_dims_coords(
     index_origin: int | None = None,
     skip_event_dims: bool = False,
     check_conventions: bool = True,
-) -> tuple[list[Hashable], CoordSpec]:
+):
     """Generate default dimensions and coordinates for a variable.
 
     Parameters
@@ -65,9 +65,9 @@ def generate_dims_coords(
 
     Returns
     -------
-    list of hashable
+    dims : list of hashable
         Default dims for that variable
-    dict of {hashable: array_like}
+    coords : dict of {hashable: ndarray}
         Default coords for that variable
     """
     if index_origin is None:

@@ -1,11 +1,7 @@
 """ArviZ testing utilities."""
 
-from xarray import DataTree
 
-
-def check_multiple_attrs(
-    test_dict: dict[str, list[str]], parent: DataTree
-) -> list[str | tuple[str, str]]:
+def check_multiple_attrs(test_dict, parent):
     """Perform multiple hasattr checks on InferenceData objects.
 
     It is thought to first check if the parent object contains a given dataset,
@@ -17,16 +13,16 @@ def check_multiple_attrs(
 
     Parameters
     ----------
-    test_dict: dict of {str : list of str}
+    test_dict : dict of {str : list of str}
         Its structure should be `{dataset1_name: [var1, var2], dataset2_name: [var]}`.
         A ``~`` at the beginning of a dataset or variable name indicates the name NOT
         being present must be asserted.
-    parent: InferenceData
-        InferenceData object on which to check the attributes.
+    parent : DataTree
+        DataTree object on which to check the attributes.
 
     Returns
     -------
-    list
+    list of (str or tuple of (str, str))
         List containing the failed checks. It will contain either the dataset_name or a
         tuple (dataset_name, var) for all non present attributes.
 

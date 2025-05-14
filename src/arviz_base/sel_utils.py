@@ -38,7 +38,7 @@ def xarray_sel_iter(
     ----------
     data : Dataset or DataArray
         Posterior data in an xarray
-    var_names : iterator of hashable, optional
+    var_names : sequence of hashable, optional
         Should be a subset of data.data_vars. Defaults to all of them.
     combined : bool, optional
         Whether to combine chains or leave them separate. By default (``None``),
@@ -47,7 +47,7 @@ def xarray_sel_iter(
         is modified in order to ensure combining chains or not.
     skip_dims : set, optional
         Dimensions to not iterate over. Defaults to rcParam ``data.sample_dims``.
-    dim_to_idx : mapping {hashable : hashable}, optional
+    dim_to_idx : mapping of {hashable : hashable}, optional
         Mapping from dimensions to indexes to loop over these dimensions using unique
         items in the provided index.
     reverse_selections : bool
@@ -208,7 +208,7 @@ def xarray_var_iter(
     ----------
     data : xarray.Dataset
         Posterior data in an xarray
-    var_names : iterator of hashable, optional
+    var_names : sequence of hashable, optional
         Should be a subset of data.data_vars. Defaults to all of them.
         Passed to :func:`~arviz_base.xarray_sel_iter`.
     combined : bool, optional
@@ -217,14 +217,14 @@ def xarray_var_iter(
     skip_dims : set, optional
         Dimensions to not iterate over.
         Passed to :func:`~arviz_base.xarray_sel_iter`.
-    dim_to_idx : dict, optional
+    dim_to_idx : mapping of {hashable : hashable}, optional
         Mapping from dimension names to index names to define a different way to
         loop over that dimension.
         Passed to :func:`~arviz_base.xarray_sel_iter`.
     reverse_selections : bool, optional
         Whether to reverse selections before iterating.
         Passed to :func:`~arviz_base.xarray_sel_iter`.
-    dim_order: list, optional
+    dim_order : list, optional
         Order for the first dimensions. Skips dimensions not found in the variable.
 
     Yields
@@ -235,7 +235,7 @@ def xarray_var_iter(
         Keys are coordinate names and values are scalar coordinate values.
     iselection : dict of {hashable : any}
         Keys are dimension names and values are positional indexes (might not be scalars).
-    data_subset : DataArray)
+    data_subset : DataArray
         Values of the variable at those coordinates.
 
     See Also
@@ -273,20 +273,19 @@ def xarray_to_ndarray(data, *, var_names=None, combined=True, label_fun=None):
 
     Parameters
     ----------
-    data: xarray.DataSet
+    data : Dataset
         Data in an xarray from an InferenceData object. Examples include posterior or sample_stats
-
-    var_names: iter
+    var_names : sequence of hashable, optional
         Should be a subset of data.data_vars not including chain and draws. Defaults to all of them
-
-    combined: bool
+    combined : bool, default True
         Whether to combine chain into one array
+    label_fun : callable, optional
 
     Returns
     -------
-    var_names: list
+    var_names : list
         List of variable names
-    data: np.array
+    data : ndarray
         Data values
     """
     if label_fun is None:

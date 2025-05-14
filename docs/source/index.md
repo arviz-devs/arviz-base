@@ -64,8 +64,9 @@ Thus, to install all user facing optional dependencies you should use `arviz-bas
 :caption: Tutorials
 :hidden:
 
-how_to/ConversionGuideEmcee
 tutorial/WorkingWithDataTree
+tutorial/label_guide
+how_to/ConversionGuideEmcee
 ArviZ in Context <https://arviz-devs.github.io/EABM/>
 :::
 

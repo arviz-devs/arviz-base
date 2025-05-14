@@ -25,9 +25,9 @@ def _make_validate_choice(accepted_values, allow_none=False, typeof=str):
     ----------
     accepted_values : iterable
         Iterable containing all accepted_values.
-    allow_none: boolean, optional
+    allow_none : bool, default False
         Whether to accept ``None`` in addition to the values in ``accepted_values``.
-    typeof: type, optional
+    typeof : type, optional
         Type the values should be converted to.
     """
     # no blank lines allowed after function docstring by pydocstyle,
@@ -63,9 +63,9 @@ def _make_validate_choice_regex(accepted_values, accepted_values_regex, allow_no
         Iterable containing all accepted_values.
     accepted_values_regex : iterable
         Iterable containing all accepted_values with regex string.
-    allow_none: boolean, optional
+    allow_none : bool, optional
         Whether to accept ``None`` in addition to the values in ``accepted_values``.
-    typeof: type, optional
+    typeof : type, optional
         Type the values should be converted to.
     """
     # no blank lines allowed after function docstring by pydocstyle,

@@ -349,10 +349,10 @@ def _unpack_fit(fit, items, save_warmup, dtypes):
 
     Parameters
     ----------
-    data: cmdstanpy.CmdStanMCMC
-    items: list
-    save_warmup: bool
-    dtypes: dict
+    data : cmdstanpy.CmdStanMCMC
+    items : list
+    save_warmup : bool
+    dtypes : dict
 
     Returns
     -------
@@ -419,21 +419,21 @@ def from_cmdstanpy(
 
     Parameters
     ----------
-    posterior : CmdStanMCMC object
+    posterior : cmdstanpy.CmdStanMCMC, optional
         CmdStanPy CmdStanMCMC
-    posterior_predictive : str, list of str
+    posterior_predictive : str, list of str, optional
         Posterior predictive samples for the fit.
-    predictions : str, list of str
+    predictions : str, list of str, optional
         Out of sample prediction samples for the fit.
-    prior : CmdStanMCMC
+    prior : cmdstanpy.CmdStanMCMC, optional
         CmdStanPy CmdStanMCMC
-    prior_predictive : str, list of str
+    prior_predictive : str, list of str, optional
         Prior predictive samples for the fit.
-    observed_data : dict
+    observed_data : dict, optional
         Observed data used in the sampling.
-    constant_data : dict
+    constant_data : dict, optional
         Constant data used in the sampling.
-    predictions_constant_data : dict
+    predictions_constant_data : dict, optional
         Constant data for predictions used in the sampling.
     log_likelihood : str, list of str, dict of {str: str}, optional
         Pointwise log_likelihood for the data. If a dict, its keys should represent var_names
@@ -444,22 +444,22 @@ def from_cmdstanpy(
     index_origin : int, optional
         Starting value of integer coordinate values. Defaults to the value in rcParam
         ``data.index_origin``.
-    coords : dict of str or dict of iterable
+    coords : dict, optional
         A dictionary containing the values that are used as index. The key
         is the name of the dimension, the values are the index values.
-    dims : dict of str or list of str
+    dims : mapping of {hashable : sequence of hashable}, optional
         A mapping from variables to a list of coordinate names for the variable.
-    save_warmup : bool
+    save_warmup : bool, optional
         Save warmup iterations into InferenceData object, if found in the input files.
         If not defined, use default defined by the rcParams.
-    dtypes: dict or str or cmdstanpy.CmdStanModel
+    dtypes : dict, str or cmdstanpy.CmdStanModel, optional
         A dictionary containing dtype information (int, float) for parameters.
         If input is a string, it is assumed to be a model code or path to model code file.
         Model code can extracted from cmdstanpy.CmdStanModel object.
 
     Returns
     -------
-    InferenceData object
+    DataTree
     """
     return CmdStanPyConverter(
         posterior=posterior,

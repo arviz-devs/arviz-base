@@ -41,25 +41,29 @@ class NumPyroConverter:
         ----------
         posterior : numpyro.mcmc.MCMC
             Fitted MCMC object from NumPyro
-        prior: dict
+        prior : dict, optional
             Prior samples from a NumPyro model
-        posterior_predictive : dict
+        posterior_predictive : dict, optional
             Posterior predictive samples for the posterior
-        predictions: dict
+        predictions : dict, optional
             Out of sample predictions
-        constant_data: dict
+        constant_data : dict, optional
             Dictionary containing constant data variables mapped to their values.
-        predictions_constant_data: dict
+        predictions_constant_data : dict, optional
             Constant data used for out-of-sample predictions.
         index_origin : int, optional
-        coords : dict[str] -> list[str]
+        coords : dict, optional
             Map of dimensions to coordinates
-        dims : dict[str] -> list[str]
+        dims : dict of {str : list of str}, optional
             Map variable names to their coordinates
-        pred_dims: dict
+        pred_dims : dict, optional
             Dims for predictions data. Map variable names to their coordinates.
-        num_chains: int
+        num_chains : int, optional
             Number of chains used for sampling. Ignored if posterior is present.
+
+        Returns
+        -------
+        NumPyroConverter
         """
         import jax
         import numpyro
@@ -339,7 +343,7 @@ def from_numpyro(
     pred_dims=None,
     num_chains=1,
 ):
-    """Convert NumPyro data into an InferenceData object.
+    """Convert NumPyro data into a DataTree object.
 
     For a usage example read the
     :ref:`Creating InferenceData section on from_numpyro <creating_InferenceData>`
@@ -348,25 +352,29 @@ def from_numpyro(
     ----------
     posterior : numpyro.mcmc.MCMC
         Fitted MCMC object from NumPyro
-    prior: dict
+    prior : dict, optional
         Prior samples from a NumPyro model
-    posterior_predictive : dict
+    posterior_predictive : dict, optional
         Posterior predictive samples for the posterior
-    predictions: dict
+    predictions : dict, optional
         Out of sample predictions
-    constant_data: dict
+    constant_data : dict, optional
         Dictionary containing constant data variables mapped to their values.
-    predictions_constant_data: dict
+    predictions_constant_data : dict, optional
         Constant data used for out-of-sample predictions.
     index_origin : int, optional
-    coords : dict[str] -> list[str]
+    coords : dict, optional
         Map of dimensions to coordinates
-    dims : dict[str] -> list[str]
+    dims : dict of {str : list of str}, optional
         Map variable names to their coordinates
-    pred_dims: dict
+    pred_dims : dict, optional
         Dims for predictions data. Map variable names to their coordinates.
-    num_chains: int
+    num_chains : int, default 1
         Number of chains used for sampling. Ignored if posterior is present.
+
+    Returns
+    -------
+    DataTree
     """
     with rc_context(rc={"data.sample_dims": ["chain", "draw"]}):
         return NumPyroConverter(
