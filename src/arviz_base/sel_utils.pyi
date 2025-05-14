@@ -1,0 +1,36 @@
+# File generated with docstub
+
+from collections.abc import Callable, Generator, Hashable, Mapping, Sequence
+
+import xarray
+from _typeshed import Incomplete
+from numpy.typing import NDArray
+
+__all__ = ["xarray_sel_iter", "xarray_var_iter", "xarray_to_ndarray"]
+
+def _dims(data: Incomplete, var_name: Incomplete, skip_dims: Incomplete) -> None: ...
+def _zip_dims(new_dims: Incomplete, vals: Incomplete) -> None: ...
+def xarray_sel_iter(
+    data: xarray.Dataset | xarray.DataArray,
+    var_names: Sequence[Hashable] | None = ...,
+    combined: bool | None = ...,
+    skip_dims: set | None = ...,
+    dim_to_idx: Mapping[Hashable, Hashable] | None = ...,
+    reverse_selections: bool = ...,
+) -> Generator[tuple[str, dict[Hashable, any], dict[Hashable, any]]]: ...
+def xarray_var_iter(
+    data: xarray.Dataset,
+    var_names: Sequence[Hashable] | None = ...,
+    combined: bool | None = ...,
+    skip_dims: set | None = ...,
+    dim_to_idx: Mapping[Hashable, Hashable] | None = ...,
+    reverse_selections: bool = ...,
+    dim_order: list | None = ...,
+) -> Generator[tuple[str, dict[Hashable, any], dict[Hashable, any], xarray.DataArray]]: ...
+def xarray_to_ndarray(
+    data: xarray.Dataset,
+    *,
+    var_names: Sequence[Hashable] | None = ...,
+    combined: bool = ...,
+    label_fun: Callable | None = ...,
+) -> tuple[list, NDArray]: ...
