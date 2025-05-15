@@ -1,8 +1,15 @@
 # File generated with docstub
 
+import warnings
+
 import emcee
+import numpy as np
 import xarray
 from numpy.typing import ArrayLike
+from xarray import DataTree
+
+from arviz_base.base import dict_to_dataset
+from arviz_base.rcparams import rc_context
 
 def _verify_names(
     sampler: emcee.EnsembleSampler,

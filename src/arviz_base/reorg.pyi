@@ -1,12 +1,21 @@
 # File generated with docstub
 
 from collections.abc import Hashable, Iterable, Sequence
+from numbers import Number
 from typing import Literal
 
 import numpy as np
 import pandas
+import pandas as pd
 import xarray
+import xarray as xr
 from numpy.typing import ArrayLike
+
+from arviz_base.converters import convert_to_dataset
+from arviz_base.labels import BaseLabeller
+from arviz_base.rcparams import rcParams
+from arviz_base.sel_utils import xarray_sel_iter
+from arviz_base.utils import _var_names
 
 from .labels import Labeller
 

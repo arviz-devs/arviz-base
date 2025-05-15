@@ -1,9 +1,18 @@
 # File generated with docstub
 
+import hashlib
+import itertools
+import json
 import os
+import shutil
+from collections import namedtuple
+from urllib.request import urlretrieve
 
 import xarray
 from _typeshed import Incomplete
+from xarray import open_datatree
+
+from arviz_base.rcparams import rcParams
 
 __all__ = ["get_data_home", "clear_data_home", "list_datasets", "load_arviz_data"]
 

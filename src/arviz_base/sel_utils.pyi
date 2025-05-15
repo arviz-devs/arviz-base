@@ -1,10 +1,17 @@
 # File generated with docstub
 
-from collections.abc import Callable, Generator, Hashable, Mapping, Sequence
+from collections.abc import Hashable, Mapping, Sequence
+from itertools import product, tee
+from typing import Callable, Generator
 
+import numpy as np
 import xarray
+import xarray as xr
 from _typeshed import Incomplete
 from numpy.typing import NDArray
+
+from arviz_base.labels import BaseLabeller
+from arviz_base.rcparams import rcParams
 
 __all__ = ["xarray_sel_iter", "xarray_var_iter", "xarray_to_ndarray"]
 
@@ -26,11 +33,13 @@ def xarray_var_iter(
     dim_to_idx: Mapping[Hashable, Hashable] | None = ...,
     reverse_selections: bool = ...,
     dim_order: list | None = ...,
-) -> Generator[tuple[str, dict[Hashable, any], dict[Hashable, any], xarray.DataArray]]: ...
+) -> Generator[
+    tuple[str, dict[Hashable, any], dict[Hashable, any], xarray.DataArray]
+]: ...
 def xarray_to_ndarray(
     data: xarray.Dataset,
     *,
     var_names: Sequence[Hashable] | None = ...,
     combined: bool = ...,
-    label_fun: Callable | None = ...,
+    label_fun: Callable | None = ...
 ) -> tuple[list, NDArray]: ...

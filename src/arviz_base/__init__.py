@@ -14,5 +14,11 @@ from arviz_base.io_dict import from_dict
 from arviz_base.io_emcee import from_emcee
 from arviz_base.io_numpyro import from_numpyro
 from arviz_base.rcparams import rc_context, rcParams
-from arviz_base.reorg import *
-from arviz_base.sel_utils import *
+from arviz_base.reorg import (
+    extract,
+    dataset_to_dataarray,
+    dataset_to_dataframe,
+    explode_dataset_dims,
+    references_to_dataset,
+)
+from arviz_base.sel_utils import xarray_sel_iter, xarray_var_iter, xarray_to_ndarray

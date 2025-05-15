@@ -1,10 +1,18 @@
 # File generated with docstub
 
+import logging
+import re
 from collections.abc import Hashable, Mapping, Sequence
+from pathlib import Path
 
 import cmdstanpy
+import numpy as np
 import xarray
 from _typeshed import Incomplete
+from xarray import DataTree
+
+from arviz_base.base import dict_to_dataset, infer_stan_dtypes, requires
+from arviz_base.rcparams import rcParams
 
 _log: Incomplete
 

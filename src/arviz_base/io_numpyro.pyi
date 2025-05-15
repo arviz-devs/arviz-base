@@ -1,10 +1,19 @@
 # File generated with docstub
 
+import warnings
+
+import numpy as np
 import numpyro
 import xarray
 from _typeshed import Incomplete
+from xarray import DataTree
+
+from arviz_base.base import dict_to_dataset, requires
+from arviz_base.rcparams import rc_context, rcParams
+from arviz_base.utils import expand_dims
 
 class NumPyroConverter:
+
     model: Incomplete
     nchains: Incomplete
     ndraws: Incomplete

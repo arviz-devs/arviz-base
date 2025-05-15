@@ -1,12 +1,23 @@
 # File generated with docstub
 
+import datetime
+import importlib
+import re
 import types
-from collections.abc import Callable, Hashable, Iterable
-from typing import TYPE_CHECKING
+import warnings
+from collections.abc import Callable, Hashable, Iterable, Mapping
+from copy import deepcopy
+from typing import TYPE_CHECKING, Any, TypeVar
 
+import numpy as np
 import xarray
+import xarray as xr
 from _typeshed import Incomplete
 from numpy.typing import ArrayLike, NDArray
+
+from arviz_base._version import __version__
+from arviz_base.rcparams import rcParams
+from arviz_base.types import CoordSpec, DictData, DimSpec
 
 if TYPE_CHECKING:
     pass

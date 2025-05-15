@@ -1,7 +1,16 @@
 # File generated with docstub
 
+import locale
+import logging
+import os
+import pprint
+import re
+import sys
 from collections.abc import Iterable, MutableMapping
+from pathlib import Path
+from typing import Any, Literal, get_args
 
+import numpy as np
 from _typeshed import Incomplete
 
 _log: Incomplete
@@ -36,6 +45,7 @@ _validate_dims: Incomplete
 defaultParams: Incomplete
 
 class RcParams(MutableMapping):
+
     validate: Incomplete
 
     def __init__(self, *args, **kwargs) -> None: ...
