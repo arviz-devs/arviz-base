@@ -1,8 +1,7 @@
 # File generated with docstub
 
-from collections.abc import Hashable, Mapping, Sequence
+from collections.abc import Callable, Generator, Hashable, Mapping, Sequence
 from itertools import product, tee
-from typing import Callable, Generator
 
 import numpy as np
 import xarray
