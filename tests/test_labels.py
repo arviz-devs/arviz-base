@@ -9,7 +9,6 @@ from arviz_base.labels import (
     DimIdxLabeller,
     IdxLabeller,
     MapLabeller,
-    NoModelLabeller,
     NoVarLabeller,
     mix_labellers,
 )
@@ -53,7 +52,6 @@ class TestLabellers:
                 var_name_map={"theta": r"$\theta$"}, coord_map={"instrument": {"a": "ATHENA"}}
             ),
             "NoVarLabeller": NoVarLabeller(),
-            "NoModelLabeller": NoModelLabeller(),
         }
 
     # pylint: disable=redefined-outer-name
@@ -66,7 +64,6 @@ class TestLabellers:
             ("DimIdxLabeller", "theta\ninstrument#0, experiment#4"),
             ("MapLabeller", "$\\theta$\nATHENA, 3"),
             ("NoVarLabeller", "a, 3"),
-            ("NoModelLabeller", "theta\na, 3"),
         ],
     )
     def test_make_label_vert(self, args, multidim_sels, labellers):
@@ -84,24 +81,10 @@ class TestLabellers:
             ("DimIdxLabeller", "theta[instrument#0, experiment#4]"),
             ("MapLabeller", r"$\theta$[ATHENA, 3]"),
             ("NoVarLabeller", "a, 3"),
-            ("NoModelLabeller", "theta[a, 3]"),
         ],
     )
     def test_make_label_flat(self, args, multidim_sels, labellers):
         name, expected_label = args
         labeller_arg = labellers[name]
         label = labeller_arg.make_label_flat("theta", multidim_sels.sel, multidim_sels.isel)
-        assert label == expected_label
-
-    @pytest.mark.parametrize(
-        "args",
-        [
-            ("BaseLabeller", "ab initio: var_sel_label"),
-            ("NoModelLabeller", "var_sel_label"),
-        ],
-    )
-    def test_make_model_label(self, args, labellers):
-        name, expected_label = args
-        labeller_arg = labellers[name]
-        label = labeller_arg.make_model_label("ab initio", "var_sel_label")
         assert label == expected_label

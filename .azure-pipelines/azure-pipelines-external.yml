@@ -59,7 +59,7 @@ jobs:
     displayName: 'Print packages'
 
   - script: |
-      SKIP=pylint pre-commit run --all
+      SKIP=docstub pre-commit run --all
     displayName: 'pre-commit'
 
   - script: |

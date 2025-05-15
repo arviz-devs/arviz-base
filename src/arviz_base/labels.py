@@ -1,7 +1,7 @@
 # pylint: disable=unused-argument
 """Utilities to generate labels from xarray objects."""
 
-from collections.abc import Hashable, Mapping, Sequence
+from collections.abc import Hashable, Iterable, Mapping, Sequence
 from typing import Protocol
 
 __all__ = [
@@ -327,7 +327,9 @@ class IdxLabeller(BaseLabeller):
         -------
         str
         """
-        return f"{','.join(tuple(coord_idx))}"
+        if not isinstance(coord_idx, Iterable):
+            return f"{coord_idx}"
+        return f"{','.join(str(idx) for idx in coord_idx)}"
 
 
 class DimIdxLabeller(BaseLabeller):
@@ -368,7 +370,9 @@ class DimIdxLabeller(BaseLabeller):
         -------
         str
         """
-        return f"{dim}#{','.join(tuple(coord_idx))}"
+        if not isinstance(coord_idx, Iterable):
+            return f"{dim}#{coord_idx}"
+        return f"{dim}#{','.join(str(idx) for idx in coord_idx)}"
 
 
 class MapLabeller(BaseLabeller):
