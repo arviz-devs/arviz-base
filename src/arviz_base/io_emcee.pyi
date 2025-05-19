@@ -13,8 +13,8 @@ from arviz_base.rcparams import rc_context
 
 def _verify_names(
     sampler: emcee.EnsembleSampler,
-    var_names: list[str | None],
-    arg_names: list[str | None],
+    var_names: list[str] | None,
+    arg_names: list[str] | None,
     slices: list | None,
 ) -> list[str]: ...
 

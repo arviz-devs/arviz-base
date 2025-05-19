@@ -48,6 +48,13 @@ ci = [
     "pre-commit",
     "cloudpickle"
 ]
+check = [
+    "build",
+    "pre-commit",
+    "docstub @ git+https://github.com/scientific-python/docstub@8c35c82585cd50472161abf3a8e191da1c509abf",
+    "isort",
+    "black",
+]
 doc = [
     "sphinx-book-theme",
     "myst-parser[linkify]",
@@ -57,7 +64,7 @@ doc = [
     "sphinx>=5",
     "sphinx-design",
     "jupyter-sphinx",
-    "netcdf4"
+    "h5netcdf"
 ]
 netcdf4 = [
   "netcdf4"

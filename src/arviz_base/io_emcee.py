@@ -254,7 +254,7 @@ def from_emcee(
         Fitted sampler from emcee.
     var_names : list of str, optional
         A list of names for variables in the sampler
-    slices : list of array-like or slice, optional
+    slices : list of (array-like or slice), optional
         A list containing the indexes of each variable. Should only be used
         for multidimensional variables.
     arg_names : list of str, optional
