@@ -106,6 +106,22 @@ class TestDsToDa:
         assert "theta" in post_da.coords["variable"].to_numpy()
         assert "mu" in post_da.coords["variable"].to_numpy()
 
+    def test_stacked(self, centered_eight):
+        post_ds = centered_eight.posterior.to_dataset().stack(sample=["chain", "draw"])
+        post_da = dataset_to_dataarray(post_ds, sample_dims=["sample"])
+        assert isinstance(post_da, xr.DataArray)
+        assert "sample" in post_da.dims
+        assert post_da.sizes["sample"] == post_ds.sizes["sample"]
+        assert "label" in post_da.dims
+        assert "school" not in post_da.dims
+        assert "chain" not in post_da.dims
+        assert "draw" not in post_da.dims
+        assert post_da.sizes["label"] == 10
+        assert "mu" in post_da["label"].to_numpy()
+        assert "theta[Choate]" in post_da["label"].to_numpy()
+        assert "theta" in post_da.coords["variable"].to_numpy()
+        assert "mu" in post_da.coords["variable"].to_numpy()
+
     def test_labeller(self, centered_eight):
         post_ds = centered_eight.posterior.dataset
         post_da = dataset_to_dataarray(post_ds, labeller=DimCoordLabeller())
