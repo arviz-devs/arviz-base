@@ -163,6 +163,7 @@ def test_dims_coords_skip_event_dims(shape):
     assert len(coords["y"]) == 20
     assert "z" not in coords
 
+
 @pytest.mark.parametrize("dims", [None, ["chain", "draw"], ["chain", "draw", None]])
 def test_autonaming_single_dim(dims):
     sample_dims = ["chain", "draw"]
@@ -173,16 +174,21 @@ def test_autonaming_single_dim(dims):
         sample_dims=sample_dims,
     )
     da_no_sample_dims = ndarray_to_dataarray(
-        np.empty((7)),
+        np.empty(7),
         "a",
-        dims=[dim for dim in dims if dim not in sample_dims] if isinstance(dims, Iterable) else dims,
+        dims=[dim for dim in dims if dim not in sample_dims]
+        if isinstance(dims, Iterable)
+        else dims,
         sample_dims=[],
     )
     assert list(da_sample_dims.dims) == ["chain", "draw", "a_dim_0"]
-    assert list(da_no_sample_dims.dims) == [dim for dim in da_sample_dims.dims if dim not in sample_dims]
+    assert list(da_no_sample_dims.dims) == [
+        dim for dim in da_sample_dims.dims if dim not in sample_dims
+    ]
+
 
 @pytest.mark.parametrize(
-    "args", 
+    "args",
     [
         (None, (4, 500, 7, 3), ["chain", "draw", "a_dim_0", "a_dim_1"]),
         (["chain", "draw"], (4, 500, 7, 3), ["chain", "draw", "a_dim_0", "a_dim_1"]),
@@ -191,7 +197,7 @@ def test_autonaming_single_dim(dims):
         (["group", None, "chain"], (500, 3, 7, 4), ["draw", "group", "a_dim_0", "chain"]),
         ([None, "group", "chain"], (500, 7, 3, 4), ["draw", "a_dim_0", "group", "chain"]),
         ([None, "draw", "chain", None], (7, 500, 4, 3), ["a_dim_0", "draw", "chain", "a_dim_1"]),
-    ]
+    ],
 )
 def test_autonaming_multiple_dims(args):
     dims, shape, out_dims = args
@@ -205,11 +211,15 @@ def test_autonaming_multiple_dims(args):
     da_no_sample_dims = ndarray_to_dataarray(
         np.empty((7, 3)),
         "a",
-        dims=[dim for dim in dims if dim not in sample_dims] if isinstance(dims, Iterable) else dims,
+        dims=[dim for dim in dims if dim not in sample_dims]
+        if isinstance(dims, Iterable)
+        else dims,
         sample_dims=[],
     )
     assert list(da_sample_dims.dims) == out_dims
-    assert list(da_no_sample_dims.dims) == [dim for dim in da_sample_dims.dims if dim not in sample_dims]
+    assert list(da_no_sample_dims.dims) == [
+        dim for dim in da_sample_dims.dims if dim not in sample_dims
+    ]
 
 
 def test_make_attrs():
