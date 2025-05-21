@@ -1,5 +1,7 @@
 # File generated with docstub
 
+from typing import Any
+
 import numpy as np
 import xarray
 import xarray as xr
@@ -15,5 +17,5 @@ __all__ = [
 
 def convert_to_datatree(obj: Incomplete, **kwargs: Incomplete) -> xarray.DataTree: ...
 def convert_to_dataset(
-    obj: Incomplete, *, group: str = ..., **kwargs: dict
+    obj: Any, *, group: str = ..., **kwargs: dict
 ) -> xarray.Dataset: ...

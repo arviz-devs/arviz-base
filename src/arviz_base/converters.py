@@ -147,39 +147,35 @@ def convert_to_datatree(obj, **kwargs):
 
 
 def convert_to_dataset(obj, *, group="posterior", **kwargs):
-    """Convert a supported object to an xarray dataset.
+    """Convert a supported object to an xarray.Dataset.
 
-    This function is idempotent, in that it will return xarray.Dataset functions
-    unchanged. Raises `ValueError` if the desired group can not be extracted.
-
-    Note this goes through a DataTree object via :func:`convert_to_datatree`.
-    See its docstring for more details.
+    This function is idempotent: if you pass in an xarray.Dataset, it returns it unchanged.
+    If passed another supported object (e.g., dict, DataTree, numpy array), it will be
+    converted to a Dataset via `convert_to_datatree`, and the specified group will be extracted.
 
     Parameters
     ----------
-    obj
-        A supported object to convert to InferenceData.
+    obj : Any
+        A supported object to convert to InferenceData. See `convert_to_datatree` for full list.
     group : str, default "posterior"
-        If `obj` is a dict or numpy array, assigns the resulting xarray
-        dataset to this group.
+        The group name to extract from the converted DataTree.
     **kwargs : dict, optional
-        Keyword arguments passed to :func:`convert_to_datatree`
+        Additional arguments passed to `convert_to_datatree`.
 
     Returns
     -------
     xarray.Dataset
-        New mutable dataset. See :meth:`datatree.DataTree.to_dataset` for more details.
+        The extracted dataset from the converted object.
 
     Raises
     ------
     ValueError
-        If `obj` can't be converted to a DataTree from which to extract the
-        `group` Dataset.
+        If the group cannot be extracted from the resulting DataTree.
 
-    See Also
+    Examples
     --------
-    dict_to_dataset
-        Convert a dictionary of arrays to a :class:`xarray.Dataset` following ArviZ conventions.
+    >>> convert_to_dataset({"mu": np.random.randn(500)})
+    <xarray.Dataset> ...  # Posterior group with 'mu' variable
     """
     if isinstance(obj, DataTree) and obj.name == group:
         return obj.to_dataset()
