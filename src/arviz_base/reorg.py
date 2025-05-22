@@ -228,7 +228,11 @@ def dataset_to_dataarray(ds, sample_dims=None, labeller=None):
         labeller.make_label_flat(var_name, sel, isel)
         for var_name, sel, isel in xarray_sel_iter(ds, skip_dims=set(sample_dims))
     ]
-    indexes = [idx_name for idx_name in labeled_stack.xindexes if idx_name not in sample_dims]
+    indexes = [
+        idx_name
+        for idx_name, idx in labeled_stack.xindexes.items()
+        if (idx_name not in sample_dims) and (idx.dim not in sample_dims)
+    ]
     labeled_stack = labeled_stack.drop_indexes(indexes).assign_coords(label=labels)
     for idx_name in indexes:
         if idx_name == "label":
