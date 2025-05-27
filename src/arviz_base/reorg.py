@@ -192,14 +192,26 @@ def _stratified_resample(weights, rng):
     return indexes
 
 
-def dataset_to_dataarray(ds, sample_dims=None, labeller=None):
+def dataset_to_dataarray(ds, sample_dims=None, labeller=None, add_coords=True, new_dim="label"):
     """Convert a Dataset to a stacked DataArray, using a labeller to set coordinate values.
 
     Parameters
     ----------
     ds : Dataset
+        Input data
     sample_dims : sequence of hashable, optional
+        Dimensions that are present in all variables of `ds` and should be kept
+        in the returned `DataArray`. All other variables will be stacked
+        into `new_dim`.
     labeller : labeller, optional
+        Labeller instance with a `make_label_flat` method that will be use to
+        generate the coordinate values along `new_dim`.
+    add_coords : bool, default True
+        Return multiple coordinate variables along `new_dim`. These will contain the newly
+        generated labels, the stacked variable names, and stacked coordinate values.
+    new_dim : hashable, default "label"
+        Name of the new dimension that is created from stacking variables
+        and dimensions not in `sample_dims`.
 
     Returns
     -------
@@ -223,7 +235,7 @@ def dataset_to_dataarray(ds, sample_dims=None, labeller=None):
     if sample_dims is None:
         sample_dims = rcParams["data.sample_dims"]
 
-    labeled_stack = ds.to_stacked_array("label", sample_dims=sample_dims)
+    labeled_stack = ds.to_stacked_array(new_dim, sample_dims=sample_dims)
     labels = [
         labeller.make_label_flat(var_name, sel, isel)
         for var_name, sel, isel in xarray_sel_iter(ds, skip_dims=set(sample_dims))
@@ -233,15 +245,18 @@ def dataset_to_dataarray(ds, sample_dims=None, labeller=None):
         for idx_name, idx in labeled_stack.xindexes.items()
         if (idx_name not in sample_dims) and (idx.dim not in sample_dims)
     ]
-    labeled_stack = labeled_stack.drop_indexes(indexes).assign_coords(label=labels)
+    labeled_stack = labeled_stack.drop_indexes(indexes).assign_coords({new_dim: labels})
     for idx_name in indexes:
-        if idx_name == "label":
+        if idx_name == new_dim:
             continue
-        labeled_stack = labeled_stack.set_xindex(idx_name)
+        if add_coords:
+            labeled_stack = labeled_stack.set_xindex(idx_name)
+        else:
+            labeled_stack = labeled_stack.drop_vars(idx_name)
     return labeled_stack
 
 
-def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False):
+def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False, new_dim="label"):
     """Convert a Dataset to a DataFrame via a stacked DataArray, using a labeller.
 
     Parameters
@@ -249,7 +264,8 @@ def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False):
     ds : Dataset
     sample_dims : sequence of hashable, optional
     labeller : labeller, optional
-    multiindex : bool, default False
+    multiindex : {"row", "column"} or bool, default False
+    new_dim : hashable, default "label"
 
     Returns
     -------
@@ -311,32 +327,32 @@ def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False):
     """
     if sample_dims is None:
         sample_dims = rcParams["data.sample_dims"]
-    da = dataset_to_dataarray(ds, sample_dims=sample_dims, labeller=labeller)
+    da = dataset_to_dataarray(ds, sample_dims=sample_dims, labeller=labeller, new_dim=new_dim)
     sample_dim = sample_dims[0]
     if len(sample_dims) > 1:
         da = da.stack(sample=sample_dims)
         sample_dim = "sample"
-    if multiindex:
+    sample_idx = da[sample_dim]
+    label_idx = da[new_dim]
+    if multiindex is True or multiindex == "row":
         idx_dict = {
             idx_name: da[idx_name].to_numpy()
             for idx_name in da.xindexes
             if sample_dim in da[idx_name].dims
         }
         sample_idx = pd.MultiIndex.from_arrays(list(idx_dict.values()), names=list(idx_dict.keys()))
+    if multiindex is True or multiindex == "column":
         idx_dict = {
             idx_name: da[idx_name].to_numpy()
             for idx_name in da.xindexes
-            if "label" in da[idx_name].dims
+            if new_dim in da[idx_name].dims
         }
         label_idx = pd.MultiIndex.from_arrays(list(idx_dict.values()), names=list(idx_dict.keys()))
-    else:
-        sample_idx = da[sample_dim]
-        label_idx = da["label"]
     df = pd.DataFrame(
-        da.transpose(sample_dim, "label").to_numpy(), columns=label_idx, index=sample_idx
+        da.transpose(sample_dim, new_dim).to_numpy(), columns=label_idx, index=sample_idx
     )
     if not multiindex:
-        df.columns.name = "label"
+        df.columns.name = new_dim
         df.index.name = sample_dim
     return df
 
