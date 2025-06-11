@@ -43,6 +43,7 @@ funding = "https://opencollective.com/arviz"
 test = [
     "pytest",
     "pytest-cov",
+    "scipy",
 ]
 ci = [
     "pre-commit",
