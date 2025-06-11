@@ -1,15 +1,14 @@
 """ArviZ testing utilities."""
 
 import numpy as np
-import pandas as pd
-import pytest
-from scipy.stats import halfnorm, norm
 
 from arviz_base import from_dict
 
 
 def generate_base_data(seed=31):
     """Generate a base dataset for testing."""
+    from scipy.stats import halfnorm, norm
+
     rng = np.random.default_rng(seed)
     mu = rng.normal(loc=1, size=(4, 100))
     tau = np.exp(rng.normal(size=(4, 100)))
@@ -45,9 +44,8 @@ def generate_base_data(seed=31):
     }
 
 
-@pytest.fixture(scope="module")
 def datatree(seed=31):
-    """Fixture to create a general DataTree."""
+    """Generate a general DataTree."""
     base_data = generate_base_data(seed)
 
     dt = from_dict(
@@ -60,9 +58,8 @@ def datatree(seed=31):
     return dt
 
 
-@pytest.fixture(scope="module")
 def datatree2(seed=17):
-    """Fixture to create a DataTree with a posterior and sample stats."""
+    """Generate a DataTree with a posterior and sample stats."""
     rng = np.random.default_rng(seed)
     mu = rng.normal(size=(4, 100))
     tau = rng.normal(size=(4, 100))
@@ -79,9 +76,8 @@ def datatree2(seed=17):
     )
 
 
-@pytest.fixture(scope="module")
 def datatree3(seed=17):
-    """Fixture to create a DataTree with discrete data."""
+    """Generate a DataTree with discrete data."""
     rng = np.random.default_rng(seed)
     posterior_predictive = rng.poisson(4, size=(4, 100, 7))
     observed_data = rng.poisson(4, size=7)
@@ -95,9 +91,8 @@ def datatree3(seed=17):
     )
 
 
-@pytest.fixture(scope="module")
 def datatree_binary(seed=17):
-    """Fixture to create a DataTree with binary data."""
+    """Generate a DataTree with binary data."""
     rng = np.random.default_rng(seed)
     posterior_predictive = rng.binomial(1, 0.5, size=(4, 100, 7))
     observed_data = rng.binomial(1, 0.5, size=7)
@@ -113,9 +108,8 @@ def datatree_binary(seed=17):
     )
 
 
-@pytest.fixture(scope="module")
 def datatree_4d(seed=31):
-    """Fixture to create a DataTree with a 4D posterior."""
+    """Generate a DataTree with a 4D posterior."""
     rng = np.random.default_rng(seed)
     mu = rng.normal(size=(4, 100))
     theta = rng.normal(size=(4, 100, 5))
@@ -137,9 +131,8 @@ def datatree_4d(seed=31):
     )
 
 
-@pytest.fixture(scope="module")
 def datatree_sample(seed=31):
-    """Fixture to create a DataTree with sample dimensions."""
+    """Generate a DataTree with sample dimensions."""
     base_data = generate_base_data(seed)
 
     return from_dict(
@@ -155,9 +148,10 @@ def datatree_sample(seed=31):
     )
 
 
-@pytest.fixture(scope="module")
 def cmp():
-    """Fixture to create a comparison DataFrame."""
+    """Generate a comparison DataFrame."""
+    import pandas as pd
+
     return pd.DataFrame(
         {
             "elpd": [-4.5, -14.3, -16.2],
@@ -172,9 +166,8 @@ def cmp():
     )
 
 
-@pytest.fixture
-def fake_post():
-    """Fixture to create a fake prior/posterior dataset."""
+def fake_dt():
+    """Generate a fake prior/posterior DataTreeZ."""
     rng = np.random.default_rng(42)
 
     return from_dict(
