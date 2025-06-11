@@ -46,12 +46,15 @@ def dataset_to_dataarray(
     ds: xarray.Dataset,
     sample_dims: Sequence[Hashable] | None = ...,
     labeller: Labeller | None = ...,
+    add_coords: bool = ...,
+    new_dim: Hashable = ...,
 ) -> xarray.DataArray: ...
 def dataset_to_dataframe(
     ds: xarray.Dataset,
     sample_dims: Sequence[Hashable] | None = ...,
     labeller: Labeller | None = ...,
-    multiindex: bool = ...,
+    multiindex: Literal["row", "column"] | bool = ...,
+    new_dim: Hashable = ...,
 ) -> pandas.DataFrame: ...
 def explode_dataset_dims(
     ds: xarray.Dataset,
