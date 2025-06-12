@@ -6,6 +6,7 @@ from _typeshed import Incomplete
 
 _log: Incomplete
 
+from arviz_base import testing
 from arviz_base._version import __version__
 from arviz_base.base import (
     dict_to_dataset,
