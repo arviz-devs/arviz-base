@@ -222,15 +222,13 @@ which sometimes requires updating default values, for example to use new algorit
     :type: bool
     :value: True
 
-    Whether to return pointwise values when computing the
-    :data:PSIS-LOO-CV.
+    Whether to return pointwise values when computing PSIS-LOO-CV.
 
 .. py:data:: stats.ic_scale
     :type: str
     :value: "log"
 
-    The scale in which to return
-    :data:PSIS-LOO-CV values,
+    The scale in which to return the PSIS-LOO-CV values,
     one of "deviance" (common in the past and reason of the information criterion naming),
     "log" or "negative_log".
 

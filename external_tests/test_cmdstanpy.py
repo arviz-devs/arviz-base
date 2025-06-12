@@ -235,7 +235,7 @@ class TestDataCmdStanPy:
             posterior_predictive=None,
             prior=data.obj,
             prior_predictive=None,
-            log_likelihood=False,
+            log_likelihood=True,
             observed_data={"y": eight_schools_params["y"]},
             coords=None,
             dims=None,
