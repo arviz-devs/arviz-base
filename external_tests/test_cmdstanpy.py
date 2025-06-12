@@ -235,7 +235,7 @@ class TestDataCmdStanPy:
             posterior_predictive=None,
             prior=data.obj,
             prior_predictive=None,
-            log_likelihood=False,
+            log_likelihood=True,
             observed_data={"y": eight_schools_params["y"]},
             coords=None,
             dims=None,
@@ -385,7 +385,7 @@ class TestDataCmdStanPy:
         test_dict = {
             "posterior": ["eta", "mu", "theta"],
             "prior": ["theta"],
-            "~log_likelihood": [""],
+            "log_likelihood": ["log_lik"],
         }
         fails = check_multiple_attrs(test_dict, inference_data4)
         assert not fails

@@ -104,7 +104,7 @@ def test_rcparams_repr_str():
 
 
 ### Test validation functions ###
-@pytest.mark.parametrize("param", ["data.http_protocol", "stats.information_criterion"])
+@pytest.mark.parametrize("param", ["data.http_protocol"])
 def test_choice_bad_values(param):
     """Test error messages are correct for rcParams validated with _make_validate_choice."""
     msg = "{}: bad_value is not one of".format(param.replace(".", r"\."))

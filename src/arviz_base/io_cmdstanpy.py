@@ -29,7 +29,7 @@ class CmdStanPyConverter:
         observed_data=None,
         constant_data=None,
         predictions_constant_data=None,
-        log_likelihood=None,
+        log_likelihood=False,
         index_origin=None,
         coords=None,
         dims=None,
@@ -44,9 +44,7 @@ class CmdStanPyConverter:
         self.observed_data = observed_data
         self.constant_data = constant_data
         self.predictions_constant_data = predictions_constant_data
-        self.log_likelihood = (
-            rcParams["data.log_likelihood"] if log_likelihood is None else log_likelihood
-        )
+        self.log_likelihood = log_likelihood
         self.index_origin = index_origin
         self.coords = coords
         self.dims = dims
@@ -440,7 +438,7 @@ def from_cmdstanpy(
         from the corresponding observed data and its values the stan variable where the
         data is stored. By default, if a variable ``log_lik`` is present in the Stan model,
         it will be retrieved as pointwise log likelihood values. Use ``False``
-        or set ``data.log_likelihood`` to false to avoid this behaviour.
+        to avoid this behaviour.
     index_origin : int, optional
         Starting value of integer coordinate values. Defaults to the value in rcParam
         ``data.index_origin``.

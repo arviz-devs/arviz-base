@@ -16,7 +16,6 @@ from _typeshed import Incomplete
 _log: Incomplete
 
 ScaleKeyword: Incomplete
-ICKeyword: Incomplete
 
 def _make_validate_choice(
     accepted_values: Iterable, allow_none: bool = ..., typeof: type = ...
@@ -39,7 +38,6 @@ def make_iterable_validator(
 
 _validate_float_or_none: Incomplete
 _validate_positive_int_or_none: Incomplete
-_validate_bokeh_bounds: Incomplete
 _validate_dims: Incomplete
 
 defaultParams: Incomplete
