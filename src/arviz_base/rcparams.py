@@ -15,7 +15,6 @@ import numpy as np
 _log = logging.getLogger("arviz")
 
 ScaleKeyword = Literal["log", "negative_log", "deviance"]
-ICKeyword = Literal["loo", "waic"]
 
 
 def _make_validate_choice(accepted_values, allow_none=False, typeof=str):
@@ -259,16 +258,12 @@ def make_iterable_validator(scalar_validator, length=None, allow_none=False, all
 
 _validate_float_or_none = _add_none_to_validator(_validate_float)
 _validate_positive_int_or_none = _add_none_to_validator(_validate_positive_int)
-_validate_bokeh_bounds = make_iterable_validator(  # pylint: disable=invalid-name
-    _validate_float_or_none, length=2, allow_none=True, allow_auto=True
-)
 _validate_dims = make_iterable_validator(str, length=None, allow_none=False, allow_auto=False)
 
 
 defaultParams = {  # pylint: disable=invalid-name
     "data.http_protocol": ("https", _make_validate_choice({"https", "http"})),
     "data.index_origin": (0, _make_validate_choice({0, 1}, typeof=int)),
-    "data.log_likelihood": (False, _validate_boolean),
     "data.sample_dims": (("chain", "draw"), _validate_dims),
     "data.save_warmup": (False, _validate_boolean),
     "plot.backend": ("auto", _validate_backend),
@@ -277,10 +272,6 @@ defaultParams = {  # pylint: disable=invalid-name
     "stats.module": ("base", _validate_stats_module),
     "stats.ci_kind": ("eti", _make_validate_choice({"eti", "hdi"})),
     "stats.ci_prob": (0.94, _validate_probability),
-    "stats.information_criterion": (
-        "loo",
-        _make_validate_choice(set(get_args(ICKeyword))),
-    ),
     "stats.ic_pointwise": (True, _validate_boolean),
     "stats.ic_scale": (
         "log",
@@ -293,42 +284,6 @@ defaultParams = {  # pylint: disable=invalid-name
     "stats.point_estimate": (
         "mean",
         _make_validate_choice({"mean", "median", "mode"}, allow_none=True),
-    ),
-    ###########  Bokeh specific rcParams: might be removed #########
-    "plot.bokeh.bounds_x_range": ("auto", _validate_bokeh_bounds),
-    "plot.bokeh.bounds_y_range": ("auto", _validate_bokeh_bounds),
-    "plot.bokeh.figure.dpi": (60, _validate_positive_int),
-    "plot.bokeh.figure.height": (500, _validate_positive_int),
-    "plot.bokeh.figure.width": (500, _validate_positive_int),
-    "plot.bokeh.layout.order": (
-        "default",
-        _make_validate_choice_regex(
-            {"default", r"column", r"row", "square", "square_trimmed"}, {r"\d*column", r"\d*row"}
-        ),
-    ),
-    "plot.bokeh.layout.sizing_mode": (
-        "fixed",
-        _make_validate_choice(
-            {
-                "fixed",
-                "stretch_width",
-                "stretch_height",
-                "stretch_both",
-                "scale_width",
-                "scale_height",
-                "scale_both",
-            }
-        ),
-    ),
-    "plot.bokeh.layout.toolbar_location": (
-        "above",
-        _make_validate_choice({"above", "below", "left", "right"}, allow_none=True),
-    ),
-    "plot.bokeh.marker": ("cross", _validate_bokeh_marker),
-    "plot.bokeh.output_backend": ("webgl", _make_validate_choice({"canvas", "svg", "webgl"})),
-    "plot.bokeh.tools": (
-        "reset,pan,box_zoom,wheel_zoom,lasso_select,undo,save,hover",
-        lambda x: x,
     ),
 }
 

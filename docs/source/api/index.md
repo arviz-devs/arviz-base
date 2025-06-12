@@ -172,12 +172,6 @@ which sometimes requires updating default values, for example to use new algorit
     If no coordinate values were provided, ArviZ generates integer indices
     as coordinate values starting at `index_origin`.
 
-.. py:data:: data.log_likelihood
-    :type: bool
-    :value: True
-
-    Whether to save pointwise log likelihood values.
-
 .. py:data:: data.sample_dims
     :type: list
     :value: ["chain", "draw"]
@@ -217,12 +211,6 @@ which sometimes requires updating default values, for example to use new algorit
     The default probability of computed credible intervals. Its default value here
     is also a friendly reminder of the arbitrary nature of commonly values like 95%
 
-.. py:data:: stats.information_criterion
-    :type: str
-    :value: "loo"
-
-    Default algorithm for predictive performance quantification, one of "loo" or "waic".
-
 .. py:data:: stats.ic_compare_method
     :type: str
     :value: "stacking"
@@ -235,14 +223,14 @@ which sometimes requires updating default values, for example to use new algorit
     :value: True
 
     Whether to return pointwise values when computing the
-    :data:`information criterion <stats.information_criterion>`.
+    :data:PSIS-LOO-CV.
 
 .. py:data:: stats.ic_scale
     :type: str
     :value: "log"
 
     The scale in which to return
-    :data:`information criterion <stats.information_criterion>` values,
+    :data:PSIS-LOO-CV values,
     one of "deviance" (common in the past and reason of the information criterion naming),
     "log" or "negative_log".
 
