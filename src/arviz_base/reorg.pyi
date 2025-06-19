@@ -59,7 +59,7 @@ def explode_dataset_dims(
     labeller: Labeller | None = ...,
 ) -> xarray.Dataset: ...
 def references_to_dataset(
-    references: np.ScalarType,
+    references: int,
     ds: xarray.Dataset,
     sample_dims: Iterable[Hashable] | None = ...,
     ref_dim: str | list | None = ...,

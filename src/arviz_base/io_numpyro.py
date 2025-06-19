@@ -60,10 +60,6 @@ class NumPyroConverter:
             Dims for predictions data. Map variable names to their coordinates.
         num_chains : int, optional
             Number of chains used for sampling. Ignored if posterior is present.
-
-        Returns
-        -------
-        NumPyroConverter
         """
         import jax
         import numpyro

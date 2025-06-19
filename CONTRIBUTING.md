@@ -13,9 +13,11 @@ make sure that you **read our code of conduct** (`CODE_OF_CONDUCT.md`).
 2. Install tox: `python -m pip install tox`
 3. Clone the repository
 4. Start a new branch off main: `git switch -c new-branch main`
-5. Make your code changes
-6. Check that your code follows the style guidelines of the project: `tox -e check`
-7. (optional) Build the documentation: `tox -e docs`
-8. (optional) Run the tests: `tox -e py310`
+5. Install dependencies `tox devenv -e py310 .venv`. You may need to install some extra dependencies `pip install ".[check,doc,ci]"`.
+   (change the version number according to the Python you are using, and `.venv` for your environment path)
+6. Make your code changes
+7. Check that your code follows the style guidelines of the project: `tox -e check`
+8. (optional) Build the documentation: `tox -e docs`
+9.  (optional) Run the tests: `tox -e py310`
    (change the version number according to the Python you are using)
-9. Commit, push, and open a pull request!
+10.  Commit, push, and open a pull request!

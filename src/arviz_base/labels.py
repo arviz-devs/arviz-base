@@ -412,10 +412,6 @@ class MapLabeller(BaseLabeller):
             The keys of the first level dictionary are dimension names, the inner
             dictionary has existing coord names as keys and their corresponding desired
             label as values.
-
-        Returns
-        -------
-        MapLabeller
         """
         self.var_name_map = {} if var_name_map is None else var_name_map
         self.dim_map = {} if dim_map is None else dim_map

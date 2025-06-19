@@ -23,3 +23,41 @@ from arviz_base.reorg import (
 )
 from arviz_base.sel_utils import xarray_sel_iter, xarray_var_iter, xarray_to_ndarray
 from arviz_base import testing
+
+
+__all__ = [
+    "__version__",
+    # base
+    "dict_to_dataset",
+    "generate_dims_coords",
+    "make_attrs",
+    "ndarray_to_dataarray",
+    # converters
+    "convert_to_dataset",
+    "convert_to_datatree",
+    # datasets
+    "clear_data_home",
+    "get_data_home",
+    "list_datasets",
+    "load_arviz_data",
+    # io modules
+    "from_cmdstanpy",
+    "from_dict",
+    "from_emcee",
+    "from_numpyro",
+    # rcparams
+    "rc_context",
+    "rcParams",
+    # reorg
+    "extract",
+    "dataset_to_dataarray",
+    "dataset_to_dataframe",
+    "explode_dataset_dims",
+    "references_to_dataset",
+    # sel_utils
+    "xarray_sel_iter",
+    "xarray_var_iter",
+    "xarray_to_ndarray",
+    # testing submodule
+    "testing",
+]
