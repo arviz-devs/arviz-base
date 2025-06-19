@@ -6,7 +6,7 @@ import os
 import pprint
 import re
 import sys
-from collections.abc import MutableMapping
+from collections.abc import Iterator, MutableMapping
 from pathlib import Path
 from typing import Any, Literal, get_args
 
@@ -334,7 +334,7 @@ class RcParams(MutableMapping):
             "RcParams keys cannot be deleted. Use .get(key) of RcParams[key] to check values"
         )
 
-    def popitem(self):
+    def popitem(self) -> tuple[Any, Any]:
         """Raise TypeError if someone ever tries to delete a key from RcParams."""
         raise TypeError(
             "RcParams keys cannot be deleted. Use .get(key) of RcParams[key] to check values"
@@ -348,7 +348,7 @@ class RcParams(MutableMapping):
             ""
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Customize repr of RcParams objects."""
         class_name = self.__class__.__name__
         indent = len(class_name) + 1
@@ -360,7 +360,7 @@ class RcParams(MutableMapping):
         repr_indented = ("\n" + " " * indent).join(repr_split)
         return f"{class_name}({repr_indented})"
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Customize str/print of RcParams objects."""
         return "\n".join(
             map(
@@ -369,11 +369,11 @@ class RcParams(MutableMapping):
             )
         )
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Any]:
         """Yield sorted list of keys."""
         yield from sorted(self._underlying_storage.keys())
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Use underlying dict's len method."""
         return len(self._underlying_storage)
 

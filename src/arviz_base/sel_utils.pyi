@@ -2,6 +2,7 @@
 
 from collections.abc import Callable, Generator, Hashable, Mapping, Sequence
 from itertools import product, tee
+from typing import Any
 
 import numpy as np
 import xarray
@@ -23,7 +24,7 @@ def xarray_sel_iter(
     skip_dims: set | None = ...,
     dim_to_idx: Mapping[Hashable, Hashable] | None = ...,
     reverse_selections: bool = ...,
-) -> Generator[tuple[str, dict[Hashable, any], dict[Hashable, any]]]: ...
+) -> Generator[tuple[str, dict[Hashable, Any], dict[Hashable, Any]]]: ...
 def xarray_var_iter(
     data: xarray.Dataset,
     var_names: Sequence[Hashable] | None = ...,
@@ -33,7 +34,7 @@ def xarray_var_iter(
     reverse_selections: bool = ...,
     dim_order: list | None = ...,
 ) -> Generator[
-    tuple[str, dict[Hashable, any], dict[Hashable, any], xarray.DataArray]
+    tuple[str, dict[Hashable, Any], dict[Hashable, Any], xarray.DataArray]
 ]: ...
 def xarray_to_ndarray(
     data: xarray.Dataset,
