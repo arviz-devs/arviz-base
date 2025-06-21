@@ -351,9 +351,6 @@ def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False, 
     df = pd.DataFrame(
         da.transpose(sample_dim, new_dim).to_numpy(), columns=label_idx, index=sample_idx
     )
-    if not multiindex:
-        df.columns.name = new_dim
-        df.index.name = sample_dim
     return df
 
 
