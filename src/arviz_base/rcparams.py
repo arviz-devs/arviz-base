@@ -28,6 +28,10 @@ def _make_validate_choice(accepted_values, allow_none=False, typeof=str):
         Whether to accept ``None`` in addition to the values in ``accepted_values``.
     typeof : type, optional
         Type the values should be converted to.
+
+    Returns
+    -------
+    Callable or None
     """
     # no blank lines allowed after function docstring by pydocstyle,
     # but black requires white line before function
@@ -66,6 +70,10 @@ def _make_validate_choice_regex(accepted_values, accepted_values_regex, allow_no
         Whether to accept ``None`` in addition to the values in ``accepted_values``.
     typeof : type, optional
         Type the values should be converted to.
+
+    Returns
+    -------
+    Callable
     """
     # no blank lines allowed after function docstring by pydocstyle,
     # but black requires white line before function
@@ -121,7 +129,12 @@ def _validate_str(value):
 
 
 def _validate_probability(value):
-    """Validate a probability: a float between 0 and 1."""
+    """Validate a probability: a float between 0 and 1.
+
+    Returns
+    -------
+    Callable
+    """
     value = _validate_float(value)
     if (value < 0) or (value > 1):
         raise ValueError("Only values between 0 and 1 are valid.")
@@ -151,6 +164,22 @@ def _add_none_to_validator(base_validator):
 
 
 def _validate_stats_module(value):
+    """Validate stats module.
+
+    Parameters
+    ----------
+    value : str or dict
+        Strings or Python objects with statistical functions `eti` and `rhat`
+        as methods.
+
+    Returns
+    -------
+    str or dict
+
+    Raises
+    ------
+    ValueError
+    """
     if isinstance(value, str):
         return value
     eti_method = getattr(value, "eti", None)
@@ -236,7 +265,12 @@ def _validate_backend(value):
 
 
 def make_iterable_validator(scalar_validator, length=None, allow_none=False, allow_auto=False):
-    """Validate value is an iterable datatype."""
+    """Validate value is an iterable datatype.
+
+    Returns
+    -------
+    Callable or None
+    """
     # based on matplotlib's _listify_validator function
 
     def validate_iterable(value):
