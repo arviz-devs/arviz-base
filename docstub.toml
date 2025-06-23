@@ -1,4 +1,5 @@
 [tool.docstub.known_imports]
+numbers = {import = "numbers"}
 xarray = {import = "xarray"}
 pandas = {import = "pandas"}
 numpyro = {import = "numpyro"}
@@ -19,5 +20,5 @@ DataTree = "xarray.DataTree"
 # TODO: define a meta/pseudo type for DataTree-like
 DataTree-like = "xarray.DataTree"
 DataArray = "xarray.DataArray"
-scalar = "int"
+scalar = "numbers.Number"
 any = "Any"

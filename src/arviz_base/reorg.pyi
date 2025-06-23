@@ -1,5 +1,6 @@
 # File generated with docstub
 
+import numbers
 from collections.abc import Hashable, Iterable, Sequence
 from numbers import Number
 from typing import Literal
@@ -59,7 +60,7 @@ def explode_dataset_dims(
     labeller: Labeller | None = ...,
 ) -> xarray.Dataset: ...
 def references_to_dataset(
-    references: int,
+    references: numbers.Number,
     ds: xarray.Dataset,
     sample_dims: Iterable[Hashable] | None = ...,
     ref_dim: str | list | None = ...,
