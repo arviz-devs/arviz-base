@@ -15,7 +15,7 @@ def _var_names(var_names, data, filter_vars=None):
 
     Parameters
     ----------
-    var_names : str, list, or None
+    var_names : str or list or None
     data : xarray.Dataset or sequence of xarray.Dataset
     filter_vars : {None, "like", "regex"}, optional, default=None
         If `None` (default), interpret var_names as the real variables names. If "like",

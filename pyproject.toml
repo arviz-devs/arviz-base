@@ -145,6 +145,11 @@ exclude = [
 module = "arviz_base"
 disallow_untyped_defs = true
 
+# Ignore non untyped calls for tests
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_calls = false
+
 # Ignore certain missing imports
 # [[tool.mypy.overrides]]
 # module = "thirdparty.*"
