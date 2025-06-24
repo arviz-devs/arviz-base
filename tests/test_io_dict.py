@@ -40,7 +40,7 @@ def test_from_dict(data, eight_schools_params, save_warmup):
             "observed_data": eight_schools_params,
         },
         coords={
-            "school": np.arange(8),
+            "school": np.arange(8).tolist(),
         },
         pred_coords={
             "school_pred": list("abcdefgh"),
@@ -80,7 +80,7 @@ def test_from_dict(data, eight_schools_params, save_warmup):
 def test_from_dict_auto_skip_event_dims():
     # create data
     rng = np.random.default_rng()
-    data = {
+    data: dict[str, dict] = {
         "log_likelihood": {
             "y": rng.normal(size=(4, 100)),
         },
@@ -92,7 +92,7 @@ def test_from_dict_auto_skip_event_dims():
         },
     }
 
-    dt = from_dict(data, dims={"y": ["school"]}, coords={"school": np.arange(8)})
+    dt = from_dict(data, dims={"y": ["school"]}, coords={"school": np.arange(8).tolist()})
     test_dict = {
         "log_likelihood": ["y"],
         "posterior_predictive": ["y"],
@@ -113,12 +113,12 @@ def test_from_dict_attrs(data):
         },
         name="Non centered eight",
         coords={
-            "school": np.arange(8),
+            "school": np.arange(8).tolist(),
         },
         dims={"theta": ["school"], "eta": ["school"]},
         attrs={"/": {"cool_atribute": "some metadata"}, "posterior": {"sampling_time": 20}},
     )
-    test_dict = {"posterior": [], "sample_stats": []}
+    test_dict: dict[str, list[str]] = {"posterior": [], "sample_stats": []}
     fails = check_multiple_attrs(test_dict, dt)
     assert not fails
     check_var_names_coords_dims(dt.posterior)
