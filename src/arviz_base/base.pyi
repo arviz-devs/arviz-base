@@ -2,6 +2,7 @@
 
 import datetime
 import importlib
+import numbers
 import re
 import types
 import warnings
@@ -35,7 +36,7 @@ def generate_dims_coords(
     check_conventions: bool = ...,
 ) -> tuple[list[Hashable], dict[Hashable, NDArray]]: ...
 def ndarray_to_dataarray(
-    ary: ArrayLike,
+    ary: numbers.Number | ArrayLike,
     var_name: Hashable,
     *,
     dims: Iterable[Hashable] | None = ...,

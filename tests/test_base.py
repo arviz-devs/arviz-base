@@ -2,11 +2,13 @@
 
 import os
 from collections import namedtuple
-from collections.abc import Iterable
+from collections.abc import Hashable, Iterable
+from numbers import Number
 from urllib.parse import urlunsplit
 
 import numpy as np
 import pytest
+from numpy.typing import ArrayLike
 from xarray import DataTree
 from xarray.testing import assert_allclose
 
@@ -152,9 +154,13 @@ def test_dims_coords_extra_dims():
 
 @pytest.mark.parametrize("shape", [(4, 20), (4, 20, 1)])
 def test_dims_coords_skip_event_dims(shape):
-    coords = {"x": np.arange(4), "y": np.arange(20), "z": np.arange(5)}
+    coords_raw: dict[Hashable, ArrayLike] = {
+        "x": np.arange(4),
+        "y": np.arange(20),
+        "z": np.arange(5),
+    }
     dims, coords = generate_dims_coords(
-        shape, "name", dims=["x", "y", "z"], coords=coords, skip_event_dims=True
+        shape, "name", dims=["x", "y", "z"], coords=coords_raw, skip_event_dims=True
     )
     assert "x" in dims
     assert "y" in dims
@@ -233,7 +239,10 @@ def test_make_attrs():
 
 def test_dict_to_dataset():
     rng = np.random.default_rng()
-    datadict = {"a": rng.normal(size=(1, 100)), "b": rng.normal(size=(1, 100, 10))}
+    datadict: dict[Hashable, ArrayLike] = {
+        "a": rng.normal(size=(1, 100)),
+        "b": rng.normal(size=(1, 100, 10)),
+    }
     dataset = dict_to_dataset(datadict, coords={"c": np.arange(10)}, dims={"b": ["c"]})
     assert set(dataset.data_vars) == {"a", "b"}
     assert set(dataset.coords) == {"chain", "draw", "c"}
@@ -244,8 +253,8 @@ def test_dict_to_dataset():
 
 def test_dict_to_dataset_event_dims_error():
     rng = np.random.default_rng()
-    datadict = {"a": rng.normal(size=(1, 100, 10))}
-    coords = {"b": np.arange(10), "c": ["x", "y", "z"]}
+    datadict: dict[Hashable, ArrayLike] = {"a": rng.normal(size=(1, 100, 10))}
+    coords: dict[Hashable, ArrayLike] = {"b": np.arange(10), "c": ["x", "y", "z"]}
     msg = "more dims"
     with pytest.raises(ValueError, match=msg):
         dict_to_dataset(datadict, coords=coords, dims={"a": ["b", "c"]})
@@ -253,7 +262,10 @@ def test_dict_to_dataset_event_dims_error():
 
 def test_dict_to_dataset_with_tuple_coord():
     rng = np.random.default_rng()
-    datadict = {"a": rng.normal(size=(1, 100)), "b": rng.normal(size=(1, 100, 10))}
+    datadict: dict[Hashable, ArrayLike] = {
+        "a": rng.normal(size=(1, 100)),
+        "b": rng.normal(size=(1, 100, 10)),
+    }
     with pytest.raises(TypeError, match="Could not convert tuple"):
         dict_to_dataset(datadict, coords={"c": tuple(range(10))}, dims={"b": ["c"]})
 
@@ -277,6 +289,7 @@ def test_ndarray_to_dataarray(args):
 
 @pytest.mark.parametrize("mode", ["scalar", "0d array"])
 def test_ndarray_to_dataarray_scalar(mode):
+    ary: ArrayLike | Number
     if mode == "scalar":
         ary = 2
     else:
