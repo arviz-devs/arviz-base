@@ -57,7 +57,7 @@ def convert_to_datatree(obj, **kwargs):
          * `numpy.ndarray`: names the variable "x" and adds it to the DataTree
            with a single group, named with the ``group`` key in `kwargs`.
 
-    kwargs
+    kwargs : Any, optional
         Rest of the supported keyword arguments transferred to conversion function.
 
     Returns
@@ -159,7 +159,7 @@ def convert_to_dataset(obj, *, group="posterior", **kwargs):
         A supported object to convert to InferenceData. See `convert_to_datatree` for full list.
     group : str, default "posterior"
         The group name to extract from the converted DataTree.
-    **kwargs : dict, optional
+    **kwargs : Any, optional
         Additional arguments passed to `convert_to_datatree`.
 
     Returns
