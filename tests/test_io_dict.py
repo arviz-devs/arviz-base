@@ -40,7 +40,7 @@ def test_from_dict(data, eight_schools_params, save_warmup):
             "observed_data": eight_schools_params,
         },
         coords={
-            "school": np.arange(8).tolist(),
+            "school": np.arange(8),
         },
         pred_coords={
             "school_pred": list("abcdefgh"),
@@ -92,7 +92,7 @@ def test_from_dict_auto_skip_event_dims():
         },
     }
 
-    dt = from_dict(data, dims={"y": ["school"]}, coords={"school": np.arange(8).tolist()})
+    dt = from_dict(data, dims={"y": ["school"]}, coords={"school": np.arange(8)})
     test_dict = {
         "log_likelihood": ["y"],
         "posterior_predictive": ["y"],
@@ -113,7 +113,7 @@ def test_from_dict_attrs(data):
         },
         name="Non centered eight",
         coords={
-            "school": np.arange(8).tolist(),
+            "school": np.arange(8),
         },
         dims={"theta": ["school"], "eta": ["school"]},
         attrs={"/": {"cool_atribute": "some metadata"}, "posterior": {"sampling_time": 20}},

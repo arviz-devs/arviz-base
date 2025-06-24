@@ -166,7 +166,6 @@ def test_make_iterable_validator_none_auto(value, allow_auto, allow_none):
     validate_iterable = make_iterable_validator(
         scalar_validator, allow_auto=allow_auto, allow_none=allow_none
     )
-    assert validate_iterable
     raise_error = False
     match_error = "Only ordered iterable"
     if value is None and not allow_none:
@@ -186,7 +185,6 @@ def test_make_iterable_validator_none_auto(value, allow_auto, allow_none):
 def test_make_iterable_validator_length(value, length):
     scalar_validator = _validate_float_or_none
     validate_iterable = make_iterable_validator(scalar_validator, length=length)
-    assert validate_iterable
     raise_error = False
     if length is not None and len(value) != length:
         raise_error = True
@@ -209,7 +207,6 @@ def test_make_iterable_validator_length(value, length):
 def test_make_iterable_validator_illegal(args):
     scalar_validator = _validate_float_or_none
     validate_iterable = make_iterable_validator(scalar_validator)
-    assert validate_iterable
     raise_error, value = args
     with pytest.raises(ValueError, match=raise_error):
         validate_iterable(value)

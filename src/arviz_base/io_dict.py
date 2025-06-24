@@ -61,7 +61,7 @@ def from_dict(
     index_origin : int, optional
         Start value to use default integer ids for dimensions without provided
         coordinate values. Defaults to ``data.index_origin``.
-    coords : dict of {hashable : list}, optional
+    coords : dict of {hashable : list or ndarray}, optional
         A dictionary containing the values that are used as index. The key
         is the name of the dimension, the values are the index values.
     dims : dict of {hashable : list of hashable}, optional

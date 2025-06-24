@@ -106,7 +106,7 @@ class TestConvertToDataset:
         assert set(dataset.c.coords) == {"chain", "draw", "c1", "c2"}
 
     def test_missing_coords(self, data):
-        dataset = convert_to_dataset(data.datadict, coords={}, dims=data.dims)
+        dataset = convert_to_dataset(data.datadict, coords=None, dims=data.dims)
         assert set(dataset.data_vars) == {"a", "b", "c"}
         assert set(dataset.coords) == {"chain", "draw", "c1", "c2", "b1"}
 
@@ -117,7 +117,7 @@ class TestConvertToDataset:
     def test_missing_dims(self, data):
         # missing dims
         coords = {"c_dim_0": np.arange(3), "c_dim_1": np.arange(4), "b_dim_0": np.arange(10)}
-        dataset = convert_to_dataset(data.datadict, coords=coords, dims={})
+        dataset = convert_to_dataset(data.datadict, coords=coords, dims=None)
         assert set(dataset.data_vars) == {"a", "b", "c"}
         assert set(dataset.coords) == {"chain", "draw", "c_dim_0", "c_dim_1", "b_dim_0"}
 

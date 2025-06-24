@@ -4,7 +4,7 @@ import warnings
 from collections.abc import Hashable, Iterable
 
 import xarray
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 from xarray import DataTree
 
 from arviz_base.base import dict_to_dataset
@@ -17,7 +17,7 @@ def from_dict(
     sample_dims: Iterable[Hashable] | None = ...,
     save_warmup: bool | None = ...,
     index_origin: int | None = ...,
-    coords: dict[Hashable, list] | None = ...,
+    coords: dict[Hashable, list | NDArray] | None = ...,
     dims: dict[Hashable, list[Hashable]] | None = ...,
     pred_dims: dict[str, list[str]] | None = ...,
     pred_coords: dict[str, list] | None = ...,

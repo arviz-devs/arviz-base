@@ -133,7 +133,7 @@ def _validate_probability(value):
 
     Returns
     -------
-    Callable
+    float
     """
     value = _validate_float(value)
     if (value < 0) or (value > 1):
@@ -168,13 +168,13 @@ def _validate_stats_module(value):
 
     Parameters
     ----------
-    value : str or dict
+    value : str or module
         Strings or Python objects with statistical functions `eti` and `rhat`
         as methods.
 
     Returns
     -------
-    str or dict
+    str or module
 
     Raises
     ------
@@ -269,7 +269,7 @@ def make_iterable_validator(scalar_validator, length=None, allow_none=False, all
 
     Returns
     -------
-    Callable or None
+    Callable
     """
     # based on matplotlib's _listify_validator function
 
