@@ -24,7 +24,7 @@ repos:
   hooks:
     - id: mypy
       name: Check static typing
-      entry: mypy src
+      entry: mypy src tests
       pass_filenames: false
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
