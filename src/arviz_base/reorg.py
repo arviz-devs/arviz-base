@@ -396,7 +396,7 @@ def references_to_dataset(references, ds, sample_dims=None, ref_dim=None):
 
     Parameters
     ----------
-    references : scalar, 1D array-like, dict, DataArray, Dataset
+    references : scalar or 1D array-like or dict or DataArray or Dataset
         References to cast into a compatible dataset.
 
         * scalar inputs are interpreted as a reference line in each variable+coordinate not in

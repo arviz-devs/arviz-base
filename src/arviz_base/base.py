@@ -162,7 +162,7 @@ def ndarray_to_dataarray(
 
     Parameters
     ----------
-    ary : array_like
+    ary : scalar or array_like
         Values for the DataArray object to be created.
     var_name : hashable
         Name of the created DataArray object.

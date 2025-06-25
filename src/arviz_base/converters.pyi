@@ -17,5 +17,5 @@ __all__ = [
 
 def convert_to_datatree(obj: Incomplete, **kwargs: Incomplete) -> xarray.DataTree: ...
 def convert_to_dataset(
-    obj: Any, *, group: str = ..., **kwargs: dict
+    obj: Any, *, group: str = ..., **kwargs: Incomplete
 ) -> xarray.Dataset: ...

@@ -118,6 +118,7 @@ def test_choice_bad_values(param):
 def test_make_validate_choice(args, allow_none, typeof):
     accepted_values = set(typeof(value) for value in (0, 1, 4, 6))
     validate_choice = _make_validate_choice(accepted_values, allow_none=allow_none, typeof=typeof)
+    assert validate_choice
     raise_error, value = args
     if value is None and not allow_none:
         raise_error = "not one of" if typeof is str else "Could not convert"
@@ -166,12 +167,13 @@ def test_make_iterable_validator_none_auto(value, allow_auto, allow_none):
         scalar_validator, allow_auto=allow_auto, allow_none=allow_none
     )
     raise_error = False
+    match_error = "Only ordered iterable"
     if value is None and not allow_none:
-        raise_error = "Only ordered iterable"
+        raise_error = True
     if value == "auto" and not allow_auto:
-        raise_error = "Could not convert"
+        raise_error, match_error = True, "Could not convert"
     if raise_error:
-        with pytest.raises(ValueError, match=raise_error):
+        with pytest.raises(ValueError, match=match_error):
             validate_iterable(value)
     else:
         value = validate_iterable(value)
@@ -185,9 +187,9 @@ def test_make_iterable_validator_length(value, length):
     validate_iterable = make_iterable_validator(scalar_validator, length=length)
     raise_error = False
     if length is not None and len(value) != length:
-        raise_error = "Iterable must be of length"
+        raise_error = True
     if raise_error:
-        with pytest.raises(ValueError, match=raise_error):
+        with pytest.raises(ValueError, match="Iterable must be of length"):
             validate_iterable(value)
     else:
         value = validate_iterable(value)

@@ -146,7 +146,12 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
 
 
 def list_datasets():
-    """Get a string representation of all available datasets with descriptions."""
+    """Get a string representation of all available datasets with descriptions.
+
+    Returns
+    -------
+    list of str
+    """
     lines = []
     for name, resource in itertools.chain(LOCAL_DATASETS.items(), REMOTE_DATASETS.items()):
         if isinstance(resource, LocalFileMetadata):

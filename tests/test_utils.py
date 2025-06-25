@@ -55,7 +55,7 @@ def test_var_names_warning():
 
 def test_var_names_key_error(data):
     with pytest.raises(KeyError, match="bad_var_name"):
-        _var_names(("theta", "tau", "bad_var_name"), data)
+        _var_names(["theta", "tau", "bad_var_name"], data)
 
 
 @pytest.mark.parametrize(
@@ -130,7 +130,7 @@ def test_var_names_filter_invalid_argument():
     data = dict_to_dataset({"alpha": samples})
     msg = r"^\'filter_vars\' can only be None, \'like\', or \'regex\', got: 'foo'$"
     with pytest.raises(ValueError, match=msg):
-        assert _var_names(["alpha"], data, filter_vars="foo")
+        assert _var_names(["alpha"], data, filter_vars="foo")  # type: ignore
 
 
 def test_subset_list_negation_not_found():

@@ -80,7 +80,7 @@ def test_from_dict(data, eight_schools_params, save_warmup):
 def test_from_dict_auto_skip_event_dims():
     # create data
     rng = np.random.default_rng()
-    data = {
+    data: dict[str, dict] = {
         "log_likelihood": {
             "y": rng.normal(size=(4, 100)),
         },
@@ -118,7 +118,7 @@ def test_from_dict_attrs(data):
         dims={"theta": ["school"], "eta": ["school"]},
         attrs={"/": {"cool_atribute": "some metadata"}, "posterior": {"sampling_time": 20}},
     )
-    test_dict = {"posterior": [], "sample_stats": []}
+    test_dict: dict[str, list[str]] = {"posterior": [], "sample_stats": []}
     fails = check_multiple_attrs(test_dict, dt)
     assert not fails
     check_var_names_coords_dims(dt.posterior)

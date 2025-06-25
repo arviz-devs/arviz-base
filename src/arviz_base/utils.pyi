@@ -12,7 +12,7 @@ from numpy.typing import ArrayLike
 
 def _check_tilde_start(x: Incomplete) -> None: ...
 def _var_names(
-    var_names: str,
+    var_names: str | list | None,
     data: xarray.Dataset | Sequence[xarray.Dataset],
     filter_vars: Literal[None, "like", "regex"] | None = ...,
 ) -> list | None: ...

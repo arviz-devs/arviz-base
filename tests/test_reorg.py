@@ -32,7 +32,7 @@ class TestExtract:
     def test_var_name_group(self, centered_eight):
         prior = extract(centered_eight, group="prior", var_names="the", filter_vars="like")
         assert {} == prior.attrs
-        assert "theta" in prior.name
+        assert "theta" == prior.name
 
     def test_keep_dataset(self, centered_eight):
         prior = extract(
@@ -144,7 +144,7 @@ class TestDsToDf:
 class TestRefToDs:
     def test_ds(self, centered_eight):
         ds_in = centered_eight.posterior.dataset.mean(["chain", "draw"])
-        ds_out = references_to_dataset(ds_in, None)
+        ds_out = references_to_dataset(ds_in, xr.Dataset(), None)
         assert ds_in is ds_out
 
     def test_scalar(self, centered_eight):
