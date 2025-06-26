@@ -7,6 +7,7 @@ _log = logging.getLogger(__name__)
 
 from arviz_base._version import __version__
 from arviz_base.base import dict_to_dataset, generate_dims_coords, make_attrs, ndarray_to_dataarray
+from arviz_base.citations import citations
 from arviz_base.converters import convert_to_dataset, convert_to_datatree
 from arviz_base.datasets import clear_data_home, get_data_home, list_datasets, load_arviz_data
 from arviz_base.io_cmdstanpy import from_cmdstanpy
@@ -28,6 +29,7 @@ from arviz_base import testing
 __all__ = [
     "__version__",
     # base
+    "citations",
     "dict_to_dataset",
     "generate_dims_coords",
     "make_attrs",
