@@ -1,6 +1,7 @@
 # pylint: disable=no-member, no-self-use, redefined-outer-name
 import numpy as np
 import pandas as pd
+import pytest
 import xarray as xr
 
 from arviz_base import dataset_to_dataarray, dataset_to_dataframe, extract, references_to_dataset
@@ -132,13 +133,46 @@ class TestDsToDa:
         assert "theta[school: Choate]" in post_da.coords["label"].to_numpy()
         assert "theta" in post_da.coords["variable"].to_numpy()
 
+    def test_no_coords(self, centered_eight):
+        post_ds = centered_eight.posterior.dataset
+        post_da = dataset_to_dataarray(post_ds, add_coords=False)
+        assert isinstance(post_da, xr.DataArray)
+        assert "label" in post_da.dims
+        assert post_da.sizes["label"] == 10
+        assert "mu" in post_da.coords["label"].to_numpy()
+        assert "theta[Choate]" in post_da.coords["label"].to_numpy()
+        assert "variable" not in post_da.coords
+        assert "school" not in post_da.coords
+
+    def test_new_dim(self, centered_eight):
+        post_ds = centered_eight.posterior.dataset
+        post_da = dataset_to_dataarray(post_ds, new_dim="new_dim")
+        assert isinstance(post_da, xr.DataArray)
+        assert "new_dim" in post_da.dims
+        assert post_da.sizes["new_dim"] == 10
+        assert "mu" in post_da.coords["new_dim"].to_numpy()
+        assert "theta[Choate]" in post_da.coords["new_dim"].to_numpy()
+
 
 class TestDsToDf:
-    def test_default(self, centered_eight):
+    @pytest.mark.parametrize("multiindex", [True, False, "row", "column"])
+    def test_df_specific(self, centered_eight, multiindex):
+        """Test dataset_to_dataframe specific behaviour and args.
+
+        Everything else is delegated to `dataset_to_dataarray` and its tests.
+        """
         post_ds = centered_eight.posterior.dataset
-        post_df = dataset_to_dataframe(post_ds)
+        post_df = dataset_to_dataframe(post_ds, multiindex=multiindex)
         assert isinstance(post_df, pd.DataFrame)
         assert post_df.shape == (post_ds.sizes["chain"] * post_ds.sizes["draw"], 10)
+        if multiindex is True or multiindex == "row":
+            assert isinstance(post_df.index, pd.MultiIndex)
+        else:
+            assert not isinstance(post_df.index, pd.MultiIndex)
+        if multiindex is True or multiindex == "column":
+            assert isinstance(post_df.columns, pd.MultiIndex)
+        else:
+            assert not isinstance(post_df.columns, pd.MultiIndex)
 
 
 class TestRefToDs:
