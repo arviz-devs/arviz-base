@@ -206,8 +206,8 @@ def dataset_to_dataarray(
         in the returned `DataArray`. All other variables will be stacked
         into `new_dim`.
     labeller : labeller, optional
-        Labeller instance with a `make_label_flat` method that will be use to
-        generate the coordinate values along `new_dim`.
+        Labeller instance with a `make_label_flat` or `make_label_vert` method that
+        will be use to generate the coordinate values along `new_dim`.
     add_coords : bool, default True
         Return multiple coordinate variables along `new_dim`. These will contain the newly
         generated labels, the stacked variable names, and stacked coordinate values.
@@ -215,6 +215,8 @@ def dataset_to_dataarray(
         Name of the new dimension that is created from stacking variables
         and dimensions not in `sample_dims`.
     label_type : {"flat", "vert"}, default "flat"
+        if "flat", then `labeller.make_label_flat` method is used to generate the labels and if
+        "vert", then `labeller.make_label_vert` method is used.
 
     Returns
     -------
