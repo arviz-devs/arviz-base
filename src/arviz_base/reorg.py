@@ -129,16 +129,12 @@ def extract(  # noqa: PLR0915
         data = data[list(data.data_vars)[0]]
 
     if weights is not None:
-        resampling_method = (
-            "stratified" if resampling_method is None else resampling_method
-        )
+        resampling_method = "stratified" if resampling_method is None else resampling_method
         weights = np.array(weights).ravel()
         if len(weights) != np.prod([data.sizes[dim] for dim in sample_dims]):
             raise ValueError("Weights must have the same size as `sample_dims`")
     else:
-        resampling_method = (
-            "multinomial" if resampling_method is None else resampling_method
-        )
+        resampling_method = "multinomial" if resampling_method is None else resampling_method
 
     if resampling_method not in ("multinomial", "stratified"):
         raise ValueError(f"Invalid resampling_method: {resampling_method}")
@@ -197,12 +193,7 @@ def _stratified_resample(weights, rng):
 
 
 def dataset_to_dataarray(
-    ds,
-    sample_dims=None,
-    labeller=None,
-    add_coords=True,
-    new_dim="label",
-    label_type="flat",
+    ds, sample_dims=None, labeller=None, add_coords=True, new_dim="label", label_type="flat"
 ):
     """Convert a Dataset to a stacked DataArray, using a labeller to set coordinate values.
 
@@ -223,6 +214,7 @@ def dataset_to_dataarray(
     new_dim : hashable, default "label"
         Name of the new dimension that is created from stacking variables
         and dimensions not in `sample_dims`.
+    label_type : {"flat", "vert"}, default "flat"
 
     Returns
     -------
@@ -246,16 +238,16 @@ def dataset_to_dataarray(
     if sample_dims is None:
         sample_dims = rcParams["data.sample_dims"]
 
+    if label_type not in ("flat", "vert"):
+        raise ValueError(f"Invalid label_type: {label_type}")
+
     labeled_stack = ds.to_stacked_array(new_dim, sample_dims=sample_dims)
-    labels = []
-    for var_name, sel, isel in xarray_sel_iter(ds, skip_dims=set(sample_dims)):
-        if label_type == "flat":
-            label = labeller.make_label_flat(var_name, sel, isel)
-        elif label_type == "vert":
-            label = labeller.make_label_vert(var_name, sel, isel)
-        else:
-            raise ValueError(f"Unknown label_type: {label_type}")
-        labels.append(label)
+    labels = [
+        (labeller.make_label_flat if label_type == "flat" else labeller.make_label_vert)(
+            var_name, sel, isel
+        )
+        for var_name, sel, isel in xarray_sel_iter(ds, skip_dims=set(sample_dims))
+    ]
     indexes = [
         idx_name
         for idx_name, idx in labeled_stack.xindexes.items()
@@ -272,9 +264,7 @@ def dataset_to_dataarray(
     return labeled_stack
 
 
-def dataset_to_dataframe(
-    ds, sample_dims=None, labeller=None, multiindex=False, new_dim="label"
-):
+def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False, new_dim="label"):
     """Convert a Dataset to a DataFrame via a stacked DataArray, using a labeller.
 
     Parameters
@@ -345,9 +335,7 @@ def dataset_to_dataframe(
     """
     if sample_dims is None:
         sample_dims = rcParams["data.sample_dims"]
-    da = dataset_to_dataarray(
-        ds, sample_dims=sample_dims, labeller=labeller, new_dim=new_dim
-    )
+    da = dataset_to_dataarray(ds, sample_dims=sample_dims, labeller=labeller, new_dim=new_dim)
     sample_dim = sample_dims[0]
     if len(sample_dims) > 1:
         da = da.stack(sample=sample_dims)
@@ -360,22 +348,16 @@ def dataset_to_dataframe(
             for idx_name in da.xindexes
             if sample_dim in da[idx_name].dims
         }
-        sample_idx = pd.MultiIndex.from_arrays(
-            list(idx_dict.values()), names=list(idx_dict.keys())
-        )
+        sample_idx = pd.MultiIndex.from_arrays(list(idx_dict.values()), names=list(idx_dict.keys()))
     if multiindex is True or multiindex == "column":
         idx_dict = {
             idx_name: da[idx_name].to_numpy()
             for idx_name in da.xindexes
             if new_dim in da[idx_name].dims
         }
-        label_idx = pd.MultiIndex.from_arrays(
-            list(idx_dict.values()), names=list(idx_dict.keys())
-        )
+        label_idx = pd.MultiIndex.from_arrays(list(idx_dict.values()), names=list(idx_dict.keys()))
     df = pd.DataFrame(
-        da.transpose(sample_dim, new_dim).to_numpy(),
-        columns=label_idx,
-        index=sample_idx,
+        da.transpose(sample_dim, new_dim).to_numpy(), columns=label_idx, index=sample_idx
     )
     return df
 
@@ -418,9 +400,7 @@ def explode_dataset_dims(ds, dim, labeller=None):
         labeller = BaseLabeller()
     return xr.Dataset(
         {
-            labeller.make_label_flat(var_name, sel, isel): ds[var_name].sel(
-                sel, drop=True
-            )
+            labeller.make_label_flat(var_name, sel, isel): ds[var_name].sel(sel, drop=True)
             for var_name, sel, isel in xarray_sel_iter(
                 ds, skip_dims={d for d in ds.dims if d not in dim}
             )
@@ -557,11 +537,7 @@ def references_to_dataset(references, ds, sample_dims=None, ref_dim=None):
                         f"length ({len(new_dims)}) for data variable {var_name}"
                     )
                 new_dim_names = ref_dim[: len(new_dims)]
-            sizes = {
-                dim: length
-                for dim, length in da.sizes.items()
-                if dim not in sample_dims
-            }
+            sizes = {dim: length for dim, length in da.sizes.items() if dim not in sample_dims}
             full_shape = list(sizes.values()) + list(new_dims)
             data = np.broadcast_to(ref_values, full_shape)
 

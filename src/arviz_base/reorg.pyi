@@ -49,6 +49,7 @@ def dataset_to_dataarray(
     labeller: Labeller | None = ...,
     add_coords: bool = ...,
     new_dim: Hashable = ...,
+    label_type: Literal["flat", "vert"] = ...,
 ) -> xarray.DataArray: ...
 def dataset_to_dataframe(
     ds: xarray.Dataset,
