@@ -192,7 +192,9 @@ def _stratified_resample(weights, rng):
     return indexes
 
 
-def dataset_to_dataarray(ds, sample_dims=None, labeller=None, add_coords=True, new_dim="label"):
+def dataset_to_dataarray(
+    ds, sample_dims=None, labeller=None, add_coords=True, new_dim="label", label_type="flat"
+):
     """Convert a Dataset to a stacked DataArray, using a labeller to set coordinate values.
 
     Parameters
@@ -204,14 +206,17 @@ def dataset_to_dataarray(ds, sample_dims=None, labeller=None, add_coords=True, n
         in the returned `DataArray`. All other variables will be stacked
         into `new_dim`.
     labeller : labeller, optional
-        Labeller instance with a `make_label_flat` method that will be use to
-        generate the coordinate values along `new_dim`.
+        Labeller instance with a `make_label_flat` or `make_label_vert` method that
+        will be use to generate the coordinate values along `new_dim`.
     add_coords : bool, default True
         Return multiple coordinate variables along `new_dim`. These will contain the newly
         generated labels, the stacked variable names, and stacked coordinate values.
     new_dim : hashable, default "label"
         Name of the new dimension that is created from stacking variables
         and dimensions not in `sample_dims`.
+    label_type : {"flat", "vert"}, default "flat"
+        if "flat", then `labeller.make_label_flat` method is used to generate the labels and if
+        "vert", then `labeller.make_label_vert` method is used.
 
     Returns
     -------
@@ -235,9 +240,14 @@ def dataset_to_dataarray(ds, sample_dims=None, labeller=None, add_coords=True, n
     if sample_dims is None:
         sample_dims = rcParams["data.sample_dims"]
 
+    if label_type not in ("flat", "vert"):
+        raise ValueError(f"Invalid label_type: {label_type}")
+
     labeled_stack = ds.to_stacked_array(new_dim, sample_dims=sample_dims)
     labels = [
-        labeller.make_label_flat(var_name, sel, isel)
+        (labeller.make_label_flat if label_type == "flat" else labeller.make_label_vert)(
+            var_name, sel, isel
+        )
         for var_name, sel, isel in xarray_sel_iter(ds, skip_dims=set(sample_dims))
     ]
     indexes = [

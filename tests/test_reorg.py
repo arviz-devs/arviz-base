@@ -133,6 +133,22 @@ class TestDsToDa:
         assert "theta[school: Choate]" in post_da.coords["label"].to_numpy()
         assert "theta" in post_da.coords["variable"].to_numpy()
 
+    @pytest.mark.parametrize("label_type", ["flat", "vert"])
+    def test_label_type(self, label_type, centered_eight):
+        post_ds = centered_eight.posterior.dataset
+        post_da = dataset_to_dataarray(post_ds, labeller=DimCoordLabeller(), label_type=label_type)
+        assert isinstance(post_da, xr.DataArray)
+        assert "label" in post_da.dims
+        assert post_da.sizes["label"] == 10
+        assert "mu" in post_da.coords["label"].to_numpy()
+        if label_type == "vert":
+            assert "theta\nschool: Choate" in post_da.coords["label"].to_numpy()
+            assert "theta\nschool: Deerfield" in post_da.coords["label"].to_numpy()
+        elif label_type == "flat":
+            assert "theta[school: Choate]" in post_da.coords["label"].to_numpy()
+            assert "theta[school: Deerfield]" in post_da.coords["label"].to_numpy()
+        assert "theta" in post_da.coords["variable"].to_numpy()
+
     def test_no_coords(self, centered_eight):
         post_ds = centered_eight.posterior.dataset
         post_da = dataset_to_dataarray(post_ds, add_coords=False)
