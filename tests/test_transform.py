@@ -1,12 +1,12 @@
 import xarray.testing as xrt
 from xarray import Dataset, DataTree
 
-from arviz_base import transform
+from arviz_base import get_unconstrained_samples
 
 
 def test_no_transform_funcs_no_unconstrained(centered_eight):
     # idata with only posterior group
-    idata = transform(centered_eight, transform_funcs=None)
+    idata = get_unconstrained_samples(centered_eight, transform_funcs=None)
 
     # idata has a "unconstrained_posterior" group
     assert "unconstrained_posterior" in idata
@@ -21,7 +21,7 @@ def test_with_transform_funcs_no_unconstrained(centered_eight):
     # transform tau
     funcs = {"tau": lambda arr: 2 * arr}
 
-    idata = transform(centered_eight, transform_funcs=funcs)
+    idata = get_unconstrained_samples(centered_eight, transform_funcs=funcs)
 
     ds_post = centered_eight["posterior"]
     ds_uc = idata["unconstrained_posterior"]
@@ -39,7 +39,7 @@ def test_no_transform_funcs_with_unconstrained(centered_eight):
     idata_with_uc = DataTree.from_dict(
         {"posterior": centered_eight["posterior"], "unconstrained_posterior": uc}
     )
-    out = transform(idata_with_uc, transform_funcs=None)
+    out = get_unconstrained_samples(idata_with_uc, transform_funcs=None)
 
     ds_uc = out["unconstrained_posterior"]
     # tau taken from unconstrained_posterior
@@ -55,7 +55,7 @@ def test_with_transform_funcs_with_unconstrained(centered_eight):
     idata_with_uc = DataTree.from_dict(
         {"posterior": centered_eight["posterior"], "unconstrained_posterior": uc}
     )
-    out = transform(idata_with_uc, transform_funcs=funcs)
+    out = get_unconstrained_samples(idata_with_uc, transform_funcs=funcs)
 
     ds_uc = out["unconstrained_posterior"]
     # tau taken from unconstrained_posterior
@@ -70,17 +70,16 @@ def test_with_transform_custom_groups(centered_eight):
     # transform y
     funcs = {"y": lambda arr: arr - 3}
 
-    idata = transform(
+    idata = get_unconstrained_samples(
         centered_eight,
         transform_funcs=funcs,
         group="posterior_predictive",
-        return_group="transformed",
     )
 
     # return group is only group in idata
-    assert ("/", "/transformed") == idata.groups
+    assert ("/", "/unconstrained_posterior_predictive") == idata.groups
 
-    ds_out = idata["transformed"]
+    ds_out = idata["unconstrained_posterior_predictive"]
 
     # y transformed
     # expected values of y

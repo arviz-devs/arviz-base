@@ -22,7 +22,7 @@ from arviz_base.reorg import (
     references_to_dataset,
 )
 from arviz_base.sel_utils import xarray_sel_iter, xarray_var_iter, xarray_to_ndarray
-from arviz_base.transform import transform
+from arviz_base.transform import get_unconstrained_samples
 from arviz_base import testing
 
 
@@ -62,5 +62,5 @@ __all__ = [
     # testing submodule
     "testing",
     # transform
-    "transform",
+    "get_unconstrained_samples",
 ]
