@@ -210,7 +210,7 @@ class BaseLabeller:
             return sel_str
         return f"{var_name_str}\n{sel_str}"
 
-    def make_label_flat(self, var_name: str, sel: dict, isel: dict):
+    def make_label_flat(self, var_name, sel, isel):
         """Format variable name and corresponding subset as a single line string.
 
         Parameters

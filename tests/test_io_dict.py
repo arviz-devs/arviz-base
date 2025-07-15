@@ -80,7 +80,7 @@ def test_from_dict(data, eight_schools_params, save_warmup):
 def test_from_dict_auto_skip_event_dims():
     # create data
     rng = np.random.default_rng()
-    data: dict[str, dict] = {
+    data: dict[str, dict[str, np.ndarray]] = {
         "log_likelihood": {
             "y": rng.normal(size=(4, 100)),
         },

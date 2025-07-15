@@ -18,7 +18,6 @@ from numpy.typing import ArrayLike, NDArray
 
 from arviz_base._version import __version__
 from arviz_base.rcparams import rcParams
-from arviz_base.types import CoordSpec, DictData, DimSpec
 
 if TYPE_CHECKING:
     pass
@@ -28,7 +27,7 @@ RequiresReturnTypeT: Incomplete
 
 def generate_dims_coords(
     shape: Iterable[int],
-    var_name: Iterable[Hashable],
+    var_name: Hashable,
     dims: Iterable[Hashable] | None = ...,
     coords: dict[Hashable, ArrayLike] | None = ...,
     index_origin: int | None = ...,
@@ -49,7 +48,7 @@ def ndarray_to_dataarray(
 def dict_to_dataset(
     data: dict[Hashable, ArrayLike],
     *,
-    attrs: dict | None = ...,
+    attrs: Mapping[Hashable, Any] | None = ...,
     inference_library: types.ModuleType | None = ...,
     coords: dict[Hashable, ArrayLike] | None = ...,
     dims: dict[Hashable, Iterable[Hashable]] | None = ...,

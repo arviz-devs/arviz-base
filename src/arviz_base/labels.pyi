@@ -46,19 +46,19 @@ class BaseLabeller:
     def make_label_vert(
         self,
         var_name: str | None,
-        sel: Mapping[Hashable, Hashable],
-        isel: Mapping[Hashable, int | Sequence[int]],
+        sel: dict[Hashable, Hashable],
+        isel: dict[Hashable, int | Sequence[int]],
     ) -> str: ...
     def make_label_flat(
         self,
         var_name: str | None,
-        sel: Mapping[Hashable, Hashable],
-        isel: Mapping[Hashable, int | Sequence[int]],
+        sel: dict[Hashable, Hashable],
+        isel: dict[Hashable, int | Sequence[int]],
     ) -> str: ...
     def make_pp_label(
         self,
-        var_name,
-        pp_var_name,
+        var_name: str | None,
+        pp_var_name: str | None,
         sel: Mapping[Hashable, Hashable],
         isel: Mapping[Hashable, int | Sequence[int]],
     ) -> str: ...
@@ -81,8 +81,8 @@ class DimIdxLabeller(BaseLabeller):
 class MapLabeller(BaseLabeller):
     def __init__(
         self,
-        var_name_map=...,
-        dim_map=...,
+        var_name_map: Mapping[Hashable, Hashable] | None = ...,
+        dim_map: Mapping[Hashable, Hashable] | None = ...,
         coord_map: Mapping[Hashable, Mapping[Hashable, Hashable]] | None = ...,
     ) -> None: ...
     def dim_coord_to_str(
