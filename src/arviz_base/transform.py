@@ -1,11 +1,13 @@
 """Transform helper."""
 
+from collections.abc import Callable
+
 import xarray as xr
 
 
 def get_unconstrained_samples(
     idata,
-    transform_funcs=None,
+    transform_funcs: dict[str, Callable[[xr.DataArray], xr.DataArray]] | None = None,
     group="posterior",
     return_dataset=False,
 ):
@@ -21,7 +23,9 @@ def get_unconstrained_samples(
     idata : DataTree-like
         DataTree from which to extract the data.
     transform_funcs : dict of {str : Callable}, optional
-        Dictionary with the functions to transform each variable, by default None
+        Dictionary with the functions to transform each variable, by default None.
+        Each function *must* accept a single DataArray and return also a
+        DataArray.
         If `None`, the values are taking from the group `unconstrained_{group}.
     group : str, optional
         The group where the transformation will be applied, by default `posterior`
@@ -33,7 +37,6 @@ def get_unconstrained_samples(
     DataTree-like or Dataset
         By defaults, it returns the original DataTree with the transformed data in
         the `unconstrained_{group}` group.
-        .
         A Dataset with the transformed samples.
     """
     if transform_funcs is None:
@@ -47,12 +50,17 @@ def get_unconstrained_samples(
     new_vars = {}
     for name, da in ds_in.data_vars.items():
         if name in transform_funcs:
-            # apply user‐supplied transform to the numpy values
-            new_da = xr.apply_ufunc(
-                transform_funcs[name],
-                da,
-                keep_attrs=True,
-            )
+            # validate function
+            func = transform_funcs[name]
+            if not callable(func):
+                raise TypeError(f"transform_funcs[{name!r}] must be callable, got {type(func)}")
+            # apply user‐supplied transform to the datarray
+            new_da = func(da)
+            if not isinstance(new_da, xr.DataArray):
+                raise TypeError(
+                    f"transform_funcs[{name!r}] must return an xarray.DataArray,"
+                    f" got {type(new_da)} instead."
+                )
         elif ds_out is not None and name in ds_out.data_vars:
             # reuse the existing unconstrained version
             new_da = ds_out[name]

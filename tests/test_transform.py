@@ -1,3 +1,4 @@
+import pytest
 import xarray as xr
 import xarray.testing as xrt
 
@@ -35,6 +36,13 @@ def test_with_transform_funcs_no_unconstrained(centered_eight):
     # mu and theta unchanged
     xrt.assert_equal(dt_uc["mu"], dt_post["mu"])
     xrt.assert_equal(dt_uc["theta"], dt_post["theta"])
+
+
+def test_with_invalid_transform_funcs(centered_eight):
+    funcs = {"tau": lambda arr: arr.to_dict()}
+
+    with pytest.raises(TypeError, match="dict"):
+        get_unconstrained_samples(centered_eight, transform_funcs=funcs)
 
 
 def test_no_transform_funcs_with_unconstrained(centered_eight):
