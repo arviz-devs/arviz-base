@@ -7,6 +7,7 @@ def get_unconstrained_samples(
     idata,
     transform_funcs=None,
     group="posterior",
+    return_dataset=False,
 ):
     """Transform helper.
 
@@ -21,14 +22,19 @@ def get_unconstrained_samples(
         DataTree from which to extract the data.
     transform_funcs : dict of {str : Callable}, optional
         Dictionary with the functions to transform each variable, by default None
-        If ``None``, the values are taking from the group `unconstrained_{group}.
+        If `None`, the values are taking from the group `unconstrained_{group}.
     group : str, optional
-        The group where the transformation will be applied, by default "posterior"
+        The group where the transformation will be applied, by default `posterior`
+    return_dataset : bool, optional
+        If true it will return a Dataset with the transformed samples, by default False.
 
     Returns
     -------
-    DataTree-like
-        DataTree with the transformed data in the `unconstrained_{group}`.
+    DataTree-like or Dataset
+        By defaults, it returns the original DataTree with the transformed data in
+        the `unconstrained_{group}` group.
+        .
+        A Dataset with the transformed samples.
     """
     if transform_funcs is None:
         transform_funcs = {}
@@ -59,4 +65,10 @@ def get_unconstrained_samples(
     # rebuild a Dataset for the return_group (keep the same coords)
     ds_new = xr.Dataset(new_vars, coords=ds_in.coords, attrs=ds_in.attrs)
 
-    return xr.DataTree.from_dict({f"unconstrained_{group}": ds_new})
+    if return_dataset:
+        # return dataset
+        return ds_new
+    else:
+        # return datatree in the unconstrained_{group}
+        idata[f"unconstrained_{group}"] = xr.DataTree(ds_new)
+        return idata

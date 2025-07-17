@@ -9,4 +9,5 @@ def get_unconstrained_samples(
     idata: xarray.DataTree,
     transform_funcs: dict[str, Callable] | None = ...,
     group: str = ...,
-) -> xarray.DataTree: ...
+    return_dataset: bool = ...,
+) -> xarray.DataTree | xarray.Dataset: ...
