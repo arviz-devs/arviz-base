@@ -130,3 +130,26 @@ def test_with_transform_filter_vars(centered_eight):
     dt_out = idata["unconstrained_posterior"]
     assert "theta" not in dt_out
     assert "mu" in dt_out
+
+
+def test_with_transform_dimensionality_changed(centered_eight):
+    # transform theta
+    def lagged_cumsum(da):
+        core_dim = da.dims[-1]
+        return da.cumsum(core_dim).isel({core_dim: slice(None, -1)})
+
+    funcs = {"theta": lagged_cumsum}
+
+    idata = get_unconstrained_samples(centered_eight, transform_funcs=funcs)
+
+    dt_post = centered_eight["posterior"]
+    dt_uc = idata["unconstrained_posterior"]
+    # expected values of theta
+    expected_theta = lagged_cumsum(dt_post["theta"])
+    xrt.assert_equal(dt_uc["theta"], expected_theta)
+    # assert dims and shape
+    assert dt_uc["theta"].dims == dt_post["theta"].dims
+    assert dt_uc["theta"].coords.keys() == dt_post["theta"].coords.keys()
+    assert dt_uc["theta"].coords["school"].size == dt_post["theta"].coords["school"].size - 1
+    assert dt_uc["theta"].shape[0:2] == dt_post["theta"].shape[0:2]
+    assert dt_uc["theta"].shape[2] == dt_post["theta"].shape[2] - 1
