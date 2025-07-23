@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import xarray as xr
 import xarray.testing as xrt
@@ -147,9 +148,35 @@ def test_with_transform_dimensionality_changed(centered_eight):
     # expected values of theta
     expected_theta = lagged_cumsum(dt_post["theta"])
     xrt.assert_equal(dt_uc["theta"], expected_theta)
+
     # assert dims and shape
     assert dt_uc["theta"].dims == dt_post["theta"].dims
     assert dt_uc["theta"].coords.keys() == dt_post["theta"].coords.keys()
     assert dt_uc["theta"].coords["school"].size == dt_post["theta"].coords["school"].size - 1
     assert dt_uc["theta"].shape[0:2] == dt_post["theta"].shape[0:2]
     assert dt_uc["theta"].shape[2] == dt_post["theta"].shape[2] - 1
+
+
+def test_with_transform_change_dim_one_var(centered_eight):
+    # transform mu
+    def lagged_cumsum(da):
+        core_dim = da.dims[-1]
+        return da.cumsum(core_dim).isel({core_dim: slice(None, -1)})
+
+    funcs = {"mu": lagged_cumsum}
+
+    idata = get_unconstrained_samples(centered_eight, transform_funcs=funcs)
+
+    dt_post = centered_eight["posterior"]
+    dt_uc = idata["unconstrained_posterior"]
+    # expected values of mu
+    transformed_mu = lagged_cumsum(dt_post["mu"])
+    # fill nan as dimension can't be removed
+    filling_mu = xr.DataArray(np.array([np.nan]), coords={"draw": [9]}, dims="draw")
+    expected_mu = xr.concat([transformed_mu, filling_mu], dim="draw")
+    xrt.assert_equal(dt_uc["mu"], expected_mu)
+
+    # assert dims and shape
+    assert dt_uc.coords.equals(dt_post.coords)
+    assert dt_uc["mu"].dims == dt_post["mu"].dims
+    assert dt_uc["mu"].shape == dt_post["mu"].shape
