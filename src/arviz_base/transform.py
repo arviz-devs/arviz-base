@@ -1,6 +1,7 @@
 """Transform helper."""
 
 from collections.abc import Callable
+from copy import deepcopy
 
 import xarray as xr
 
@@ -54,6 +55,7 @@ def get_unconstrained_samples(
         transform_funcs = {}
 
     # get the two datasets and extract variables
+    idata = deepcopy(idata)
     ds_in = idata[group].to_dataset()
     var_names_in = _var_names(var_names, ds_in, filter_vars)
     if var_names_in:
