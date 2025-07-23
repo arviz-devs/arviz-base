@@ -116,3 +116,17 @@ def test_with_transform_return_dataset(centered_eight):
     # expected values of mu
     expected_mu = centered_eight["posterior"]["mu"] - 3
     xrt.assert_equal(ds_uc["mu"], expected_mu)
+
+
+def test_with_transform_filter_vars(centered_eight):
+    # exclude theta
+    idata = get_unconstrained_samples(
+        centered_eight,
+        var_names="~theta",
+    )
+
+    # it returns a datatree
+    assert isinstance(idata, xr.DataTree)
+    dt_out = idata["unconstrained_posterior"]
+    assert "theta" not in dt_out
+    assert "mu" in dt_out

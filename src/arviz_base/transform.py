@@ -4,9 +4,13 @@ from collections.abc import Callable
 
 import xarray as xr
 
+from arviz_base.utils import _var_names
+
 
 def get_unconstrained_samples(
     idata,
+    var_names=None,
+    filter_vars=None,
     transform_funcs: dict[str, Callable[[xr.DataArray], xr.DataArray]] | None = None,
     group="posterior",
     return_dataset=False,
@@ -22,6 +26,13 @@ def get_unconstrained_samples(
     ----------
     idata : DataTree-like
         DataTree from which to extract the data.
+    var_names : str or list of str, optional
+        Variables to be extracted. Prefix the variables by `~` when you want to exclude them.
+    filter_vars : {None, "like", "regex"}, optional
+        If `None` (default), interpret var_names as the real variables names. If "like",
+        interpret var_names as substrings of the real variables names. If "regex",
+        interpret var_names as regular expressions on the real variables names. A la
+        `pandas.filter`.
     transform_funcs : dict of {str : Callable}, optional
         Dictionary with the functions to transform each variable, by default None.
         Each function *must* accept a single DataArray and return also a
@@ -42,9 +53,14 @@ def get_unconstrained_samples(
     if transform_funcs is None:
         transform_funcs = {}
 
-    # get the two datasets
-    ds_in = idata[group]
+    # get the two datasets and extract variables
+    ds_in = idata[group].to_dataset()
+    var_names_in = _var_names(var_names, ds_in, filter_vars)
+    if var_names_in:
+        ds_in = ds_in[var_names_in]
     ds_out = idata.get(f"unconstrained_{group}", None)
+    if ds_out:
+        ds_out = ds_out.to_dataset()
 
     # for each variable in the input group, decide what to store
     new_vars = {}
@@ -71,7 +87,7 @@ def get_unconstrained_samples(
         new_vars[name] = new_da
 
     # rebuild a Dataset for the return_group (keep the same coords)
-    ds_new = xr.Dataset(new_vars, coords=ds_in.coords, attrs=ds_in.attrs)
+    ds_new = xr.Dataset(new_vars, attrs=ds_in.attrs)
 
     if return_dataset:
         # return dataset
