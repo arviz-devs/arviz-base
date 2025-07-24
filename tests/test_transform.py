@@ -172,8 +172,9 @@ def test_with_transform_change_dim_one_var(centered_eight):
     # expected values of mu
     transformed_mu = lagged_cumsum(dt_post["mu"])
     # fill nan as dimension can't be removed
-    filling_mu = xr.DataArray(np.array([np.nan]), coords={"draw": [9]}, dims="draw")
-    expected_mu = xr.concat([transformed_mu, filling_mu], dim="draw")
+    expected_mu = transformed_mu.pad(draw=(0, 1), constant_values=np.nan).assign_coords(
+        draw=np.arange(0, 10)
+    )
     xrt.assert_equal(dt_uc["mu"], expected_mu)
 
     # assert dims and shape
