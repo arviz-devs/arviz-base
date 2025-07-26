@@ -34,6 +34,7 @@ from arviz_base.reorg import (
     references_to_dataset,
 )
 from arviz_base.sel_utils import xarray_sel_iter, xarray_to_ndarray, xarray_var_iter
+from arviz_base.transform import get_unconstrained_samples
 
 __all__ = [
     "__version__",
@@ -62,4 +63,5 @@ __all__ = [
     "xarray_var_iter",
     "xarray_to_ndarray",
     "testing",
+    "get_unconstrained_samples",
 ]
