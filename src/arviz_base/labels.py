@@ -2,7 +2,7 @@
 """Utilities to generate labels from xarray objects."""
 
 from collections.abc import Hashable, Iterable, Mapping, Sequence
-from typing import Protocol
+from typing import Any, Protocol
 
 __all__ = [
     "mix_labellers",
@@ -22,14 +22,14 @@ class Labeller(Protocol):
     def make_label_vert(  # noqa: D102
         self,
         var_name: str | None,
-        sel: Mapping[Hashable, Hashable],
-        isel: Mapping[Hashable, int | Sequence[int]],
+        sel: Mapping[Any, Hashable],
+        isel: Mapping[Any, int | Sequence[int]],
     ) -> str: ...
     def make_label_flat(  # noqa: D102
         self,
         var_name: str | None,
-        sel: Mapping[Hashable, Hashable],
-        isel: Mapping[Hashable, int | Sequence[int]],
+        sel: Mapping[Any, Hashable],
+        isel: Mapping[Any, int | Sequence[int]],
     ) -> str: ...
 
 
@@ -100,12 +100,12 @@ class BaseLabeller:
     The default labels for "theta" variable on the subset corresponding to "chain" 0
     and "school" "Name" are:
 
-    .. code-block::
+    .. code-block:: none
         :caption: Single line label
 
         theta[0, Name]
 
-    .. code-block::
+    .. code-block:: none
         :caption: Multi-line label
 
         theta
@@ -139,8 +139,8 @@ class BaseLabeller:
 
         Parameters
         ----------
-        sel : mapping of {hashable : hashable}
-        isel : mapping of {hashable : int or sequence of int}
+        sel : mapping of {hashable_key : hashable}
+        isel : mapping of {hashable_key : int or sequence of int}
 
         Returns
         -------
@@ -195,8 +195,8 @@ class BaseLabeller:
         Parameters
         ----------
         var_name : str or None
-        sel : mapping of {hashable : hashable}
-        isel : mapping of {hashable : int or sequence of int}
+        sel : mapping of {hashable_key : hashable}
+        isel : mapping of {hashable_key : int or sequence of int}
 
         Returns
         -------
@@ -216,8 +216,8 @@ class BaseLabeller:
         Parameters
         ----------
         var_name : str or None
-        sel : mapping of {hashable : hashable}
-        isel : mapping of {hashable : int or sequence of int}
+        sel : mapping of {hashable_key : hashable}
+        isel : mapping of {hashable_key : int or sequence of int}
 
         Returns
         -------
@@ -237,8 +237,8 @@ class BaseLabeller:
         Parameters
         ----------
         var_name, pp_var_name : str or None
-        sel : mapping of {hashable : hashable}
-        isel : mapping of {hashable : int or sequence of int}
+        sel : mapping of {hashable_key : hashable}
+        isel : mapping of {hashable_key : int or sequence of int}
 
         Returns
         -------
@@ -254,12 +254,12 @@ class DimCoordLabeller(BaseLabeller):
     The default labels for "theta" variable on the subset corresponding to "chain" 0
     and "school" "Name" are:
 
-    .. code-block::
+    .. code-block:: none
         :caption: Single line label
 
         theta[chain: 0, school: Name]
 
-    .. code-block::
+    .. code-block:: none
         :caption: Multi-line label
 
         theta
@@ -295,12 +295,12 @@ class IdxLabeller(BaseLabeller):
     The default labels for "theta" variable on the subset corresponding to "chain" 0
     and "school" "Name" (3rd and 5th element in the school coordinate values) are:
 
-    .. code-block::
+    .. code-block:: none
         :caption: Single line label
 
         theta[0, 2,4]
 
-    .. code-block::
+    .. code-block:: none
         :caption: Multi-line label
 
         theta
@@ -338,12 +338,12 @@ class DimIdxLabeller(BaseLabeller):
     The default labels for "theta" variable on the subset corresponding to "chain" 0
     and "school" "Name" (3rd and 5th element in the school coordinate values) are:
 
-    .. code-block::
+    .. code-block:: none
         :caption: Single line label
 
         theta[chain#0, school#2,4]
 
-    .. code-block::
+    .. code-block:: none
         :caption: Multi-line label
 
         theta
@@ -385,12 +385,12 @@ class MapLabeller(BaseLabeller):
     and "school" "Name" with a replacement mapping on the variable name ``{"theta": "θ"}``
     and one on the coordinate values ``{"Name": "𝑁𝑎𝑚𝑒"}``
 
-    .. code-block::
+    .. code-block:: none
         :caption: Single line label
 
         θ[0, 𝑁𝑎𝑚𝑒]
 
-    .. code-block::
+    .. code-block:: none
         :caption: Multi-line label
 
         θ
@@ -459,12 +459,12 @@ class NoVarLabeller(BaseLabeller):
     The default labels for "theta" variable on the subset corresponding to "chain" 0
     and "school" "Name" are:
 
-    .. code-block::
+    .. code-block:: none
         :caption: Single line label
 
         0, Name
 
-    .. code-block::
+    .. code-block:: none
         :caption: Multi-line label
 
         0, Name

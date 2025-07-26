@@ -29,7 +29,7 @@ def from_dict(
 
     Parameters
     ----------
-    data : mapping of {hashable : mapping of {hashable : array_like}}
+    data : mapping of {hashable_key : mapping of {hashable_key : array_like}}
         Dictionary to convert to DataTree. It must be a nested dictionary.
         The keys of the outer dictionary are group names, the values
         of the outer dictionary must be dictionaries themselves with the
@@ -50,7 +50,7 @@ def from_dict(
     name : str, optional
         Name of the DataTree root node. This is used as the DataTree name by
         ArviZ.
-    sample_dims : iterable of hashable, optional
+    sample_dims : sequence of hashable, optional
         Dimensions that should be assumed to be present in _all_ variables.
         If missing, they will be added as the dimensions corresponding to the
         leading axis.
@@ -61,18 +61,18 @@ def from_dict(
     index_origin : int, optional
         Start value to use default integer ids for dimensions without provided
         coordinate values. Defaults to ``data.index_origin``.
-    coords : mapping of {hashable : array-like}, optional
+    coords : mapping of {hashable_key : array-like}, optional
         A dictionary containing the values that are used as index. The key
         is the name of the dimension, the values are the index values.
-    dims : mapping of {hashable : sequence of hashable}, optional
+    dims : mapping of {hashable_key : sequence of hashable}, optional
         A mapping from variable names to a list of dimension names for the variable.
-    pred_dims : mapping of {hashable : sequence of hashable}, optional
+    pred_dims : mapping of {hashable_key : sequence of hashable}, optional
         A mapping from variables to a list of coordinate names for predictions.
-    pred_coords : dict of {str : list}, optional
+    pred_coords : mapping of {hashable_key : array-like}, optional
         A mapping from variables to a list of coordinate values for predictions.
     check_conventions : bool, default True
         Check some ArviZ conventions on dimension meaning.
-    attrs : mapping of {hashable : mapping of {hashable : any}}, optional
+    attrs : mapping of {hashable_key : mapping of {hashable_key : any}}, optional
         A dictionary containing attributes for different groups. Its keys should
         match keys in `data`, with the exception of "/" which is used to set global
         attributes.

@@ -233,9 +233,9 @@ def dict_to_dataset(
 
     Parameters
     ----------
-    data : dict of {hashable: array_like}
+    data : mapping of {hashable_key : array_like}
         Data to convert. Keys are variable names.
-    attrs : mapping of {hashable: any}, optional
+    attrs : mapping of {hashable_key : any}, optional
         JSON-like arbitrary metadata to attach to the dataset, in addition to default
         attributes added by :func:`make_attrs`.
 
@@ -250,10 +250,10 @@ def dict_to_dataset(
         :class:`xarray.Dataset` attributes.
     coords : dict of {hashable: array_like}, optional
         Coordinates for the dataset
-    dims : dict of {hashable: iterable of hashable}, optional
+    dims : dict of {hashable : sequence of hashable}, optional
         Dimensions of each variable. The keys are variable names, values are lists of
         coordinates.
-    sample_dims : iterable of hashable, optional
+    sample_dims : sequence of hashable, optional
         Dimensions that should be assumed to be present in _all_ variables.
         If missing, they will be added as the dimensions corresponding to the
         leading axes.
@@ -332,7 +332,7 @@ def make_attrs(attrs=None, inference_library=None):
 
     Parameters
     ----------
-    attrs : dict, optional
+    attrs : mapping of {hashable_key : any}, optional
         Additional attributes to add or overwrite
     inference_library : module, optional
         Library used to perform inference.

@@ -87,6 +87,7 @@ numpydoc_xref_aliases = {
     "sequence": ":term:`python:sequence`",
     "mapping": ":term:`python:mapping`",
     "hashable": ":term:`python:hashable`",
+    "hashable_key": ":term:`python:hashable`",
 }
 
 intersphinx_mapping = {

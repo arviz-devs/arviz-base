@@ -2,12 +2,12 @@
 
 import datetime
 import importlib
-import numbers
 import re
 import types
 import warnings
-from collections.abc import Callable, Hashable, Iterable, Mapping
+from collections.abc import Callable, Hashable, Iterable, Mapping, Sequence
 from copy import deepcopy
+from numbers import Number
 from typing import TYPE_CHECKING, Any, TypeVar
 
 import numpy as np
@@ -35,7 +35,7 @@ def generate_dims_coords(
     check_conventions: bool = ...,
 ) -> tuple[list[Hashable], dict[Hashable, NDArray]]: ...
 def ndarray_to_dataarray(
-    ary: numbers.Number | ArrayLike,
+    ary: Number | ArrayLike,
     var_name: Hashable,
     *,
     dims: Iterable[Hashable] | None = ...,
@@ -46,19 +46,20 @@ def ndarray_to_dataarray(
     check_conventions: bool = ...,
 ) -> xarray.DataArray: ...
 def dict_to_dataset(
-    data: dict[Hashable, ArrayLike],
+    data: Mapping[Any, ArrayLike],
     *,
-    attrs: Mapping[Hashable, Any] | None = ...,
+    attrs: Mapping[Any, Any] | None = ...,
     inference_library: types.ModuleType | None = ...,
     coords: dict[Hashable, ArrayLike] | None = ...,
-    dims: dict[Hashable, Iterable[Hashable]] | None = ...,
-    sample_dims: Iterable[Hashable] | None = ...,
+    dims: dict[Hashable, Sequence[Hashable]] | None = ...,
+    sample_dims: Sequence[Hashable] | None = ...,
     index_origin: int | None = ...,
     skip_event_dims: bool = ...,
     check_conventions: bool = ...,
 ) -> xarray.Dataset: ...
 def make_attrs(
-    attrs: dict | None = ..., inference_library: types.ModuleType | None = ...
+    attrs: Mapping[Any, Any] | None = ...,
+    inference_library: types.ModuleType | None = ...,
 ) -> dict: ...
 
 class requires:

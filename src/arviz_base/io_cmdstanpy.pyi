@@ -4,11 +4,12 @@ import logging
 import re
 from collections.abc import Hashable, Mapping, Sequence
 from pathlib import Path
+from typing import Any
 
 import cmdstanpy
 import numpy as np
-import xarray
 from _typeshed import Incomplete
+from numpy.typing import ArrayLike
 from xarray import DataTree
 
 from arviz_base.base import dict_to_dataset, infer_stan_dtypes, requires
@@ -59,17 +60,17 @@ def _unpack_fit(fit, items: list, save_warmup: bool, dtypes: dict) -> dict: ...
 def from_cmdstanpy(
     posterior: cmdstanpy.CmdStanMCMC | None = ...,
     *,
-    posterior_predictive: str | None = ...,
-    predictions: str | None = ...,
+    posterior_predictive: str | list[str] | None = ...,
+    predictions: str | list[str] | None = ...,
     prior: cmdstanpy.CmdStanMCMC | None = ...,
-    prior_predictive: str | None = ...,
-    observed_data: dict | None = ...,
-    constant_data: dict | None = ...,
+    prior_predictive: str | list[str] | None = ...,
+    observed_data: Mapping[str, ArrayLike] | None = ...,
+    constant_data: Mapping[str, ArrayLike] | None = ...,
     predictions_constant_data: dict | None = ...,
-    log_likelihood: str | None = ...,
+    log_likelihood: str | list[str] | dict[str, str] | None = ...,
     index_origin: int | None = ...,
     coords: dict | None = ...,
-    dims: Mapping[Hashable, Sequence[Hashable]] | None = ...,
+    dims: Mapping[Any, Sequence[Hashable]] | None = ...,
     save_warmup: bool | None = ...,
     dtypes: dict | None = ...,
-) -> xarray.DataTree: ...
+) -> DataTree: ...

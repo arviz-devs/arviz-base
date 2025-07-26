@@ -1,7 +1,7 @@
 # File generated with docstub
 
 from collections.abc import Hashable, Iterable, Mapping, Sequence
-from typing import Protocol
+from typing import Any, Protocol
 
 __all__ = [
     "mix_labellers",
@@ -18,14 +18,14 @@ class Labeller(Protocol):
     def make_label_vert(
         self,
         var_name: str | None,
-        sel: Mapping[Hashable, Hashable],
-        isel: Mapping[Hashable, int | Sequence[int]],
+        sel: Mapping[Any, Hashable],
+        isel: Mapping[Any, int | Sequence[int]],
     ) -> str: ...
     def make_label_flat(
         self,
         var_name: str | None,
-        sel: Mapping[Hashable, Hashable],
-        isel: Mapping[Hashable, int | Sequence[int]],
+        sel: Mapping[Any, Hashable],
+        isel: Mapping[Any, int | Sequence[int]],
     ) -> str: ...
 
 def mix_labellers(labellers: Iterable[type], class_name: str = ...) -> type: ...
@@ -35,9 +35,7 @@ class BaseLabeller:
         self, dim: Hashable, coord_val: Hashable, coord_idx: int | Sequence[int]
     ) -> str: ...
     def sel_to_str(
-        self,
-        sel: Mapping[Hashable, Hashable],
-        isel: Mapping[Hashable, int | Sequence[int]],
+        self, sel: Mapping[Any, Hashable], isel: Mapping[Any, int | Sequence[int]]
     ) -> str: ...
     def var_name_to_str(self, var_name: str | None) -> str | None: ...
     def var_pp_to_str(
@@ -46,21 +44,21 @@ class BaseLabeller:
     def make_label_vert(
         self,
         var_name: str | None,
-        sel: dict[Hashable, Hashable],
-        isel: dict[Hashable, int | Sequence[int]],
+        sel: Mapping[Any, Hashable],
+        isel: Mapping[Any, int | Sequence[int]],
     ) -> str: ...
     def make_label_flat(
         self,
         var_name: str | None,
-        sel: dict[Hashable, Hashable],
-        isel: dict[Hashable, int | Sequence[int]],
+        sel: Mapping[Any, Hashable],
+        isel: Mapping[Any, int | Sequence[int]],
     ) -> str: ...
     def make_pp_label(
         self,
         var_name: str | None,
         pp_var_name: str | None,
-        sel: Mapping[Hashable, Hashable],
-        isel: Mapping[Hashable, int | Sequence[int]],
+        sel: Mapping[Any, Hashable],
+        isel: Mapping[Any, int | Sequence[int]],
     ) -> str: ...
 
 class DimCoordLabeller(BaseLabeller):

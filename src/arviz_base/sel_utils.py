@@ -47,7 +47,7 @@ def xarray_sel_iter(
         is modified in order to ensure combining chains or not.
     skip_dims : set, optional
         Dimensions to not iterate over. Defaults to rcParam ``data.sample_dims``.
-    dim_to_idx : mapping of {hashable : hashable}, optional
+    dim_to_idx : mapping of {hashable_key : hashable}, optional
         Mapping from dimensions to indexes to loop over these dimensions using unique
         items in the provided index.
     reverse_selections : bool
@@ -57,12 +57,12 @@ def xarray_sel_iter(
     ------
     var_name : str
         Variable name to which `selection` and `iselection` correspond to.
-    selection : dict of {hashable : any}
+    selection : dict of {hashable_key : any}
         Keys are coordinate names and values are scalar coordinate values.
         To get the values of the variable at these coordinates, do
         ``data[var_name].sel(selection)`` for :class:`~xarray.Dataset` or
         ``data.sel(selection)`` for :class:`~xarray.DataArray`.
-    iselection : dict of {hashable : any}
+    iselection : dict of {hashable_key : any}
         Keys are dimension names and values are positional indexes (might not be scalars).
         To get the values of the variable at these coordinates, do
         ``data[var_name].isel(iselection)`` for :class:`~xarray.Dataset` or
@@ -217,7 +217,7 @@ def xarray_var_iter(
     skip_dims : set, optional
         Dimensions to not iterate over.
         Passed to :func:`~arviz_base.xarray_sel_iter`.
-    dim_to_idx : mapping of {hashable : hashable}, optional
+    dim_to_idx : mapping of {hashable_key : hashable}, optional
         Mapping from dimension names to index names to define a different way to
         loop over that dimension.
         Passed to :func:`~arviz_base.xarray_sel_iter`.
@@ -231,9 +231,9 @@ def xarray_var_iter(
     ------
     var_name : str
         Variable name to which `selection`, `iselection` and `data_subset` correspond to.
-    selection : dict of {hashable : any}
+    selection : dict of {hashable_key : any}
         Keys are coordinate names and values are scalar coordinate values.
-    iselection : dict of {hashable : any}
+    iselection : dict of {hashable_key : any}
         Keys are dimension names and values are positional indexes (might not be scalars).
     data_subset : DataArray
         Values of the variable at those coordinates.

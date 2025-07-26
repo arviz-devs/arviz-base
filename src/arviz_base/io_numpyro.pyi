@@ -4,7 +4,6 @@ import warnings
 
 import numpy as np
 import numpyro
-import xarray
 from _typeshed import Incomplete
 from xarray import DataTree
 
@@ -60,4 +59,4 @@ def from_numpyro(
     dims: dict[str, list[str]] | None = ...,
     pred_dims: dict | None = ...,
     num_chains: int = ...,
-) -> xarray.DataTree: ...
+) -> DataTree: ...
