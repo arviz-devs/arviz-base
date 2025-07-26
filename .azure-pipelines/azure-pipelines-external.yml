@@ -45,7 +45,7 @@ jobs:
       fi
 
       python -m pip --no-cache-dir install emcee>=3 h5py
-      python -m pip --no-cache-dir install pystan>=3 pyro-ppl>=1 numpyro
+      python -m pip --no-cache-dir install pystan>=3 pyro-ppl>=1 numpyro jax<0.7
 
     displayName: 'Install external dependencies'
 
