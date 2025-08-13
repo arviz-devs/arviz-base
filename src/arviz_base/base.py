@@ -4,16 +4,15 @@ import datetime
 import importlib
 import re
 import warnings
-from collections.abc import Callable, Hashable, Iterable, Mapping
+from collections.abc import Callable
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 import numpy as np
 import xarray as xr
 
 from arviz_base._version import __version__
 from arviz_base.rcparams import rcParams
-from arviz_base.types import CoordSpec, DictData, DimSpec
 
 if TYPE_CHECKING:
     pass
@@ -23,13 +22,13 @@ RequiresReturnTypeT = TypeVar("RequiresReturnTypeT")
 
 
 def generate_dims_coords(
-    shape: Iterable[int],
-    var_name: Hashable,
-    dims: Iterable[Hashable] | None = None,
-    coords: CoordSpec | None = None,
-    index_origin: int | None = None,
-    skip_event_dims: bool = False,
-    check_conventions: bool = True,
+    shape,
+    var_name,
+    dims=None,
+    coords=None,
+    index_origin=None,
+    skip_event_dims=False,
+    check_conventions=True,
 ):
     """Generate default dimensions and coordinates for a variable.
 
@@ -37,7 +36,7 @@ def generate_dims_coords(
     ----------
     shape : iterable of int
         Shape of the variable
-    var_name : iterable of hashable
+    var_name : hashable
         Name of the variable. If no dimension name(s) is provided, ArviZ
         will generate a default dimension name using ``var_name``, e.g.
         ``"foo_dim_0"`` for the first dimension if ``var_name`` is ``"foo"``.
@@ -215,16 +214,16 @@ def ndarray_to_dataarray(
 
 
 def dict_to_dataset(
-    data: DictData,
+    data,
     *,
-    attrs: Mapping[Any, Any] | None = None,
-    inference_library: str | None = None,
-    coords: CoordSpec | None = None,
-    dims: DimSpec | None = None,
-    sample_dims: Iterable[Hashable] | None = None,
-    index_origin: int | None = None,
-    skip_event_dims: bool = False,
-    check_conventions: bool = True,
+    attrs=None,
+    inference_library=None,
+    coords=None,
+    dims=None,
+    sample_dims=None,
+    index_origin=None,
+    skip_event_dims=False,
+    check_conventions=True,
 ):
     """Convert a dictionary of numpy arrays to an xarray.Dataset.
 
@@ -234,9 +233,9 @@ def dict_to_dataset(
 
     Parameters
     ----------
-    data : dict of {hashable: array_like}
+    data : mapping of {hashable_key : array_like}
         Data to convert. Keys are variable names.
-    attrs : dict, optional
+    attrs : mapping of {hashable_key : any}, optional
         JSON-like arbitrary metadata to attach to the dataset, in addition to default
         attributes added by :func:`make_attrs`.
 
@@ -251,10 +250,10 @@ def dict_to_dataset(
         :class:`xarray.Dataset` attributes.
     coords : dict of {hashable: array_like}, optional
         Coordinates for the dataset
-    dims : dict of {hashable: iterable of hashable}, optional
+    dims : dict of {hashable : sequence of hashable}, optional
         Dimensions of each variable. The keys are variable names, values are lists of
         coordinates.
-    sample_dims : iterable of hashable, optional
+    sample_dims : sequence of hashable, optional
         Dimensions that should be assumed to be present in _all_ variables.
         If missing, they will be added as the dimensions corresponding to the
         leading axes.
@@ -333,7 +332,7 @@ def make_attrs(attrs=None, inference_library=None):
 
     Parameters
     ----------
-    attrs : dict, optional
+    attrs : mapping of {hashable_key : any}, optional
         Additional attributes to add or overwrite
     inference_library : module, optional
         Library used to perform inference.

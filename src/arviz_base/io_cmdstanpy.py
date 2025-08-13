@@ -419,21 +419,21 @@ def from_cmdstanpy(
     ----------
     posterior : cmdstanpy.CmdStanMCMC, optional
         CmdStanPy CmdStanMCMC
-    posterior_predictive : str, list of str, optional
+    posterior_predictive : str or list of str, optional
         Posterior predictive samples for the fit.
-    predictions : str, list of str, optional
+    predictions : str or list of str, optional
         Out of sample prediction samples for the fit.
     prior : cmdstanpy.CmdStanMCMC, optional
         CmdStanPy CmdStanMCMC
-    prior_predictive : str, list of str, optional
+    prior_predictive : str or list of str, optional
         Prior predictive samples for the fit.
-    observed_data : dict, optional
+    observed_data : mapping of {str : array-like}, optional
         Observed data used in the sampling.
-    constant_data : dict, optional
+    constant_data : mapping of {str : array-like}, optional
         Constant data used in the sampling.
     predictions_constant_data : dict, optional
         Constant data for predictions used in the sampling.
-    log_likelihood : str, list of str, dict of {str: str}, optional
+    log_likelihood : str or list of str or dict of {str : str}, optional
         Pointwise log_likelihood for the data. If a dict, its keys should represent var_names
         from the corresponding observed data and its values the stan variable where the
         data is stored. By default, if a variable ``log_lik`` is present in the Stan model,
@@ -445,7 +445,7 @@ def from_cmdstanpy(
     coords : dict, optional
         A dictionary containing the values that are used as index. The key
         is the name of the dimension, the values are the index values.
-    dims : mapping of {hashable : sequence of hashable}, optional
+    dims : mapping of {hashable_key : sequence of hashable}, optional
         A mapping from variables to a list of coordinate names for the variable.
     save_warmup : bool, optional
         Save warmup iterations into InferenceData object, if found in the input files.

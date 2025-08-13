@@ -1,19 +1,23 @@
-[tool.docstub.known_imports]
-numbers = {import = "numbers"}
-xarray = {import = "xarray"}
-pandas = {import = "pandas"}
-numpyro = {import = "numpyro"}
-emcee = {import = "emcee"}
-cmdstanpy = {import = "cmdstanpy"}
-types = {import = "types"}
+[tool.docstub.type_prefixes]
+numbers = "numbers"
+xarray = "xarray"
+pandas = "pandas"
+numpyro = "numpyro"
+emcee = "emcee"
+cmdstanpy = "cmdstanpy"
+types = "types"
 
 # Specify human-friendly aliases that can be used instead of Python-parsable
 # annotations.
-# TODO rename to qualname_alias or something
-[tool.docstub.replace_doctypes]
+[tool.docstub.type_nicknames]
+sequence = "Sequence"
+iterable = "Iterable"
+mapping = "Mapping"
 hashable = "Hashable"
+hashable_key = "Any"
 iterator = "Iterator"
 module = "types.ModuleType"
+callable = "Callable"
 labeller = "arviz_base.labels.Labeller"
 Dataset = "xarray.Dataset"
 DataTree = "xarray.DataTree"

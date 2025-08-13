@@ -1,14 +1,14 @@
 """ArviZ type definitions."""
 
-from collections.abc import Hashable, Iterable, Mapping
-from typing import TYPE_CHECKING
+from collections.abc import Hashable, Mapping, Sequence
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from numpy.typing import ArrayLike, NDArray
 
-CoordSpec = Mapping[Hashable, "ArrayLike"]
-CoordOut = dict[Hashable, "NDArray"]
-DimSpec = Mapping[Hashable, Iterable[Hashable]]
-DimOut = dict[Hashable, list[Hashable]]
+CoordSpec = Mapping[Any, "ArrayLike"]
+CoordOut = dict[Any, "NDArray"]
+DimSpec = Mapping[Any, Sequence[Hashable]]
+DimOut = dict[Any, list[Hashable]]
 
-DictData = Mapping[Hashable, "ArrayLike"]
+DictData = Mapping[Any, "ArrayLike"]

@@ -1,7 +1,7 @@
 # File generated with docstub
 
-from collections.abc import Hashable, Iterable, Mapping
-from typing import TYPE_CHECKING
+from collections.abc import Hashable, Mapping, Sequence
+from typing import TYPE_CHECKING, Any
 
 from _typeshed import Incomplete
 
