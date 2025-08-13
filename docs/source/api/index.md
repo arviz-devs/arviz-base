@@ -46,6 +46,15 @@ More coming soon...
    arviz_base.xarray_var_iter
 ```
 
+## How to cite ArviZ and implemented methods
+
+```{eval-rst}
+.. autosummary::
+   :toctree: generated/
+
+   arviz_base.citations
+```
+
 
 ## Example datasets
 The behaviour of the functions in this section is partially controlled by the
