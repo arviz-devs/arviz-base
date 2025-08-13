@@ -21,19 +21,10 @@ def citations(methods=None, filepath=None, format_type="bibtex"):
 
     Examples
     --------
-    The default behaviour is to return the citation for ArviZ's paper.
-
-    .. jupyter-execute::
-
-        from arviz_base import citations
-        citations()
-
-    We can also get the citations related to each method implemented in ArviZ.
-
-    .. jupyter-execute::
-
-        from arviz_stats import rhat
-        citations(methods=[rhat])
+    >>> from arviz_base import citations
+    >>> from arviz_stats import rhat
+    >>> citations(methods=[rhat])  # Returns how to cite ArviZ and rhat
+    >>> citations()  # Returns how to cite ArviZ
     """
     method_citations = [{"doi": "10.21105/joss.XXXXX"}]
     if methods is not None:
