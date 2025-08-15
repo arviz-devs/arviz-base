@@ -11,6 +11,72 @@ from arviz_base.rcparams import rc_context, rcParams
 from arviz_base.utils import expand_dims
 
 
+class SVIWrapper:
+    """A helper class for SVI to mimic MCMC methods."""
+
+    def __init__(
+        self,
+        guide,
+        *,
+        svi_result,
+        model_args=None,
+        model_kwargs=None,
+        num_samples: int = 1000,
+        model=None,
+        thinning: int = 1,
+    ):
+        self.guide = guide
+        self.svi_result = svi_result
+        self._args = model_args or tuple()
+        self._kwargs = model_kwargs or dict()
+        self.num_samples = num_samples
+        self.thinning = thinning
+        self.num_chains = 0
+        self.sample_dims = ["samples"]
+        self.kind = "svi"
+        self.model = model
+
+    def get_samples(self, seed=None, **kwargs):
+        """Mimics mcmc.get_samples()."""
+        import jax
+        from numpyro.infer import Predictive
+        from numpyro.infer.autoguide import AutoGuide
+
+        key = jax.random.PRNGKey(seed or 0)
+        if isinstance(self.guide, AutoGuide):
+            return self.guide.sample_posterior(
+                key,
+                self.svi_result.params,
+                *self._args,
+                sample_shape=(self.num_samples,),
+                **self._kwargs,
+            )
+        # if a custom guide is provided, sample by hand
+        predictive = Predictive(
+            self.guide, params=self.svi_result.params, num_samples=self.num_samples
+        )
+        samples = predictive(key, *self._args, **self._kwargs)
+        return samples
+
+    @property
+    def sampler(self):
+        """Mimics mcmc.sampler.model."""
+
+        class Sampler:
+            def __init__(self, model):
+                self._model = model
+
+            @property
+            def model(self):
+                return self._model
+
+        return Sampler(getattr(self.guide, "model", self.model))
+
+    def get_extra_fields(self, **kwargs):
+        """Mimics mcmc.get_extra_fields()."""
+        return dict()
+
+
 def _add_dims(dims_a, dims_b):
     """Merge two dimension mappings by concatenating dimension labels.
 
@@ -230,7 +296,10 @@ class NumPyroConverter:
         observations = {}
         if self.model is not None:
             trace = self._get_model_trace(
-                self.model, self._args, self._kwargs, key=jax.random.PRNGKey(0)
+                self.model,
+                model_args=self._args,
+                model_kwargs=self._kwargs,
+                key=jax.random.PRNGKey(0),
             )
             observations = {
                 name: site["value"]
@@ -239,14 +308,17 @@ class NumPyroConverter:
             }
         self.observations = observations if observations else None
 
-    def _get_model_trace(self, model, args, kwargs, key):
+    def _get_model_trace(self, model, model_args, model_kwargs, key):
         """Extract the numpyro model trace."""
+        model_args = model_args or tuple()
+        model_kwargs = model_kwargs or dict()
+
         # we need to use an init strategy to generate random samples for ImproperUniform sites
         seeded_model = self.numpyro.handlers.substitute(
             self.numpyro.handlers.seed(model, key),
             substitute_fn=self.numpyro.infer.init_to_sample,
         )
-        trace = self.numpyro.handlers.trace(seeded_model).get_trace(*args, **kwargs)
+        trace = self.numpyro.handlers.trace(seeded_model).get_trace(*model_args, **model_kwargs)
         return trace
 
     @requires("posterior")
@@ -321,8 +393,13 @@ class NumPyroConverter:
             shape = ary.shape
             if shape[0] == self.nchains and shape[1] == self.ndraws:
                 data[k] = ary
-            elif shape[0] == self.nchains * self.ndraws:
+            elif (
+                shape[0] == self.nchains * self.ndraws
+                and getattr(self.posterior, "kind", "") != "svi"
+            ):
                 data[k] = ary.reshape((self.nchains, self.ndraws, *shape[1:]))
+            elif getattr(self.posterior, "kind", "") == "svi":
+                data[k] = ary
             else:
                 data[k] = expand_dims(ary)
                 warnings.warn(
@@ -359,12 +436,17 @@ class NumPyroConverter:
         else:
             prior_vars = self.prior.keys()
             prior_predictive_vars = None
+
+        # dont expand dims for SVI
+        expand_dims_func = (
+            expand_dims if getattr(self.posterior, "kind", "") != "svi" else lambda x: x
+        )
         priors_dict = {
             group: (
                 None
                 if var_names is None
                 else dict_to_dataset(
-                    {k: expand_dims(self.prior[k]) for k in var_names},
+                    {k: expand_dims_func(self.prior[k]) for k in var_names},
                     inference_library=self.numpyro,
                     coords=self.coords,
                     dims=self.dims,
@@ -537,4 +619,109 @@ def from_numpyro(
             pred_dims=pred_dims,
             extra_event_dims=extra_event_dims,
             num_chains=num_chains,
+        ).to_datatree()
+
+
+def from_numpyro_svi(
+    guide,
+    svi_result,
+    *,
+    model_args=None,
+    model_kwargs=None,
+    prior=None,
+    posterior_predictive=None,
+    predictions=None,
+    constant_data=None,
+    predictions_constant_data=None,
+    log_likelihood=None,
+    index_origin=None,
+    coords=None,
+    dims=None,
+    pred_dims=None,
+    extra_event_dims=None,
+    model=None,
+    num_samples: int = 1000,
+):
+    """Convert NumPyro SVI results into a DataTree object.
+
+    If no dims are provided, this will infer batch dim names from NumPyro model plates.
+    For event dim names, such as with the ZeroSumNormal, `infer={"event_dims":dim_names}`
+    can be provided in numpyro.sample, i.e.::
+
+        # equivalent to dims entry, {"gamma": ["groups"]}
+        gamma = numpyro.sample(
+            "gamma",
+            dist.ZeroSumNormal(1, event_shape=(n_groups,)),
+            infer={"event_dims":["groups"]}
+        )
+
+    There is also an additional `extra_event_dims` input to cover any edge cases, for instance
+    deterministic sites with event dims (which dont have an `infer` argument to provide metadata).
+
+    For a usage example read the
+    :ref:`Creating InferenceData section on from_numpyro <creating_InferenceData>`
+
+    Parameters
+    ----------
+    guide : numpyro.infer.autoguide.AutoGuide or callable
+        Guide function for a numpyro SVI model. Can be an autoguide or custom guide.
+    svi_result : numpyro.infer.svi.SVIRunResult
+        SVI results from a fitted model.
+    model_args : tuple, optional
+        Model arguments, should match those used for fitting the model.
+    model_kwargs : dict, optional
+        Model keyword arguments, should match those used for fitting the model.\
+    prior : dict, optional
+        Prior samples from a NumPyro model
+    posterior_predictive : dict, optional
+        Posterior predictive samples for the posterior
+    predictions : dict, optional
+        Out of sample predictions
+    constant_data : dict, optional
+        Dictionary containing constant data variables mapped to their values.
+    predictions_constant_data : dict, optional
+        Constant data used for out-of-sample predictions.
+    index_origin : int, optional
+    coords : dict, optional
+        Map of dimensions to coordinates
+    dims : dict of {str : list of str}, optional
+        Map variable names to their coordinates. Will be inferred if they are not provided.
+    pred_dims : dict, optional
+        Dims for predictions data. Map variable names to their coordinates. Default behavior is to
+        infer dims if this is not provided
+    extra_event_dims : dict, optional
+        Extra event dims for deterministic sites. Maps event dims that couldnt be inferred to
+        their coordinates.
+    num_chains : int, default 1
+        Number of chains used for sampling. Ignored if posterior is present.
+    model : callable, optional
+        Model function, only needed for a custom guide function
+
+    Returns
+    -------
+    DataTree
+    """
+    posterior = SVIWrapper(
+        guide,
+        svi_result=svi_result,
+        model_args=model_args,
+        model_kwargs=model_kwargs,
+        num_samples=num_samples,
+        model=model,
+    )
+    with rc_context(rc={"data.sample_dims": ["samples"]}):
+        return NumPyroConverter(
+            posterior=posterior,
+            prior=prior,
+            posterior_predictive=posterior_predictive,
+            predictions=predictions,
+            constant_data=constant_data,
+            predictions_constant_data=predictions_constant_data,
+            log_likelihood=log_likelihood,
+            index_origin=index_origin,
+            coords=coords,
+            dims=dims,
+            pred_dims=pred_dims,
+            extra_event_dims=extra_event_dims,
+            num_chains=1,
         ).to_datatree()
