@@ -4,7 +4,7 @@ from collections import namedtuple
 import numpy as np
 import pytest
 
-from arviz_base.io_numpyro import from_numpyro
+from arviz_base.io_numpyro import SVIWrapper, from_numpyro, from_numpyro_svi
 from arviz_base.testing import check_multiple_attrs
 
 from .helpers import importorskip, load_cached_models
@@ -15,13 +15,17 @@ PRNGKey = jax.random.PRNGKey
 numpyro = importorskip("numpyro")
 Predictive = numpyro.infer.Predictive
 numpyro.set_host_device_count(2)
+dist = numpyro.distributions
+AutoNormal = numpyro.infer.autoguide.AutoNormal
+AutoDelta = numpyro.infer.autoguide.AutoDelta
+autoguide = numpyro.infer.autoguide
 
 
 class TestDataNumPyro:
-    @pytest.fixture(scope="class")
-    def data(self, eight_schools_params, draws, chains):
+    @pytest.fixture(scope="class", params=["numpyro", "numpyro_svi", "numpyro_svi_custom_guide"])
+    def data(self, request, eight_schools_params, draws, chains):
         class Data:
-            obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")["numpyro"]
+            obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[request.param]
 
         return Data
 
@@ -36,8 +40,9 @@ class TestDataNumPyro:
     @pytest.fixture(scope="class")
     def predictions_data(self, data, predictions_params):
         """Generate predictions for predictions_params"""
-        posterior_samples = data.obj.get_samples()
-        model = data.obj.sampler.model
+        posterior = SVIWrapper(**data.obj) if isinstance(data.obj, dict) else data.obj
+        posterior_samples = posterior.get_samples()
+        model = posterior.sampler.model
         predictions = Predictive(model, posterior_samples)(
             PRNGKey(2), predictions_params["J"], predictions_params["sigma"]
         )
@@ -46,8 +51,17 @@ class TestDataNumPyro:
     def get_inference_data(
         self, data, eight_schools_params, predictions_data, predictions_params, infer_dims=False
     ):
-        posterior_samples = data.obj.get_samples()
-        model = data.obj.sampler.model
+        if isinstance(data.obj, dict):  # SVI cached data obj is a tuple
+            posterior = SVIWrapper(**data.obj)
+            from_numpyro_func = from_numpyro_svi
+            posterior_kwarg = data.obj
+        else:  # regular MCMC
+            posterior = data.obj
+            from_numpyro_func = from_numpyro
+            posterior_kwarg = {"posterior": posterior}
+
+        posterior_samples = posterior.get_samples()
+        model = posterior.sampler.model
         posterior_predictive = Predictive(model, posterior_samples)(
             PRNGKey(1), eight_schools_params["J"], eight_schools_params["sigma"]
         )
@@ -60,8 +74,9 @@ class TestDataNumPyro:
             dims = pred_dims = None
 
         predictions = predictions_data
-        return from_numpyro(
-            posterior=data.obj,
+
+        return from_numpyro_func(
+            **posterior_kwarg,
             prior=prior,
             posterior_predictive=posterior_predictive,
             predictions=predictions,
@@ -74,17 +89,18 @@ class TestDataNumPyro:
         )
 
     def test_inference_data_namedtuple(self, data):
-        samples = data.obj.get_samples()
+        posterior = SVIWrapper(**data.obj) if isinstance(data.obj, dict) else data.obj
+        samples = posterior.get_samples()
         Samples = namedtuple("Samples", samples)
         data_namedtuple = Samples(**samples)
-        _old_fn = data.obj.get_samples
-        data.obj.get_samples = lambda *args, **kwargs: data_namedtuple
+        _old_fn = posterior.get_samples
+        posterior.get_samples = lambda *args, **kwargs: data_namedtuple
         inference_data = from_numpyro(
-            posterior=data.obj,
+            posterior=posterior,
             dims={},  # This mock test needs to turn off autodims like so or mock group_by_chain
         )
-        assert isinstance(data.obj.get_samples(), Samples)
-        data.obj.get_samples = _old_fn
+        assert isinstance(posterior.get_samples(), Samples)
+        posterior.get_samples = _old_fn
         for key in samples:
             assert key in inference_data.posterior
 
@@ -101,6 +117,8 @@ class TestDataNumPyro:
             "prior_predictive": ["obs"],
             "observed_data": ["obs"],
         }
+        if isinstance(data.obj, dict):  # if its SVI, drop sample_stats check
+            test_dict.pop("sample_stats")
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails
 
@@ -113,8 +131,9 @@ class TestDataNumPyro:
     def test_inference_data_no_posterior(
         self, data, eight_schools_params, predictions_data, predictions_params
     ):
-        posterior_samples = data.obj.get_samples()
-        model = data.obj.sampler.model
+        posterior = SVIWrapper(**data.obj) if isinstance(data.obj, dict) else data.obj
+        posterior_samples = posterior.get_samples()
+        model = posterior.sampler.model
         posterior_predictive = Predictive(model, posterior_samples)(
             PRNGKey(1), eight_schools_params["J"], eight_schools_params["sigma"]
         )
@@ -161,11 +180,15 @@ class TestDataNumPyro:
         assert not fails, f"prior and posterior_predictive: {fails}"
 
     def test_inference_data_only_posterior(self, data):
-        idata = from_numpyro(data.obj)
+        kwargs = data.obj if isinstance(data.obj, dict) else {"posterior": data.obj}
+        from_numpyro_func = from_numpyro_svi if isinstance(data.obj, dict) else from_numpyro
+        idata = from_numpyro_func(**kwargs)
         test_dict = {
             "posterior": ["mu", "tau", "eta"],
             "sample_stats": ["diverging"],
         }
+        if isinstance(data.obj, dict):
+            test_dict.pop("sample_stats")
         fails = check_multiple_attrs(test_dict, idata)
         assert not fails
 
@@ -282,28 +305,57 @@ class TestDataNumPyro:
         inference_data = from_numpyro(mcmc)
         assert inference_data.observed_data
 
-    def test_mcmc_infer_dims(self):
+    @pytest.mark.parametrize(
+        "svi,guide_fn",
+        [
+            (False, None),  # MCMC, guide ignored
+            (True, AutoDelta),  # SVI with AutoDelta
+            (True, AutoNormal),  # SVI with AutoNormal
+            (True, "custom"),  # SVI with custom guide
+        ],
+    )
+    def test_infer_dims(self, svi, guide_fn):
         import numpyro
         import numpyro.distributions as dist
-        from numpyro.infer import MCMC, NUTS
 
         def model():
             # note: group2 gets assigned dim=-1 and group1 is assigned dim=-2
             with numpyro.plate("group2", 5), numpyro.plate("group1", 10):
                 _ = numpyro.sample("param", dist.Normal(0, 1))
 
-        mcmc = MCMC(NUTS(model), num_warmup=10, num_samples=10)
-        mcmc.run(PRNGKey(0))
-        inference_data = from_numpyro(
-            mcmc, coords={"group1": np.arange(10), "group2": np.arange(5)}
+        def guide():
+            loc = numpyro.param("param_loc", jax.numpy.zeros((10, 5)))
+            scale = numpyro.param(
+                "param_scale", jax.numpy.ones((10, 5)), constraint=dist.constraints.positive
+            )
+            with numpyro.plate("group2", 5), numpyro.plate("group1", 10):
+                numpyro.sample("param", dist.Normal(loc, scale))
+
+        if guide_fn == "custom":
+            guide_fn = guide
+
+        result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
+        from_numpyro_func = from_numpyro_svi if svi else from_numpyro
+        sample_dims = ("samples",) if svi else ("chain", "draw")
+
+        inference_data = from_numpyro_func(
+            **result, coords={"group1": np.arange(10), "group2": np.arange(5)}
         )
-        assert inference_data.posterior.param.dims == ("chain", "draw", "group1", "group2")
+        assert inference_data.posterior.param.dims == sample_dims + ("group1", "group2")
         assert all(dim in inference_data.posterior.param.coords for dim in ("group1", "group2"))
 
-    def test_mcmc_infer_unsorted_dims(self):
+    @pytest.mark.parametrize(
+        "svi,guide_fn",
+        [
+            (False, None),  # MCMC, guide ignored
+            (True, AutoDelta),  # SVI with AutoDelta
+            (True, AutoNormal),  # SVI with AutoNormal
+            (True, "custom"),  # SVI with custom guide
+        ],
+    )
+    def test_infer_unsorted_dims(self, svi, guide_fn):
         import numpyro
         import numpyro.distributions as dist
-        from numpyro.infer import MCMC, NUTS
 
         def model():
             group1_plate = numpyro.plate("group1", 10, dim=-1)
@@ -314,49 +366,114 @@ class TestDataNumPyro:
             with group2_plate, group1_plate:
                 _ = numpyro.sample("param", dist.Normal(0, 1))
 
-        mcmc = MCMC(NUTS(model), num_warmup=10, num_samples=10)
-        mcmc.run(PRNGKey(0))
-        inference_data = from_numpyro(
-            mcmc, coords={"group1": np.arange(10), "group2": np.arange(5)}
+        def guide():
+            loc = numpyro.param("param_loc", jax.numpy.zeros((5, 10)))
+            scale = numpyro.param(
+                "param_scale", jax.numpy.ones((5, 10)), constraint=dist.constraints.positive
+            )
+            group1_plate = numpyro.plate("group1", 10, dim=-1)
+            group2_plate = numpyro.plate("group2", 5, dim=-2)
+            with group2_plate, group1_plate:
+                numpyro.sample("param", dist.Normal(loc, scale))
+
+        if guide_fn == "custom":
+            guide_fn = guide
+
+        result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
+        from_numpyro_func = from_numpyro_svi if svi else from_numpyro
+        sample_dims = ("samples",) if svi else ("chain", "draw")
+
+        inference_data = from_numpyro_func(
+            **result, coords={"group1": np.arange(10), "group2": np.arange(5)}
         )
-        assert inference_data.posterior.param.dims == ("chain", "draw", "group2", "group1")
+        assert inference_data.posterior.param.dims == sample_dims + ("group2", "group1")
         assert all(dim in inference_data.posterior.param.coords for dim in ("group1", "group2"))
 
-    def test_mcmc_infer_dims_no_coords(self):
+    @pytest.mark.parametrize(
+        "svi,guide_fn",
+        [
+            (False, None),  # MCMC, guide ignored
+            (True, AutoDelta),  # SVI with AutoDelta
+            (True, AutoNormal),  # SVI with AutoNormal
+            (True, "custom"),  # SVI with custom guide
+        ],
+    )
+    def test_infer_dims_no_coords(self, svi, guide_fn):
         import numpyro
         import numpyro.distributions as dist
-        from numpyro.infer import MCMC, NUTS
 
         def model():
             with numpyro.plate("group", 5):
                 _ = numpyro.sample("param", dist.Normal(0, 1))
 
-        mcmc = MCMC(NUTS(model), num_warmup=10, num_samples=10)
-        mcmc.run(PRNGKey(0))
-        inference_data = from_numpyro(mcmc)
-        assert inference_data.posterior.param.dims == ("chain", "draw", "group")
+        def guide():
+            loc = numpyro.param("param_loc", jax.numpy.zeros(5))
+            scale = numpyro.param(
+                "param_scale", jax.numpy.ones(5), constraint=dist.constraints.positive
+            )
+            with numpyro.plate("group", 5):
+                numpyro.sample("param", dist.Normal(loc, scale))
 
-    def test_mcmc_event_dims(self):
+        if guide_fn == "custom":
+            guide_fn = guide
+
+        result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
+        from_numpyro_func = from_numpyro_svi if svi else from_numpyro
+        sample_dims = ("samples",) if svi else ("chain", "draw")
+
+        inference_data = from_numpyro_func(**result)
+        assert inference_data.posterior.param.dims == sample_dims + ("group",)
+
+    @pytest.mark.parametrize(
+        "svi,guide_fn",
+        [
+            (False, None),  # MCMC, guide ignored
+            (True, AutoDelta),  # SVI with AutoDelta
+            (True, AutoNormal),  # SVI with AutoNormal
+            (True, "custom"),  # SVI with custom guide
+        ],
+    )
+    def test_event_dims(self, svi, guide_fn):
         import numpyro
         import numpyro.distributions as dist
-        from numpyro.infer import MCMC, NUTS
 
         def model():
             _ = numpyro.sample(
                 "gamma", dist.ZeroSumNormal(1, event_shape=(10,)), infer={"event_dims": ["groups"]}
             )
 
-        mcmc = MCMC(NUTS(model), num_warmup=10, num_samples=10)
-        mcmc.run(PRNGKey(0))
-        inference_data = from_numpyro(mcmc, coords={"groups": np.arange(10)})
-        assert inference_data.posterior.gamma.dims == ("chain", "draw", "groups")
+        def guide():
+            scale = numpyro.param(
+                "gamma_scale",
+                1.0,
+                constraint=dist.constraints.positive,
+            )
+            numpyro.sample("gamma", dist.ZeroSumNormal(scale, event_shape=(10,)))
+
+        if guide_fn == "custom":
+            guide_fn = guide
+
+        result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
+        from_numpyro_func = from_numpyro_svi if svi else from_numpyro
+        sample_dims = ("samples",) if svi else ("chain", "draw")
+
+        inference_data = from_numpyro_func(**result, coords={"groups": np.arange(10)})
+        assert inference_data.posterior.gamma.dims == sample_dims + ("groups",)
         assert "groups" in inference_data.posterior.gamma.coords
 
-    def test_mcmc_inferred_dims_univariate(self):
+    @pytest.mark.parametrize(
+        "svi,guide_fn",
+        [
+            (False, None),  # MCMC, guide ignored
+            (True, AutoDelta),  # SVI with AutoDelta
+            (True, AutoNormal),  # SVI with AutoNormal
+            (True, "custom"),  # SVI with custom guide
+        ],
+    )
+    def test_inferred_dims_univariate(self, svi, guide_fn):
         import jax.numpy as jnp
         import numpyro
         import numpyro.distributions as dist
-        from numpyro.infer import MCMC, NUTS
 
         def model():
             alpha = numpyro.sample("alpha", dist.Normal(0, 1))
@@ -367,33 +484,92 @@ class TestDataNumPyro:
                 mu = numpyro.deterministic("mu", alpha)
                 return numpyro.sample("y", dist.Normal(mu, sigma), obs=jnp.array([-1, 0, 1]))
 
-        mcmc = MCMC(NUTS(model), num_warmup=10, num_samples=10)
-        mcmc.run(PRNGKey(0))
-        with pytest.raises(ValueError):
-            from_numpyro(mcmc, coords={"obs_idx": np.arange(3)})
+        def guide():
+            alpha_loc = numpyro.param("alpha_loc", jnp.array(0.0))
+            alpha_scale = numpyro.param(
+                "alpha_scale", jnp.array(1.0), constraint=dist.constraints.positive
+            )
+            sigma_loc = numpyro.param(
+                "sigma_loc", jnp.array(1.0), constraint=dist.constraints.positive
+            )
 
-    def test_mcmc_extra_event_dims(self):
+            alpha = numpyro.sample("alpha", dist.Normal(alpha_loc, alpha_scale))
+            numpyro.sample("sigma", dist.HalfNormal(sigma_loc))
+            with numpyro.plate("obs_idx", 3):
+                numpyro.deterministic("mu", alpha)
+
+        if guide_fn == "custom":
+            guide_fn = guide
+
+        result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
+        from_numpyro_func = from_numpyro_svi if svi else from_numpyro
+        with pytest.raises(ValueError):
+            from_numpyro_func(**result, coords={"obs_idx": np.arange(3)})
+
+    @pytest.mark.parametrize(
+        "svi,guide_fn",
+        [
+            (False, None),  # MCMC, guide ignored
+            (True, AutoDelta),  # SVI with AutoDelta
+            (True, AutoNormal),  # SVI with AutoNormal
+            (True, "custom"),  # SVI with custom guide
+        ],
+    )
+    def test_extra_event_dims(self, svi, guide_fn):
         import numpyro
         import numpyro.distributions as dist
-        from numpyro.infer import MCMC, NUTS
 
         def model():
             gamma = numpyro.sample("gamma", dist.ZeroSumNormal(1, event_shape=(10,)))
             _ = numpyro.deterministic("gamma_plus1", gamma + 1)
 
-        mcmc = MCMC(NUTS(model), num_warmup=10, num_samples=10)
-        mcmc.run(PRNGKey(0))
-        inference_data = from_numpyro(
-            mcmc, coords={"groups": np.arange(10)}, extra_event_dims={"gamma_plus1": ["groups"]}
+        def guide():
+            scale = numpyro.param(
+                "gamma_scale",
+                1.0,
+                constraint=dist.constraints.positive,
+            )
+            gamma = numpyro.sample("gamma", dist.ZeroSumNormal(scale, event_shape=(10,)))
+            numpyro.deterministic("gamma_plus1", gamma + 1)
+
+        if guide_fn == "custom":
+            guide_fn = guide
+
+        result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
+        from_numpyro_func = from_numpyro_svi if svi else from_numpyro
+        sample_dims = ("samples",) if svi else ("chain", "draw")
+        inference_data = from_numpyro_func(
+            **result, coords={"groups": np.arange(10)}, extra_event_dims={"gamma_plus1": ["groups"]}
         )
-        assert inference_data.posterior.gamma_plus1.dims == ("chain", "draw", "groups")
+        assert inference_data.posterior.gamma_plus1.dims == sample_dims + ("groups",)
         assert "groups" in inference_data.posterior.gamma_plus1.coords
 
-    def test_mcmc_predictions_infer_dims(
+    def test_predictions_infer_dims(
         self, data, eight_schools_params, predictions_data, predictions_params
     ):
         inference_data = self.get_inference_data(
             data, eight_schools_params, predictions_data, predictions_params, infer_dims=True
         )
-        assert inference_data.predictions.obs.dims == ("chain", "draw", "J")
+        sample_dims = ("samples",) if isinstance(data.obj, dict) else ("chain", "draw")
+        assert inference_data.predictions.obs.dims == (sample_dims + ("J",))
         assert "J" in inference_data.predictions.obs.coords
+
+    def _run_inference(self, model, svi, guide_fn=autoguide.AutoNormal):
+        from numpyro.infer import MCMC, NUTS, SVI, Trace_ELBO
+        from numpyro.optim import Adam
+
+        if svi:
+            is_autoguide = isinstance(guide_fn, type) and issubclass(guide_fn, autoguide.AutoGuide)
+            guide = guide_fn(model) if is_autoguide else guide_fn
+            svi = SVI(model, guide=guide, optim=Adam(0.05), loss=Trace_ELBO())
+            svi_result = svi.run(PRNGKey(0), 10)
+            return {
+                "guide": guide,
+                "svi_result": svi_result,
+                "model": None if is_autoguide else model,
+            }
+
+        else:
+            mcmc = MCMC(NUTS(model), num_warmup=10, num_samples=10)
+            mcmc.run(PRNGKey(0))
+            return {"posterior": mcmc}
