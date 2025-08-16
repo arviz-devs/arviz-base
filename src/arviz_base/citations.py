@@ -10,7 +10,7 @@ def citations(methods=None, filepath=None, format_type="bibtex"):
 
     Parameters
     ----------
-    methods : List
+    methods : Callable or list, optional
         Methods implemented in ArviZ from which to retrieve citations.
     filepath : str, optional
         Specifies the location to save the file with the citations.
@@ -28,6 +28,10 @@ def citations(methods=None, filepath=None, format_type="bibtex"):
     """
     method_citations = [{"doi": "10.21105/joss.XXXXX"}]
     if methods is not None:
+        if isinstance(methods, str):
+            raise TypeError("you should pass an ArviZ function or list of functions.")
+        if not isinstance(methods, list | tuple):
+            methods = [methods]
         for method in methods:
             _extract_ids_per_entry(method_citations, method.__doc__)
 
