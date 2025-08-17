@@ -10,7 +10,7 @@ def citations(methods=None, filepath=None, format_type="bibtex"):
 
     Parameters
     ----------
-    methods : Callable or list, optional
+    methods : Callable or list of callable, optional
         Methods implemented in ArviZ from which to retrieve citations.
     filepath : str, optional
         Specifies the location to save the file with the citations.

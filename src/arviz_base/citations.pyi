@@ -7,7 +7,7 @@ from collections.abc import Callable
 from _typeshed import Incomplete
 
 def citations(
-    methods: Callable | list | None = ...,
+    methods: Callable | list[Callable] | None = ...,
     filepath: str | None = ...,
     format_type: str = ...,
 ) -> None: ...
