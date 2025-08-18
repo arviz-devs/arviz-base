@@ -2,12 +2,14 @@
 
 import os
 import re
-from typing import List
+from collections.abc import Callable
 
 from _typeshed import Incomplete
 
 def citations(
-    methods: List | None = ..., filepath: str | None = ..., format_type: str = ...
+    methods: Callable | list[Callable] | None = ...,
+    filepath: str | None = ...,
+    format_type: str = ...,
 ) -> None: ...
 def _extract_ids_per_entry(data: Incomplete, text: Incomplete) -> None: ...
 def _find_bibtex_entries(header: Incomplete, data: Incomplete) -> None: ...
