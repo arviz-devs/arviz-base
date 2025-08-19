@@ -76,7 +76,7 @@ autodoc_default_options = {
 
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
-numpydoc_xref_ignore = {"of", "or", "optional", "scalar"}
+numpydoc_xref_ignore = {"of", "or", "optional", "scalar", "default"}
 singulars = ("int", "list", "dict", "float")
 numpydoc_xref_aliases = {
     "DataArray": ":class:`xarray.DataArray`",
@@ -87,6 +87,7 @@ numpydoc_xref_aliases = {
     "sequence": ":term:`python:sequence`",
     "mapping": ":term:`python:mapping`",
     "hashable": ":term:`python:hashable`",
+    "hashable_key": ":term:`python:hashable`",
 }
 
 intersphinx_mapping = {
