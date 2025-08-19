@@ -3,7 +3,6 @@
 import warnings
 from collections import defaultdict
 from collections.abc import Callable
-from typing import Any
 
 import numpy as np
 from xarray import DataTree
@@ -28,9 +27,9 @@ def _add_dims(dims_a: dict[str, list[str]], dims_b: dict[str, list[str]]) -> dic
 
 def infer_dims(
     model: Callable,
-    model_args: tuple[Any, ...] | None = None,
-    model_kwargs: dict[str, Any] | None = None,
-) -> dict[str, list[str]]:
+    model_args: tuple | None = None,
+    model_kwargs: dict | None = None,
+) -> dict:
     """Infers batch dim names from numpyro model plates.
 
     Parameters
@@ -44,7 +43,8 @@ def infer_dims(
 
     Returns
     -------
-    dict[str, list[str]]
+    dict of {str: list of str(s)}
+        Mapping from model site name to list of dimension labels.
     """
     import jax
     from numpyro import distributions as dist
