@@ -352,7 +352,6 @@ class TestDataNumPyro:
         assert inference_data.posterior.gamma.dims == ("chain", "draw", "groups")
         assert "groups" in inference_data.posterior.gamma.coords
 
-    @pytest.mark.xfail
     def test_mcmc_inferred_dims_univariate(self):
         import jax.numpy as jnp
         import numpyro
@@ -370,9 +369,8 @@ class TestDataNumPyro:
 
         mcmc = MCMC(NUTS(model), num_warmup=10, num_samples=10)
         mcmc.run(PRNGKey(0))
-        inference_data = from_numpyro(mcmc, coords={"obs_idx": np.arange(3)})
-        assert inference_data.posterior.mu.dims == ("chain", "draw", "obs_idx")
-        assert "obs_idx" in inference_data.posterior.mu.coords
+        with pytest.raises(ValueError):
+            from_numpyro(mcmc, coords={"obs_idx": np.arange(3)})
 
     def test_mcmc_extra_event_dims(self):
         import numpyro
