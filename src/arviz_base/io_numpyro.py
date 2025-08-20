@@ -476,12 +476,14 @@ def from_numpyro(
     If no dims are provided, this will infer batch dim names from NumPyro model plates.
     For event dim names, such as with the ZeroSumNormal, `infer={"event_dims":dim_names}`
     can be provided in numpyro.sample, i.e.::
+
         # equivalent to dims entry, {"gamma": ["groups"]}
         gamma = numpyro.sample(
             "gamma",
             dist.ZeroSumNormal(1, event_shape=(n_groups,)),
             infer={"event_dims":["groups"]}
         )
+
     There is also an additional `extra_event_dims` input to cover any edge cases, for instance
     deterministic sites with event dims (which dont have an `infer` argument to provide metadata).
 
