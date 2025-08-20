@@ -3,6 +3,7 @@
 import warnings
 from collections import defaultdict
 from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 import numpyro
@@ -19,8 +20,8 @@ def _add_dims(
 ) -> dict[str, list[str]]: ...
 def infer_dims(
     model: Callable,
-    model_args: tuple | None = ...,
-    model_kwargs: dict | None = ...,
+    model_args: tuple[Any] | None = ...,
+    model_kwargs: dict[str, Any] | None = ...,
 ) -> dict[str, list[str]]: ...
 
 class NumPyroConverter:

@@ -2,7 +2,6 @@
 
 import warnings
 from collections import defaultdict
-from collections.abc import Callable
 
 import numpy as np
 from xarray import DataTree
@@ -12,12 +11,27 @@ from arviz_base.rcparams import rc_context, rcParams
 from arviz_base.utils import expand_dims
 
 
-def _add_dims(dims_a: dict[str, list[str]], dims_b: dict[str, list[str]]) -> dict[str, list[str]]:
-    merged = defaultdict(list)
+def _add_dims(dims_a, dims_b):
+    """Merge two dimension mappings by concatenating dimension labels.
 
-    for k, v in dims_a.items():
-        merged[k].extend(v)
+    Used to combine batch dims with event dims by appending the dims of dims_b to dims_a.
 
+    Parameters
+    ----------
+    dims_a : dict of {str: list of str(s)}
+        Mapping from site name to a list of dimension labels, typically
+        representing batch dimensions.
+    dims_b : dict of {str: list of str(s)}
+        Mapping from site name to a list of dimension labels, typically
+        representing event dimensions.
+
+    Returns
+    -------
+    dict of {str: list of str(s)}
+        Combined mapping where each site name is associated with the
+        concatenated dimension labels from both inputs.
+    """
+    merged = defaultdict(list, dims_a)
     for k, v in dims_b.items():
         merged[k].extend(v)
 
@@ -26,19 +40,19 @@ def _add_dims(dims_a: dict[str, list[str]], dims_b: dict[str, list[str]]) -> dic
 
 
 def infer_dims(
-    model: Callable,
-    model_args: tuple | None = None,
-    model_kwargs: dict | None = None,
-) -> dict:
+    model,
+    model_args=None,
+    model_kwargs=None,
+):
     """Infers batch dim names from numpyro model plates.
 
     Parameters
     ----------
     model : callable
-        A numpyro model
-    model_args : tuple, optional
+        A numpyro model function.
+    model_args : tuple of Any(s), optional
         Input args for the numpyro model.
-    model_kwargs : dict, optional
+    model_kwargs : dict of {str: Any}, optional
         Input kwargs for the numpyro model.
 
     Returns
