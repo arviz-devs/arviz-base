@@ -15,12 +15,14 @@ def _var_names(
     var_names: str | list | None,
     data: xarray.Dataset | Sequence[xarray.Dataset],
     filter_vars: Literal[None, "like", "regex"] | None = ...,
+    check_if_present=...,
 ) -> list | None: ...
 def _subset_list(
     subset: str,
     whole_list: list,
     filter_items: Literal[None, "like", "regex"] | None = ...,
     warn=...,
+    check_if_present=...,
 ) -> list | None: ...
 def _get_coords(
     data: xarray.DataArray, coords: dict[Hashable, ArrayLike]
