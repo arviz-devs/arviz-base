@@ -15,7 +15,7 @@ def _var_names(
     var_names: str | list | None,
     data: xarray.Dataset | Sequence[xarray.Dataset],
     filter_vars: Literal[None, "like", "regex"] | None = ...,
-    check_if_present=...,
+    check_if_present: bool = ...,
 ) -> list | None: ...
 def _subset_list(
     subset: str,

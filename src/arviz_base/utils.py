@@ -22,6 +22,9 @@ def _var_names(var_names, data, filter_vars=None, check_if_present=True):
         interpret var_names as substrings of the real variables names. If "regex",
         interpret var_names as regular expressions on the real variables names. A la
         `pandas.filter`.
+    check_if_present : bool, optional
+        If True (default), raise an error if any of the var_names is not present in
+        the data. If False, ignore missing var_names.
 
     Returns
     -------
