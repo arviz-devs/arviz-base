@@ -58,6 +58,14 @@ def test_var_names_key_error(data):
         _var_names(["theta", "tau", "bad_var_name"], data)
 
 
+def test_var_names_skip_check_if_present(data):
+    assert _var_names(["theta", "tau", "bad_var_name"], data, check_if_present=False) == [
+        "theta",
+        "tau",
+        "bad_var_name",
+    ]
+
+
 @pytest.mark.parametrize(
     "var_args",
     [

@@ -10,7 +10,7 @@ def _check_tilde_start(x):
     return bool(isinstance(x, str) and x.startswith("~"))
 
 
-def _var_names(var_names, data, filter_vars=None):
+def _var_names(var_names, data, filter_vars=None, check_if_present=True):
     """Handle var_names input across arviz.
 
     Parameters
@@ -22,6 +22,9 @@ def _var_names(var_names, data, filter_vars=None):
         interpret var_names as substrings of the real variables names. If "regex",
         interpret var_names as regular expressions on the real variables names. A la
         `pandas.filter`.
+    check_if_present : bool, optional
+        If True (default), raise an error if any of the var_names is not present in
+        the data. If False, ignore missing var_names.
 
     Returns
     -------
@@ -52,14 +55,20 @@ def _var_names(var_names, data, filter_vars=None):
             )
 
         try:
-            var_names = _subset_list(var_names, all_vars, filter_items=filter_vars, warn=False)
+            var_names = _subset_list(
+                var_names,
+                all_vars,
+                filter_items=filter_vars,
+                warn=False,
+                check_if_present=check_if_present,
+            )
         except KeyError as err:
             msg = " ".join(("var names:", f"{err}", "in dataset"))
             raise KeyError(msg) from err
     return var_names
 
 
-def _subset_list(subset, whole_list, filter_items=None, warn=True):
+def _subset_list(subset, whole_list, filter_items=None, warn=True, check_if_present=True):
     """Handle list subsetting (var_names, groups...) across arviz.
 
     Parameters
@@ -125,7 +134,7 @@ def _subset_list(subset, whole_list, filter_items=None, warn=True):
             subset = [item for item in whole_list for name in subset if re.search(name, item)]
 
         existing_items = np.isin(subset, whole_list)
-        if not np.all(existing_items):
+        if check_if_present and not np.all(existing_items):
             raise KeyError(f"{np.array(subset)[~existing_items]} are not present")
 
     return subset
