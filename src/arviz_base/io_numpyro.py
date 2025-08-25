@@ -1,6 +1,7 @@
 """NumPyro-specific conversion code."""
 
 import warnings
+from collections import defaultdict
 
 import numpy as np
 from xarray import DataTree
@@ -8,6 +9,104 @@ from xarray import DataTree
 from arviz_base.base import dict_to_dataset, requires
 from arviz_base.rcparams import rc_context, rcParams
 from arviz_base.utils import expand_dims
+
+
+def _add_dims(dims_a, dims_b):
+    """Merge two dimension mappings by concatenating dimension labels.
+
+    Used to combine batch dims with event dims by appending the dims of dims_b to dims_a.
+
+    Parameters
+    ----------
+    dims_a : dict of {str: list of str(s)}
+        Mapping from site name to a list of dimension labels, typically
+        representing batch dimensions.
+    dims_b : dict of {str: list of str(s)}
+        Mapping from site name to a list of dimension labels, typically
+        representing event dimensions.
+
+    Returns
+    -------
+    dict of {str: list of str(s)}
+        Combined mapping where each site name is associated with the
+        concatenated dimension labels from both inputs.
+    """
+    merged = defaultdict(list, dims_a)
+    for k, v in dims_b.items():
+        merged[k].extend(v)
+
+    # Convert back to a regular dict
+    return dict(merged)
+
+
+def infer_dims(
+    model,
+    model_args=None,
+    model_kwargs=None,
+):
+    """Infers batch dim names from numpyro model plates.
+
+    Parameters
+    ----------
+    model : callable
+        A numpyro model function.
+    model_args : tuple of (Any, ...), optional
+        Input args for the numpyro model.
+    model_kwargs : dict of {str: Any}, optional
+        Input kwargs for the numpyro model.
+
+    Returns
+    -------
+    dict of {str: list of str(s)}
+        Mapping from model site name to list of dimension labels.
+    """
+    import jax
+    from numpyro import distributions as dist
+    from numpyro import handlers
+    from numpyro.infer.initialization import init_to_sample
+    from numpyro.ops.pytree import PytreeTrace
+
+    model_args = tuple() if model_args is None else model_args
+    model_kwargs = dict() if model_kwargs is None else model_kwargs
+
+    def _get_dist_name(fn):
+        if isinstance(fn, dist.Independent | dist.ExpandedDistribution | dist.MaskedDistribution):
+            return _get_dist_name(fn.base_dist)
+        return type(fn).__name__
+
+    def get_trace():
+        # We use `init_to_sample` to get around ImproperUniform distribution,
+        # which does not have `sample` method.
+        subs_model = handlers.substitute(
+            handlers.seed(model, 0),
+            substitute_fn=init_to_sample,
+        )
+        trace = handlers.trace(subs_model).get_trace(*model_args, **model_kwargs)
+        # Work around an issue where jax.eval_shape does not work
+        # for distribution output (e.g. the function `lambda: dist.Normal(0, 1)`)
+        # Here we will remove `fn` and store its name in the trace.
+        for _, site in trace.items():
+            if site["type"] == "sample":
+                site["fn_name"] = _get_dist_name(site.pop("fn"))
+            elif site["type"] == "deterministic":
+                site["fn_name"] = "Deterministic"
+        return PytreeTrace(trace)
+
+    # We use eval_shape to avoid any array computation.
+    trace = jax.eval_shape(get_trace).trace
+
+    named_dims = {}
+
+    # loop through the trace and pull the batch dim and event dim names
+    for name, site in trace.items():
+        batch_dims = [frame.name for frame in sorted(site["cond_indep_stack"], key=lambda x: x.dim)]
+        event_dims = list(site.get("infer", {}).get("event_dims", []))
+
+        # save the dim names leading with batch dims
+        if site["type"] in ["sample", "deterministic"] and (batch_dims or event_dims):
+            named_dims[name] = batch_dims + event_dims
+
+    return named_dims
 
 
 class NumPyroConverter:
@@ -33,6 +132,7 @@ class NumPyroConverter:
         coords=None,
         dims=None,
         pred_dims=None,
+        extra_event_dims=None,
         num_chains=1,
     ):
         """Convert NumPyro data into an InferenceData object.
@@ -55,11 +155,13 @@ class NumPyroConverter:
         coords : dict, optional
             Map of dimensions to coordinates
         dims : dict of {str : list of str}, optional
-            Map variable names to their coordinates
+            Map variable names to their coordinates. Will be inferred if they are not provided.
         pred_dims : dict, optional
             Dims for predictions data. Map variable names to their coordinates.
         num_chains : int, optional
             Number of chains used for sampling. Ignored if posterior is present.
+        extra_event_dims : dict, optional
+            Maps event dims that couldnt be inferred (ie deterministic sites) to their coordinates.
         """
         import jax
         import numpyro
@@ -75,6 +177,7 @@ class NumPyroConverter:
         self.coords = coords
         self.dims = dims
         self.pred_dims = pred_dims
+        self.extra_event_dims = extra_event_dims
         self.numpyro = numpyro
 
         def arbitrary_element(dct):
@@ -102,6 +205,10 @@ class NumPyroConverter:
             # model arguments and keyword arguments
             self._args = self.posterior._args  # pylint: disable=protected-access
             self._kwargs = self.posterior._kwargs  # pylint: disable=protected-access
+            self.dims = self.dims if self.dims is not None else self.infer_dims()
+            self.pred_dims = (
+                self.pred_dims if self.pred_dims is not None else self.infer_pred_dims()
+            )
         else:
             self.nchains = num_chains
             get_from = None
@@ -122,18 +229,25 @@ class NumPyroConverter:
 
         observations = {}
         if self.model is not None:
-            # we need to use an init strategy to generate random samples for ImproperUniform sites
-            seeded_model = numpyro.handlers.substitute(
-                numpyro.handlers.seed(self.model, jax.random.PRNGKey(0)),
-                substitute_fn=numpyro.infer.init_to_sample,
+            trace = self._get_model_trace(
+                self.model, self._args, self._kwargs, key=jax.random.PRNGKey(0)
             )
-            trace = numpyro.handlers.trace(seeded_model).get_trace(*self._args, **self._kwargs)
             observations = {
                 name: site["value"]
                 for name, site in trace.items()
                 if site["type"] == "sample" and site["is_observed"]
             }
         self.observations = observations if observations else None
+
+    def _get_model_trace(self, model, args, kwargs, key):
+        """Extract the numpyro model trace."""
+        # we need to use an init strategy to generate random samples for ImproperUniform sites
+        seeded_model = self.numpyro.handlers.substitute(
+            self.numpyro.handlers.seed(model, key),
+            substitute_fn=self.numpyro.infer.init_to_sample,
+        )
+        trace = self.numpyro.handlers.trace(seeded_model).get_trace(*args, **kwargs)
+        return trace
 
     @requires("posterior")
     def posterior_to_xarray(self):
@@ -321,6 +435,25 @@ class NumPyroConverter:
 
         return DataTree.from_dict({group: ds for group, ds in dicto.items() if ds is not None})
 
+    @requires("posterior")
+    @requires("model")
+    def infer_dims(self) -> dict[str, list[str]]:
+        """Infers dims for input data."""
+        dims = infer_dims(self.model, self._args, self._kwargs)
+        if self.extra_event_dims:
+            dims = _add_dims(dims, self.extra_event_dims)
+        return dims
+
+    @requires("posterior")
+    @requires("model")
+    @requires("predictions")
+    def infer_pred_dims(self) -> dict[str, list[str]]:
+        """Infers dims for predictions data."""
+        dims = infer_dims(self.model, self._args, self._kwargs)
+        if self.extra_event_dims:
+            dims = _add_dims(dims, self.extra_event_dims)
+        return dims
+
 
 def from_numpyro(
     posterior=None,
@@ -335,9 +468,24 @@ def from_numpyro(
     coords=None,
     dims=None,
     pred_dims=None,
+    extra_event_dims=None,
     num_chains=1,
 ):
     """Convert NumPyro data into a DataTree object.
+
+    If no dims are provided, this will infer batch dim names from NumPyro model plates.
+    For event dim names, such as with the ZeroSumNormal, `infer={"event_dims":dim_names}`
+    can be provided in numpyro.sample, i.e.::
+
+        # equivalent to dims entry, {"gamma": ["groups"]}
+        gamma = numpyro.sample(
+            "gamma",
+            dist.ZeroSumNormal(1, event_shape=(n_groups,)),
+            infer={"event_dims":["groups"]}
+        )
+
+    There is also an additional `extra_event_dims` input to cover any edge cases, for instance
+    deterministic sites with event dims (which dont have an `infer` argument to provide metadata).
 
     For a usage example read the
     :ref:`Creating InferenceData section on from_numpyro <creating_InferenceData>`
@@ -360,9 +508,13 @@ def from_numpyro(
     coords : dict, optional
         Map of dimensions to coordinates
     dims : dict of {str : list of str}, optional
-        Map variable names to their coordinates
+        Map variable names to their coordinates. Will be inferred if they are not provided.
     pred_dims : dict, optional
-        Dims for predictions data. Map variable names to their coordinates.
+        Dims for predictions data. Map variable names to their coordinates. Default behavior is to
+        infer dims if this is not provided
+    extra_event_dims : dict, optional
+        Extra event dims for deterministic sites. Maps event dims that couldnt be inferred to
+        their coordinates.
     num_chains : int, default 1
         Number of chains used for sampling. Ignored if posterior is present.
 
@@ -383,5 +535,6 @@ def from_numpyro(
             coords=coords,
             dims=dims,
             pred_dims=pred_dims,
+            extra_event_dims=extra_event_dims,
             num_chains=num_chains,
         ).to_datatree()
