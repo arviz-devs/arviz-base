@@ -50,7 +50,7 @@ def infer_dims(
     ----------
     model : callable
         A numpyro model function.
-    model_args : tuple of Any(s), optional
+    model_args : tuple of (Any, ...), optional
         Input args for the numpyro model.
     model_kwargs : dict of {str: Any}, optional
         Input kwargs for the numpyro model.

@@ -20,7 +20,7 @@ def _add_dims(
 ) -> dict[str, list[str]]: ...
 def infer_dims(
     model: Callable,
-    model_args: tuple[Any] | None = ...,
+    model_args: tuple[Any, ...] | None = ...,
     model_kwargs: dict[str, Any] | None = ...,
 ) -> dict[str, list[str]]: ...
 
