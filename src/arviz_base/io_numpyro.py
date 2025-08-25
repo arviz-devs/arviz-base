@@ -67,7 +67,7 @@ def infer_dims(
     from numpyro.ops.pytree import PytreeTrace
 
     model_args = tuple() if model_args is None else model_args
-    model_kwargs = dict() if model_args is None else model_kwargs
+    model_kwargs = dict() if model_kwargs is None else model_kwargs
 
     def _get_dist_name(fn):
         if isinstance(fn, dist.Independent | dist.ExpandedDistribution | dist.MaskedDistribution):
