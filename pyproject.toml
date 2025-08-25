@@ -41,6 +41,7 @@ funding = "https://opencollective.com/arviz"
 
 [project.optional-dependencies]
 test = [
+    "xarray!=2025.8.0",
     "pytest",
     "pytest-cov",
     "scipy",
