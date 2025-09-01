@@ -18,13 +18,12 @@ from arviz_base.utils import expand_dims
 class SVIWrapper:
     def __init__(
         self,
-        guide,
+        svi,
         *,
         svi_result,
         model_args=...,
         model_kwargs=...,
         num_samples: int = ...,
-        model=...,
         thinning: int = ...,
     ) -> None: ...
     def get_samples(self, seed=..., **kwargs) -> None: ...
@@ -96,7 +95,7 @@ def from_numpyro(
     num_chains: int = ...,
 ) -> xarray.DataTree: ...
 def from_numpyro_svi(
-    guide: numpyro.infer.autoguide.AutoGuide | Callable,
+    svi,
     svi_result: numpyro.infer.svi.SVIRunResult,
     *,
     model_args: tuple | None = ...,
@@ -112,6 +111,6 @@ def from_numpyro_svi(
     dims: dict[str, list[str]] | None = ...,
     pred_dims: dict | None = ...,
     extra_event_dims: dict | None = ...,
-    model: Callable | None = ...,
+    model=...,
     num_samples: int = ...,
 ) -> xarray.DataTree: ...

@@ -169,7 +169,7 @@ def numpyro_schools_model_svi(data, draws, chains):
     guide = AutoNormal(_numpyro_noncentered_model, init_loc_fn=init_to_sample())
     svi = SVI(_numpyro_noncentered_model, guide=guide, optim=Adam(0.05), loss=Trace_ELBO())
     svi_result = svi.run(PRNGKey(0), 4000, **data)
-    return {"guide": guide, "svi_result": svi_result, "model_kwargs": data}
+    return {"svi": svi, "svi_result": svi_result, "model_kwargs": data}
 
 
 def numpyro_schools_model_svi_custom_guide(data, draws, chains):
@@ -182,10 +182,9 @@ def numpyro_schools_model_svi_custom_guide(data, draws, chains):
     svi = SVI(_numpyro_noncentered_model, guide=guide, optim=Adam(0.05), loss=Trace_ELBO())
     svi_result = svi.run(PRNGKey(0), 4000, **data)
     return {
-        "guide": guide,
+        "svi": svi,
         "svi_result": svi_result,
         "model_kwargs": data,
-        "model": _numpyro_noncentered_model,
     }
 
 
