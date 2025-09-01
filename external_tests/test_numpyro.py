@@ -14,11 +14,8 @@ jax = importorskip("jax")
 PRNGKey = jax.random.PRNGKey
 numpyro = importorskip("numpyro")
 Predictive = numpyro.infer.Predictive
-numpyro.set_host_device_count(2)
-dist = numpyro.distributions
-AutoNormal = numpyro.infer.autoguide.AutoNormal
-AutoDelta = numpyro.infer.autoguide.AutoDelta
 autoguide = numpyro.infer.autoguide
+numpyro.set_host_device_count(2)
 
 
 class TestDataNumPyro:
@@ -309,12 +306,13 @@ class TestDataNumPyro:
         "svi,guide_fn",
         [
             (False, None),  # MCMC, guide ignored
-            (True, AutoDelta),  # SVI with AutoDelta
-            (True, AutoNormal),  # SVI with AutoNormal
+            (True, autoguide.AutoDelta),  # SVI with AutoDelta
+            (True, autoguide.AutoNormal),  # SVI with AutoNormal
             (True, "custom"),  # SVI with custom guide
         ],
     )
     def test_infer_dims(self, svi, guide_fn):
+        import jax.numpy as jnp
         import numpyro
         import numpyro.distributions as dist
 
@@ -324,9 +322,9 @@ class TestDataNumPyro:
                 _ = numpyro.sample("param", dist.Normal(0, 1))
 
         def guide():
-            loc = numpyro.param("param_loc", jax.numpy.zeros((10, 5)))
+            loc = numpyro.param("param_loc", jnp.zeros((10, 5)))
             scale = numpyro.param(
-                "param_scale", jax.numpy.ones((10, 5)), constraint=dist.constraints.positive
+                "param_scale", jnp.ones((10, 5)), constraint=dist.constraints.positive
             )
             with numpyro.plate("group2", 5), numpyro.plate("group1", 10):
                 numpyro.sample("param", dist.Normal(loc, scale))
@@ -348,12 +346,13 @@ class TestDataNumPyro:
         "svi,guide_fn",
         [
             (False, None),  # MCMC, guide ignored
-            (True, AutoDelta),  # SVI with AutoDelta
-            (True, AutoNormal),  # SVI with AutoNormal
+            (True, autoguide.AutoDelta),  # SVI with AutoDelta
+            (True, autoguide.AutoNormal),  # SVI with AutoNormal
             (True, "custom"),  # SVI with custom guide
         ],
     )
     def test_infer_unsorted_dims(self, svi, guide_fn):
+        import jax.numpy as jnp
         import numpyro
         import numpyro.distributions as dist
 
@@ -367,9 +366,9 @@ class TestDataNumPyro:
                 _ = numpyro.sample("param", dist.Normal(0, 1))
 
         def guide():
-            loc = numpyro.param("param_loc", jax.numpy.zeros((5, 10)))
+            loc = numpyro.param("param_loc", jnp.zeros((5, 10)))
             scale = numpyro.param(
-                "param_scale", jax.numpy.ones((5, 10)), constraint=dist.constraints.positive
+                "param_scale", jnp.ones((5, 10)), constraint=dist.constraints.positive
             )
             group1_plate = numpyro.plate("group1", 10, dim=-1)
             group2_plate = numpyro.plate("group2", 5, dim=-2)
@@ -393,12 +392,13 @@ class TestDataNumPyro:
         "svi,guide_fn",
         [
             (False, None),  # MCMC, guide ignored
-            (True, AutoDelta),  # SVI with AutoDelta
-            (True, AutoNormal),  # SVI with AutoNormal
+            (True, autoguide.AutoDelta),  # SVI with AutoDelta
+            (True, autoguide.AutoNormal),  # SVI with AutoNormal
             (True, "custom"),  # SVI with custom guide
         ],
     )
     def test_infer_dims_no_coords(self, svi, guide_fn):
+        import jax.numpy as jnp
         import numpyro
         import numpyro.distributions as dist
 
@@ -407,10 +407,8 @@ class TestDataNumPyro:
                 _ = numpyro.sample("param", dist.Normal(0, 1))
 
         def guide():
-            loc = numpyro.param("param_loc", jax.numpy.zeros(5))
-            scale = numpyro.param(
-                "param_scale", jax.numpy.ones(5), constraint=dist.constraints.positive
-            )
+            loc = numpyro.param("param_loc", jnp.zeros(5))
+            scale = numpyro.param("param_scale", jnp.ones(5), constraint=dist.constraints.positive)
             with numpyro.plate("group", 5):
                 numpyro.sample("param", dist.Normal(loc, scale))
 
@@ -428,8 +426,8 @@ class TestDataNumPyro:
         "svi,guide_fn",
         [
             (False, None),  # MCMC, guide ignored
-            (True, AutoDelta),  # SVI with AutoDelta
-            (True, AutoNormal),  # SVI with AutoNormal
+            (True, autoguide.AutoDelta),  # SVI with AutoDelta
+            (True, autoguide.AutoNormal),  # SVI with AutoNormal
             (True, "custom"),  # SVI with custom guide
         ],
     )
@@ -465,8 +463,8 @@ class TestDataNumPyro:
         "svi,guide_fn",
         [
             (False, None),  # MCMC, guide ignored
-            (True, AutoDelta),  # SVI with AutoDelta
-            (True, AutoNormal),  # SVI with AutoNormal
+            (True, autoguide.AutoDelta),  # SVI with AutoDelta
+            (True, autoguide.AutoNormal),  # SVI with AutoNormal
             (True, "custom"),  # SVI with custom guide
         ],
     )
@@ -510,8 +508,8 @@ class TestDataNumPyro:
         "svi,guide_fn",
         [
             (False, None),  # MCMC, guide ignored
-            (True, AutoDelta),  # SVI with AutoDelta
-            (True, AutoNormal),  # SVI with AutoNormal
+            (True, autoguide.AutoDelta),  # SVI with AutoDelta
+            (True, autoguide.AutoNormal),  # SVI with AutoNormal
             (True, "custom"),  # SVI with custom guide
         ],
     )
@@ -554,7 +552,7 @@ class TestDataNumPyro:
         assert inference_data.predictions.obs.dims == (sample_dims + ("J",))
         assert "J" in inference_data.predictions.obs.coords
 
-    def _run_inference(self, model, svi, guide_fn=autoguide.AutoNormal):
+    def _run_inference(self, model, svi, guide_fn):
         from numpyro.infer import MCMC, NUTS, SVI, Trace_ELBO
         from numpyro.optim import Adam
 
