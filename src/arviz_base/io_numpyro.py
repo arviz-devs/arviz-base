@@ -24,6 +24,9 @@ class SVIWrapper:
         num_samples: int = 1000,
         thinning: int = 1,
     ):
+        import jax
+        import numpyro
+
         self.svi = svi
         self.svi_result = svi_result
         self._args = model_args or tuple()
@@ -34,14 +37,13 @@ class SVIWrapper:
         self.sample_dims = ["samples"]
         self.kind = "svi"
 
+        self.numpyro = numpyro
+        self.prng_key_func = jax.random.PRNGKey
+
     def get_samples(self, seed=None, **kwargs):
         """Mimics mcmc.get_samples()."""
-        import jax
-        from numpyro.infer import Predictive
-        from numpyro.infer.autoguide import AutoGuide
-
-        key = jax.random.PRNGKey(seed or 0)
-        if isinstance(self.svi.guide, AutoGuide):
+        key = self.prng_key_func(seed or 0)
+        if isinstance(self.svi.guide, self.numpyro.infer.autoguide.AutoGuide):
             return self.svi.guide.sample_posterior(
                 key,
                 self.svi_result.params,
@@ -50,7 +52,7 @@ class SVIWrapper:
                 **self._kwargs,
             )
         # if a custom guide is provided, sample by hand
-        predictive = Predictive(
+        predictive = self.numpyro.infer.Predictive(
             self.svi.guide, params=self.svi_result.params, num_samples=self.num_samples
         )
         samples = predictive(key, *self._args, **self._kwargs)

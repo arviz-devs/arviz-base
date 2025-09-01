@@ -117,22 +117,18 @@ def _numpyro_noncentered_guide(J, sigma, y=None):
     # Variational parameters for mu
     mu_loc = numpyro.param("mu_loc", 0.0)
     mu_scale = numpyro.param("mu_scale", 1.0, constraint=dist.constraints.positive)
-    mu = numpyro.sample("mu", dist.Normal(mu_loc, mu_scale))
+    numpyro.sample("mu", dist.Normal(mu_loc, mu_scale))
 
     # Variational parameters for tau (positive support)
     tau_loc = numpyro.param("tau_loc", 1.0)
     tau_scale = numpyro.param("tau_scale", 0.5, constraint=dist.constraints.positive)
-    tau = numpyro.sample("tau", dist.LogNormal(jax.numpy.log(tau_loc), tau_scale))
+    numpyro.sample("tau", dist.LogNormal(jax.numpy.log(tau_loc), tau_scale))
 
     # Variational parameters for eta
     eta_loc = numpyro.param("eta_loc", jax.numpy.zeros(J))
     eta_scale = numpyro.param("eta_scale", jax.numpy.ones(J), constraint=dist.constraints.positive)
     with numpyro.plate("J", J):
-        eta = numpyro.sample("eta", dist.Normal(eta_loc, eta_scale))
-
-    # theta is deterministic; obs is handled in the model
-    theta = mu + tau * eta
-    return theta
+        numpyro.sample("eta", dist.Normal(eta_loc, eta_scale))
 
 
 def numpyro_schools_model(data, draws, chains):
