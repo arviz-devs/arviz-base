@@ -564,7 +564,7 @@ class TestDataNumPyro:
             svi = SVI(model, guide=guide, optim=Adam(0.05), loss=Trace_ELBO())
             svi_result = svi.run(PRNGKey(0), 10)
             return {
-                "guide": guide,
+                "svi": svi,
                 "svi_result": svi_result,
                 "model": None if is_autoguide else model,
             }

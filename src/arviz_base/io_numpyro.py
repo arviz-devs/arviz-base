@@ -16,16 +16,15 @@ class SVIWrapper:
 
     def __init__(
         self,
-        guide,
+        svi,
         *,
         svi_result,
         model_args=None,
         model_kwargs=None,
         num_samples: int = 1000,
-        model=None,
         thinning: int = 1,
     ):
-        self.guide = guide
+        self.svi = svi
         self.svi_result = svi_result
         self._args = model_args or tuple()
         self._kwargs = model_kwargs or dict()
@@ -34,7 +33,6 @@ class SVIWrapper:
         self.num_chains = 0
         self.sample_dims = ["samples"]
         self.kind = "svi"
-        self.model = model
 
     def get_samples(self, seed=None, **kwargs):
         """Mimics mcmc.get_samples()."""
@@ -43,8 +41,8 @@ class SVIWrapper:
         from numpyro.infer.autoguide import AutoGuide
 
         key = jax.random.PRNGKey(seed or 0)
-        if isinstance(self.guide, AutoGuide):
-            return self.guide.sample_posterior(
+        if isinstance(self.svi.guide, AutoGuide):
+            return self.svi.guide.sample_posterior(
                 key,
                 self.svi_result.params,
                 *self._args,
@@ -53,7 +51,7 @@ class SVIWrapper:
             )
         # if a custom guide is provided, sample by hand
         predictive = Predictive(
-            self.guide, params=self.svi_result.params, num_samples=self.num_samples
+            self.svi.guide, params=self.svi_result.params, num_samples=self.num_samples
         )
         samples = predictive(key, *self._args, **self._kwargs)
         return samples
@@ -70,7 +68,7 @@ class SVIWrapper:
             def model(self):
                 return self._model
 
-        return Sampler(getattr(self.guide, "model", self.model))
+        return Sampler(getattr(self.svi.guide, "model", self.svi.model))
 
     def get_extra_fields(self, **kwargs):
         """Mimics mcmc.get_extra_fields()."""
@@ -623,7 +621,7 @@ def from_numpyro(
 
 
 def from_numpyro_svi(
-    guide,
+    svi,
     svi_result,
     *,
     model_args=None,
@@ -663,8 +661,8 @@ def from_numpyro_svi(
 
     Parameters
     ----------
-    guide : numpyro.infer.autoguide.AutoGuide or callable
-        Guide function for a numpyro SVI model. Can be an autoguide or custom guide.
+    guide : numpyro.infer.svi.SVI
+        Numpyro SVI instance used for fitting the model.
     svi_result : numpyro.infer.svi.SVIRunResult
         SVI results from a fitted model.
     model_args : tuple, optional
@@ -694,20 +692,17 @@ def from_numpyro_svi(
         their coordinates.
     num_chains : int, default 1
         Number of chains used for sampling. Ignored if posterior is present.
-    model : callable, optional
-        Model function, only needed for a custom guide function
 
     Returns
     -------
     DataTree
     """
     posterior = SVIWrapper(
-        guide,
+        svi,
         svi_result=svi_result,
         model_args=model_args,
         model_kwargs=model_kwargs,
         num_samples=num_samples,
-        model=model,
     )
     with rc_context(rc={"data.sample_dims": ["samples"]}):
         return NumPyroConverter(
