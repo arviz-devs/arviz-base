@@ -571,3 +571,72 @@ class TestDataNumPyro:
             mcmc = MCMC(NUTS(model), num_warmup=10, num_samples=10)
             mcmc.run(PRNGKey(0))
             return {"posterior": mcmc}
+
+
+class TestSVIWrapper:
+    # @pytest.fixture(scope="class", params=["numpyro", "numpyro_svi"])
+    # def data(self, request):
+    #     from numpyro.infer.svi import SVI, SVIRunResult
+    #     from numpyro.infer import Trace_ELBO
+    #     from numpyro.optim import Adam
+    #     from numpyro import distributions as dist
+
+    #     def model():
+    #         numpyro.sample("alpha", dist.Normal(0, 10))
+
+    #     return {
+    #         "numpyro": (numpyro.infer.SVI()
+    #     }[request.param]
+
+    #     return Data
+
+    @pytest.fixture(scope="class", params=["numpyro_svi", "numpyro_svi_custom_guide"])
+    def data(self, request, eight_schools_params, draws, chains):
+        class Data:
+            obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[request.param]
+
+        return Data
+
+    # def test_init_defaults(self):
+    #     wrapper = SVIWrapper(
+
+    #     )
+
+    #     assert wrapper.svi == "mysvi"
+    #     assert wrapper.svi_result == {"params": {}}
+    #     assert wrapper.num_samples == 1000
+    #     assert wrapper.thinning == 1
+    #     assert wrapper.num_chains == 0
+    #     assert wrapper.sample_dims == ["samples"]
+    #     assert wrapper.kind == "svi"
+    #     assert callable(wrapper.prng_key_func)
+    #     assert hasattr(wrapper, "numpyro")
+
+    def test_init_without_args_kwargs(self):
+        from numpyro.infer import Trace_ELBO
+        from numpyro.infer.svi import SVI, SVIRunResult
+        from numpyro.optim import Adam
+
+        model = guide = lambda x: x
+        svi = SVI(model, guide, optim=Adam(0.05), loss=Trace_ELBO())
+        svi_result = SVIRunResult(params=jax.numpy.ones(5), state=None, losses=jax.numpy.zeros(10))
+
+        posterior = SVIWrapper(svi, svi_result=svi_result)
+        assert isinstance(posterior._args, tuple)
+        assert isinstance(posterior._kwargs, dict)
+
+    def test_get_samples(self, data, eight_schools_params):
+        svi_posterior = SVIWrapper(
+            data.obj["svi"], svi_result=data.obj["svi_result"], model_kwargs=eight_schools_params
+        )
+        out = svi_posterior.get_samples(seed=0)
+        assert isinstance(out, dict)
+        for v in out.values():  # values are array-like
+            assert isinstance(v, (jax.numpy.ndarray | np.ndarray))
+
+    def test_sampler_attr(self, data, eight_schools_params):
+        svi_posterior = SVIWrapper(
+            data.obj["svi"], svi_result=data.obj["svi_result"], model_kwargs=eight_schools_params
+        )
+        assert hasattr(svi_posterior, "sampler")
+        assert hasattr(svi_posterior.sampler, "model")

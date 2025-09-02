@@ -12,7 +12,7 @@ from arviz_base.utils import expand_dims
 
 
 class SVIWrapper:
-    """A helper class for SVI to mimic MCMC methods."""
+    """A helper class for SVI to mimic numpyro.infer.MCMC methods."""
 
     def __init__(
         self,
@@ -624,8 +624,8 @@ def from_numpyro(
 
 def from_numpyro_svi(
     svi,
-    svi_result,
     *,
+    svi_result,
     model_args=None,
     model_kwargs=None,
     prior=None,
@@ -663,7 +663,7 @@ def from_numpyro_svi(
 
     Parameters
     ----------
-    guide : numpyro.infer.svi.SVI
+    svi : numpyro.infer.svi.SVI
         Numpyro SVI instance used for fitting the model.
     svi_result : numpyro.infer.svi.SVIRunResult
         SVI results from a fitted model.
@@ -720,5 +720,5 @@ def from_numpyro_svi(
             dims=dims,
             pred_dims=pred_dims,
             extra_event_dims=extra_event_dims,
-            num_chains=1,
+            num_chains=0,
         ).to_datatree()
