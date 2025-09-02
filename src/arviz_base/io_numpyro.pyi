@@ -95,9 +95,9 @@ def from_numpyro(
     num_chains: int = ...,
 ) -> xarray.DataTree: ...
 def from_numpyro_svi(
-    svi,
-    svi_result: numpyro.infer.svi.SVIRunResult,
+    svi: numpyro.infer.svi.SVI,
     *,
+    svi_result: numpyro.infer.svi.SVIRunResult,
     model_args: tuple | None = ...,
     model_kwargs: dict | None = ...,
     prior=...,
