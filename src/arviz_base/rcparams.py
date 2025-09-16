@@ -305,7 +305,7 @@ defaultParams = {  # pylint: disable=invalid-name
     "plot.max_subplots": (40, _validate_positive_int_or_none),
     "stats.module": ("base", _validate_stats_module),
     "stats.ci_kind": ("eti", _make_validate_choice({"eti", "hdi"})),
-    "stats.ci_prob": (0.94, _validate_probability),
+    "stats.ci_prob": (0.89, _validate_probability),
     "stats.ic_pointwise": (True, _validate_boolean),
     "stats.ic_scale": (
         "log",
