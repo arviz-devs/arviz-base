@@ -25,7 +25,6 @@ def infer_dims(
 ) -> dict[str, list[str]]: ...
 
 class NumPyroConverter:
-
     model: Incomplete
     nchains: Incomplete
     ndraws: Incomplete

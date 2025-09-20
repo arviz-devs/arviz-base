@@ -184,6 +184,36 @@ def fake_dt():
     )
 
 
+def datatree_censored(seed=42):
+    """Create a sample DataTree with censored data."""
+    rng = np.random.default_rng(seed)
+
+    # Parameters
+    n_obs = 100
+    n_samples = 1000
+    n_chains = 4
+    observed_times = rng.exponential(scale=8, size=n_obs)
+    status = rng.binomial(1, 0.7, size=n_obs)
+
+    posterior_predictive_times = rng.exponential(scale=8, size=(n_chains, n_samples, n_obs))
+
+    # Create DataTree
+    return from_dict(
+        {
+            "observed_data": {
+                "time": observed_times,
+            },
+            "constant_data": {
+                "time": status,
+            },
+            "posterior_predictive": {
+                "time": posterior_predictive_times,
+            },
+        },
+        dims={"time": ["subject"]},
+    )
+
+
 def check_multiple_attrs(test_dict, parent):
     """Perform multiple hasattr checks on InferenceData objects.
 
