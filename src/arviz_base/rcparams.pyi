@@ -44,6 +44,7 @@ _validate_dims: Incomplete
 defaultParams: Incomplete
 
 class RcParams(MutableMapping):
+
     validate: Incomplete
 
     def __init__(self, *args, **kwargs) -> None: ...
