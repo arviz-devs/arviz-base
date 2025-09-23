@@ -89,5 +89,12 @@
         "url": "http://figshare.com/ndownloader/files/53391296",
         "checksum": "a3d1cf3b72d5d616c2ecaa7936c6bc6698fd7c4958f2601c632917eaa7803ccd",
         "description": "31 periwinkles (a kind of sea snail) were removed from it original place and released down shore. A VonMises likelihood is used to model the direction of motion as function of the distance travelled by the periwinkles after being release."
+    },
+    {
+        "name": "censored_cats",
+        "filename": "censored_cats.nc",
+        "url": "http://figshare.com/ndownloader/files/58114255",
+        "checksum": "02432a7972a5f599645b6c952e0f236d5192fdd72d77f381060155aca1872b4d",
+        "description": "Simple model of the survival curve for cat adoptions from an animal shelter in Austin, Texas. The dataset comes from the City of Austin Open Data Portal for more details of the model you can check bambi's documentation"
     }
 ]
