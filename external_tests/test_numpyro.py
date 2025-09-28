@@ -574,43 +574,12 @@ class TestDataNumPyro:
 
 
 class TestSVIWrapper:
-    # @pytest.fixture(scope="class", params=["numpyro", "numpyro_svi"])
-    # def data(self, request):
-    #     from numpyro.infer.svi import SVI, SVIRunResult
-    #     from numpyro.infer import Trace_ELBO
-    #     from numpyro.optim import Adam
-    #     from numpyro import distributions as dist
-
-    #     def model():
-    #         numpyro.sample("alpha", dist.Normal(0, 10))
-
-    #     return {
-    #         "numpyro": (numpyro.infer.SVI()
-    #     }[request.param]
-
-    #     return Data
-
     @pytest.fixture(scope="class", params=["numpyro_svi", "numpyro_svi_custom_guide"])
     def data(self, request, eight_schools_params, draws, chains):
         class Data:
             obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[request.param]
 
         return Data
-
-    # def test_init_defaults(self):
-    #     wrapper = SVIWrapper(
-
-    #     )
-
-    #     assert wrapper.svi == "mysvi"
-    #     assert wrapper.svi_result == {"params": {}}
-    #     assert wrapper.num_samples == 1000
-    #     assert wrapper.thinning == 1
-    #     assert wrapper.num_chains == 0
-    #     assert wrapper.sample_dims == ["samples"]
-    #     assert wrapper.kind == "svi"
-    #     assert callable(wrapper.prng_key_func)
-    #     assert hasattr(wrapper, "numpyro")
 
     def test_init_without_args_kwargs(self):
         from numpyro.infer import Trace_ELBO

@@ -555,6 +555,8 @@ def from_numpyro(
 ):
     """Convert NumPyro data into a DataTree object.
 
+    For a usage example read :ref:`numpyro_conversion`
+
     If no dims are provided, this will infer batch dim names from NumPyro model plates.
     For event dim names, such as with the ZeroSumNormal, `infer={"event_dims":dim_names}`
     can be provided in numpyro.sample, i.e.::
@@ -568,9 +570,6 @@ def from_numpyro(
 
     There is also an additional `extra_event_dims` input to cover any edge cases, for instance
     deterministic sites with event dims (which dont have an `infer` argument to provide metadata).
-
-    For a usage example read the
-    :ref:`Creating InferenceData section on from_numpyro <creating_InferenceData>`
 
     Parameters
     ----------
@@ -644,6 +643,8 @@ def from_numpyro_svi(
 ):
     """Convert NumPyro SVI results into a DataTree object.
 
+    For a usage example read :ref:`numpyro_conversion`
+
     If no dims are provided, this will infer batch dim names from NumPyro model plates.
     For event dim names, such as with the ZeroSumNormal, `infer={"event_dims":dim_names}`
     can be provided in numpyro.sample, i.e.::
@@ -657,9 +658,6 @@ def from_numpyro_svi(
 
     There is also an additional `extra_event_dims` input to cover any edge cases, for instance
     deterministic sites with event dims (which dont have an `infer` argument to provide metadata).
-
-    For a usage example read the
-    :ref:`Creating InferenceData section on from_numpyro <creating_InferenceData>`
 
     Parameters
     ----------
