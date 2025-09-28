@@ -132,7 +132,7 @@ def _numpyro_noncentered_guide(J, sigma, y=None):
 
 
 def numpyro_schools_model(data, draws, chains):
-    """Centered eight schools implementation in NumPyro."""
+    """Noncentered eight schools implementation in NumPyro."""
     from jax.random import PRNGKey
     from numpyro.infer import MCMC, NUTS
 
