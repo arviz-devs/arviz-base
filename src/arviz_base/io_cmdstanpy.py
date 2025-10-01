@@ -453,7 +453,7 @@ def from_cmdstanpy(
     dtypes : dict, str or cmdstanpy.CmdStanModel, optional
         A dictionary containing dtype information (int, float) for parameters.
         If input is a string, it is assumed to be a model code or path to model code file.
-        Model code can extracted from cmdstanpy.CmdStanModel object.
+        Model code can be extracted from cmdstanpy.CmdStanModel object.
 
     Returns
     -------

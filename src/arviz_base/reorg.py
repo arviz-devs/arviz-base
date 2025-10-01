@@ -283,7 +283,7 @@ def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False, 
 
     Examples
     --------
-    The output will have whatever is uses as `sample_dims` as the columns of
+    The output will have whatever that uses `sample_dims` as the columns of
     the DataFrame, so when these are much longer we might want to transpose the
     output:
 
