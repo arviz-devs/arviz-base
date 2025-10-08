@@ -46,7 +46,7 @@ def generate_dims_coords(
         In that case, only the first ``len(shape)`` elements in `dims` will be used.
         Moreover, if needed, axis of length 1 in shape will also be given
         different names than the ones provided in `dims`.
-    coords : dict of {hashable: array_like}, optional
+    coords : dict of {hashable_key : array_like}, optional
         Map of dimension names to coordinate values. Dimensions without coordinate
         values mapped to them will be given an integer range as coordinate values.
         It can have keys for dimension names not present in that variable.
@@ -66,7 +66,7 @@ def generate_dims_coords(
     -------
     dims : list of hashable
         Default dims for that variable
-    coords : dict of {hashable: ndarray}
+    coords : dict of {hashable_key : ndarray}
         Default coords for that variable
     """
     if index_origin is None:
@@ -167,7 +167,7 @@ def ndarray_to_dataarray(
         Name of the created DataArray object.
     dims : iterable of hashable, optional
         Dimensions of the DataArray.
-    coords : dict of {hashable: array_like}, optional
+    coords : dict of {hashable_key : array_like}, optional
         Coordinates for the dataarray
     sample_dims : iterable of hashable, optional
         Dimensions that should be assumed to be present.
@@ -248,7 +248,7 @@ def dict_to_dataset(
     inference_library : module, optional
         Library used for performing inference. Will be included in the
         :class:`xarray.Dataset` attributes.
-    coords : dict of {hashable: array_like}, optional
+    coords : dict of {hashable_key : array_like}, optional
         Coordinates for the dataset
     dims : dict of {hashable : sequence of hashable}, optional
         Dimensions of each variable. The keys are variable names, values are lists of

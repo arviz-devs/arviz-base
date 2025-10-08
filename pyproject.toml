@@ -52,7 +52,7 @@ ci = [
 check = [
     "build",
     "pre-commit",
-    "docstub @ git+https://github.com/scientific-python/docstub@d2a1dfdf1298fd68e34c08281cb1f375fc947d84",
+    "docstub>=0.4",
     "mypy",
     "isort",
     "black",
