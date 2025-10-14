@@ -98,7 +98,7 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
     variable :envvar:`ARVIZ_DATA`. The checksum of the dataset is checked against a
     hardcoded value to watch for data corruption.
 
-    Run `az.clear_data_home` to clear the data directory.
+    Run :func:`arviz_base.clear_data_home` to clear the data directory.
 
     Parameters
     ----------
