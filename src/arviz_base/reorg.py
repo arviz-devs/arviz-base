@@ -411,7 +411,7 @@ def explode_dataset_dims(ds, dim, labeller=None):
 
 
 def references_to_dataset(references, ds, sample_dims=None, ref_dim=None):
-    """Generate an :class:`~xarray.Dataset` compabible with `ds` from `references`.
+    """Generate an :class:`~xarray.Dataset` compatible with `ds` from `references`.
 
     Cast common formats to provide references to a compatible Dataset.
     This function does not aim to be exhaustive, anything somewhat peculiar or complex
