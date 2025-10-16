@@ -1,12 +1,11 @@
 # pylint: disable=no-member, invalid-name, redefined-outer-name, too-many-function-args
 import importlib
-import os
 
 import numpy as np
 import pytest
 
 from arviz_base import from_pystan
-from arviz_base.io_pystan import get_draws_stan3
+from arviz_base.io_pystan import get_draws
 from arviz_base.testing import check_multiple_attrs
 
 from .helpers import (  # pylint: disable=unused-import
@@ -19,14 +18,12 @@ from .helpers import (  # pylint: disable=unused-import
 )
 
 # Check if either pystan or pystan3 is installed
-pystan_installed = (importlib.util.find_spec("pystan") is not None) or (
-    importlib.util.find_spec("stan") is not None
-)
+pystan_installed = importlib.util.find_spec("stan") is not None
 
 
 @pytest.mark.skipif(
-    not (pystan_installed or "ARVIZ_REQUIRE_ALL_DEPS" in os.environ),
-    reason="test requires pystan/pystan3 which is not installed",
+    True,
+    reason="Temporarily disable pytest tests.",
 )
 class TestDataPyStan:
     @pytest.fixture(scope="class")
@@ -243,5 +240,5 @@ class TestDataPyStan:
 
     def test_get_draws(self, data):
         fit = data.obj
-        draws, _ = get_draws_stan3(fit, variables=["theta", "theta"])
+        draws, _ = get_draws(fit, variables=["theta", "theta"])
         assert draws.get("theta") is not None

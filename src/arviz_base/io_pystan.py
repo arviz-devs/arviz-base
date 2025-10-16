@@ -3,8 +3,6 @@
 
 import logging
 import re
-from collections import OrderedDict
-from copy import deepcopy
 from math import ceil
 
 import numpy as np
@@ -21,17 +19,9 @@ from arviz_base.rcparams import rcParams
 
 _log = logging.getLogger(__name__)
 
-try:
-    import ujson as json
-except ImportError:
-    # Can't find ujson using json
-    # mypy struggles with conditional imports expressed as catching ImportError:
-    # https://github.com/python/mypy/issues/1153
-    import json  # type: ignore
 
-
-class PyStan3Converter:
-    """Encapsulate PyStan3 specific logic."""
+class PyStanConverter:
+    """Encapsulate PyStan specific logic."""
 
     # pylint: disable=too-many-instance-attributes
     def __init__(
@@ -132,14 +122,14 @@ class PyStan3Converter:
 
         ignore = posterior_predictive + predictions + log_likelihood
 
-        data, data_warmup = get_draws_stan3(
+        data, data_warmup = get_draws(
             posterior,
             model=posterior_model,
             ignore=ignore,
             warmup=self.save_warmup,
             dtypes=self.dtypes,
         )
-        attrs = get_attrs_stan3(posterior, model=posterior_model)
+        attrs = get_attrs(posterior, model=posterior_model)
         return self._warmup_return_to_dict(data, data_warmup, "posterior", attrs)
 
     @requires("posterior")
@@ -147,17 +137,17 @@ class PyStan3Converter:
         """Extract sample_stats from posterior."""
         posterior = self.posterior
         posterior_model = self.posterior_model
-        data, data_warmup = get_sample_stats_stan3(
+        data, data_warmup = get_sample_stats(
             posterior, ignore="lp__", warmup=self.save_warmup, dtypes=self.dtypes
         )
-        data_lp, data_warmup_lp = get_sample_stats_stan3(
+        data_lp, data_warmup_lp = get_sample_stats(
             posterior, variables="lp__", warmup=self.save_warmup
         )
         data["lp"] = data_lp["lp"]
         if data_warmup_lp:
             data_warmup["lp"] = data_warmup_lp["lp"]
 
-        attrs = get_attrs_stan3(posterior, model=posterior_model)
+        attrs = get_attrs(posterior, model=posterior_model)
         return self._warmup_return_to_dict(data, data_warmup, "sample_stats", attrs)
 
     @requires("posterior")
@@ -172,7 +162,7 @@ class PyStan3Converter:
             log_likelihood = [log_likelihood]
         if isinstance(log_likelihood, (list | tuple)):
             log_likelihood = {name: name for name in log_likelihood}
-        log_likelihood_draws, log_likelihood_draws_warmup = get_draws_stan3(
+        log_likelihood_draws, log_likelihood_draws_warmup = get_draws(
             fit,
             model=model,
             variables=list(log_likelihood.values()),
@@ -198,7 +188,7 @@ class PyStan3Converter:
         posterior = self.posterior
         posterior_model = self.posterior_model
         posterior_predictive = self.posterior_predictive
-        data, data_warmup = get_draws_stan3(
+        data, data_warmup = get_draws(
             posterior,
             model=posterior_model,
             variables=posterior_predictive,
@@ -214,7 +204,7 @@ class PyStan3Converter:
         posterior = self.posterior
         posterior_model = self.posterior_model
         predictions = self.predictions
-        data, data_warmup = get_draws_stan3(
+        data, data_warmup = get_draws(
             posterior,
             model=posterior_model,
             variables=predictions,
@@ -237,10 +227,10 @@ class PyStan3Converter:
 
         ignore = prior_predictive
 
-        data, data_warmup = get_draws_stan3(
+        data, data_warmup = get_draws(
             prior, model=prior_model, ignore=ignore, warmup=self.save_warmup, dtypes=self.dtypes
         )
-        attrs = get_attrs_stan3(prior, model=prior_model)
+        attrs = get_attrs(prior, model=prior_model)
         return self._warmup_return_to_dict(data, data_warmup, "prior", attrs)
 
     @requires("prior")
@@ -248,10 +238,8 @@ class PyStan3Converter:
         """Extract sample_stats_prior from prior."""
         prior = self.prior
         prior_model = self.prior_model
-        data, data_warmup = get_sample_stats_stan3(
-            prior, warmup=self.save_warmup, dtypes=self.dtypes
-        )
-        attrs = get_attrs_stan3(prior, model=prior_model)
+        data, data_warmup = get_sample_stats(prior, warmup=self.save_warmup, dtypes=self.dtypes)
+        attrs = get_attrs(prior, model=prior_model)
         return self._warmup_return_to_dict(data, data_warmup, "sample_stats_prior", attrs)
 
     @requires("prior")
@@ -261,7 +249,7 @@ class PyStan3Converter:
         prior = self.prior
         prior_model = self.prior_model
         prior_predictive = self.prior_predictive
-        data, data_warmup = get_draws_stan3(
+        data, data_warmup = get_draws(
             prior,
             model=prior_model,
             variables=prior_predictive,
@@ -280,7 +268,7 @@ class PyStan3Converter:
         if names is None:
             return None
         names = [names] if isinstance(names, str) else names
-        data = OrderedDict()
+        data = {}
         for key in names:
             vals = np.atleast_1d(posterior_model.data[key])
             val_dims = dims.get(key)
@@ -300,7 +288,7 @@ class PyStan3Converter:
         if names is None:
             return None
         names = [names] if isinstance(names, str) else names
-        data = OrderedDict()
+        data = {}
         for key in names:
             vals = np.atleast_1d(posterior_model.data[key])
             val_dims = dims.get(key)
@@ -318,7 +306,7 @@ class PyStan3Converter:
         dims = {} if self.dims is None else self.dims
         names = self.predictions_constant_data
         names = [names] if isinstance(names, str) else names
-        data = OrderedDict()
+        data = {}
         for key in names:
             vals = np.atleast_1d(posterior_model.data[key])
             val_dims = dims.get(key)
@@ -356,130 +344,8 @@ class PyStan3Converter:
         return DataTree.from_dict({group: ds for group, ds in datadict.items() if ds is not None})
 
 
-def get_sample_stats(fit, warmup=False, dtypes=None):
-    """Extract sample stats from PyStan fit."""
-    if dtypes is None:
-        dtypes = {}
-    dtypes = {"divergent__": bool, "n_leapfrog__": np.int64, "treedepth__": np.int64, **dtypes}
-
-    rename_dict = {
-        "divergent": "diverging",
-        "n_leapfrog": "n_steps",
-        "treedepth": "tree_depth",
-        "stepsize": "step_size",
-        "accept_stat": "acceptance_rate",
-    }
-
-    ndraws_warmup = fit.sim["warmup2"]
-    if max(ndraws_warmup) == 0:
-        warmup = False
-    ndraws = [s - w for s, w in zip(fit.sim["n_save"], ndraws_warmup)]
-
-    extraction = OrderedDict()
-    extraction_warmup = OrderedDict()
-    for chain, (pyholder, ndraw, ndraw_warmup) in enumerate(
-        zip(fit.sim["samples"], ndraws, ndraws_warmup)
-    ):
-        if chain == 0:
-            for key in pyholder["sampler_param_names"]:
-                extraction[key] = []
-                if warmup:
-                    extraction_warmup[key] = []
-        for key, values in zip(pyholder["sampler_param_names"], pyholder["sampler_params"]):
-            extraction[key].append(values[-ndraw:])
-            if warmup:
-                extraction_warmup[key].append(values[:ndraw_warmup])
-
-    data = OrderedDict()
-    for key, values in extraction.items():
-        vals = np.stack(values, axis=0)
-        dtype = dtypes.get(key)
-        vals = vals.astype(dtype)
-        name = re.sub("__$", "", key)
-        name = rename_dict.get(name, name)
-        data[name] = vals
-
-    data_warmup = OrderedDict()
-    if warmup:
-        for key, values in extraction_warmup.items():
-            vals = np.stack(values, axis=0)
-            vals = vals.astype(dtypes.get(key))
-            name = re.sub("__$", "", key)
-            name = rename_dict.get(name, name)
-            data_warmup[name] = vals
-
-    return data, data_warmup
-
-
-def get_attrs(fit):
-    """Get attributes from PyStan fit object."""
-    attrs = {}
-
-    try:
-        attrs["args"] = [deepcopy(holder.args) for holder in fit.sim["samples"]]
-    except Exception as exp:  # pylint: disable=broad-except
-        _log.warning("Failed to fetch args from fit: %s", exp)
-    if "args" in attrs:
-        for arg in attrs["args"]:
-            if isinstance(arg["init"], bytes):
-                arg["init"] = arg["init"].decode("utf-8")
-        attrs["args"] = json.dumps(attrs["args"])
-    try:
-        attrs["inits"] = [holder.inits for holder in fit.sim["samples"]]
-    except Exception as exp:  # pylint: disable=broad-except
-        _log.warning("Failed to fetch `args` from fit: %s", exp)
-    else:
-        attrs["inits"] = json.dumps(attrs["inits"])
-
-    attrs["step_size"] = []
-    attrs["metric"] = []
-    attrs["inv_metric"] = []
-    for holder in fit.sim["samples"]:
-        try:
-            step_size = float(
-                re.search(
-                    r"step\s*size\s*=\s*([0-9]+.?[0-9]+)\s*",
-                    holder.adaptation_info,
-                    flags=re.IGNORECASE,
-                ).group(1)
-            )
-        except AttributeError:
-            step_size = np.nan
-        attrs["step_size"].append(step_size)
-
-        inv_metric_match = re.search(
-            r"mass matrix:\s*(.*)\s*$", holder.adaptation_info, flags=re.DOTALL
-        )
-        if inv_metric_match:
-            inv_metric_str = inv_metric_match.group(1)
-            if "Diagonal elements of inverse mass matrix" in holder.adaptation_info:
-                metric = "diag_e"
-                inv_metric = [float(item) for item in inv_metric_str.strip(" #\n").split(",")]
-            else:
-                metric = "dense_e"
-                inv_metric = [
-                    list(map(float, item.split(",")))
-                    for item in re.sub(r"#\s", "", inv_metric_str).splitlines()
-                ]
-        else:
-            metric = "unit_e"
-            inv_metric = None
-
-        attrs["metric"].append(metric)
-        attrs["inv_metric"].append(inv_metric)
-    attrs["inv_metric"] = json.dumps(attrs["inv_metric"])
-
-    if not attrs["step_size"]:
-        del attrs["step_size"]
-
-    attrs["adaptation_info"] = fit.get_adaptation_info()
-    attrs["stan_code"] = fit.get_stancode()
-
-    return attrs
-
-
-def get_draws_stan3(fit, model=None, variables=None, ignore=None, warmup=False, dtypes=None):
-    """Extract draws from PyStan3 fit."""
+def get_draws(fit, model=None, variables=None, ignore=None, warmup=False, dtypes=None):
+    """Extract draws from PyStan fit."""
     if ignore is None:
         ignore = []
 
@@ -500,8 +366,8 @@ def get_draws_stan3(fit, model=None, variables=None, ignore=None, warmup=False, 
         variables = [variables]
     variables = list(variables)
 
-    data = OrderedDict()
-    data_warmup = OrderedDict()
+    data = {}
+    data_warmup = {}
 
     for var in variables:
         if var in ignore:
@@ -524,8 +390,8 @@ def get_draws_stan3(fit, model=None, variables=None, ignore=None, warmup=False, 
     return data, data_warmup
 
 
-def get_sample_stats_stan3(fit, variables=None, ignore=None, warmup=False, dtypes=None):
-    """Extract sample stats from PyStan3 fit."""
+def get_sample_stats(fit, variables=None, ignore=None, warmup=False, dtypes=None):
+    """Extract sample stats from PyStan fit."""
     if dtypes is None:
         dtypes = {}
     dtypes = {"divergent__": bool, "n_leapfrog__": np.int64, "treedepth__": np.int64, **dtypes}
@@ -548,8 +414,8 @@ def get_sample_stats_stan3(fit, variables=None, ignore=None, warmup=False, dtype
 
     num_warmup = ceil((fit.num_warmup * fit.save_warmup) / fit.num_thin)
 
-    data = OrderedDict()
-    data_warmup = OrderedDict()
+    data = {}
+    data_warmup = {}
     for key in fit.sample_and_sampler_param_names:
         if (variables and key not in variables) or (ignore and key in ignore):
             continue
@@ -568,8 +434,8 @@ def get_sample_stats_stan3(fit, variables=None, ignore=None, warmup=False, dtype
     return data, data_warmup
 
 
-def get_attrs_stan3(fit, model=None):
-    """Get attributes from PyStan3 fit and model object."""
+def get_attrs(fit, model=None):
+    """Get attributes from PyStan fit and model object."""
     attrs = {}
     for key in ["num_chains", "num_samples", "num_thin", "num_warmup", "save_warmup"]:
         try:
@@ -594,11 +460,9 @@ def infer_dtypes(fit, model=None):
     dtypes after stripping out comments inside the block.
     """
     if model is None:
-        stan_code = fit.get_stancode()
-        model_pars = fit.model_pars
-    else:
-        stan_code = model.program_code
-        model_pars = fit.param_names
+        return {}
+    stan_code = model.program_code
+    model_pars = fit.param_names
 
     dtypes = {key: item for key, item in infer_stan_dtypes(stan_code).items() if key in model_pars}
     return dtypes
@@ -630,25 +494,25 @@ def from_pystan(
 
     Parameters
     ----------
-    posterior : StanFit4Model or stan.fit.Fit
+    posterior : stan.fit.Fit
         PyStan fit object for posterior.
     posterior_predictive : str, a list of str
         Posterior predictive samples for the posterior.
     predictions : str, a list of str
         Out-of-sample predictions for the posterior.
-    prior : StanFit4Model or stan.fit.Fit
+    prior : stan.fit.Fit
         PyStan fit object for prior.
     prior_predictive : str, a list of str
         Posterior predictive samples for the prior.
-    observed_data : str or a list of str
+    observed_data : str, a list of str
         observed data used in the sampling.
         Observed data is extracted from the `posterior.data`.
-        PyStan3 needs model object for the extraction.
+        PyStan needs model object for the extraction.
         See `posterior_model`.
-    constant_data : str or list of str
+    constant_data : str, a list of str
         Constants relevant to the model (i.e. x values in a linear
         regression).
-    predictions_constant_data : str or list of str
+    predictions_constant_data : str, a list of str
         Constants relevant to the model predictions (i.e. new x values in a linear
         regression).
     log_likelihood : dict of {str: str}, list of str or str, optional
@@ -663,27 +527,26 @@ def from_pystan(
     coords : dict[str, iterable]
         A dictionary containing the values that are used as index. The key
         is the name of the dimension, the values are the index values.
-    dims : dict[str, List(str)]
+    dims : dict[str, list[str]]
         A mapping from variables to a list of coordinate names for the variable.
     posterior_model : stan.model.Model
-        PyStan3 specific model object. Needed for automatic dtype parsing
+        PyStan specific model object. Needed for automatic dtype parsing
         and for the extraction of observed data.
     prior_model : stan.model.Model
-        PyStan3 specific model object. Needed for automatic dtype parsing.
+        PyStan specific model object. Needed for automatic dtype parsing.
     save_warmup : bool
         Save warmup iterations into InferenceData object. If not defined, use default
         defined by the rcParams.
-    dtypes: dict
+    dtypes : dict
         A dictionary containing dtype information (int, float) for parameters.
         By default dtype information is extracted from the model code.
-        Model code is extracted from fit object in PyStan 2 and from model object
-        in PyStan 3.
+        Model code is extracted from model object.
 
     Returns
     -------
-    InferenceData object
+    DataTree
     """
-    return PyStan3Converter(
+    return PyStanConverter(
         posterior=posterior,
         posterior_model=posterior_model,
         posterior_predictive=posterior_predictive,
