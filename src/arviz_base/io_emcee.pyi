@@ -4,7 +4,6 @@ import warnings
 
 import emcee
 import numpy as np
-import xarray
 from numpy.typing import ArrayLike
 from xarray import DataTree
 
@@ -50,4 +49,4 @@ def from_emcee(
     coords: dict[str, ArrayLike] | None = ...,
     dims: dict[str, list[str]] | None = ...,
     check_conventions: bool = ...,
-) -> xarray.DataTree: ...
+) -> DataTree: ...

@@ -14,7 +14,7 @@ repos:
   hooks:
     - id: docstub
       name: Generate stub files
-      entry: docstub src/arviz_base
+      entry: docstub run src/arviz_base
       language: system
       types: [python]
       pass_filenames: false

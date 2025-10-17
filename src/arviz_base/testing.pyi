@@ -1,7 +1,7 @@
 # File generated with docstub
 
 import numpy as np
-import xarray
+from xarray import DataTree
 
 from arviz_base import from_dict
 
@@ -16,5 +16,5 @@ def cmp() -> None: ...
 def fake_dt() -> None: ...
 def datatree_censored(seed=...) -> None: ...
 def check_multiple_attrs(
-    test_dict: dict[str, list[str]], parent: xarray.DataTree
+    test_dict: dict[str, list[str]], parent: DataTree
 ) -> list[str | tuple[str, str]]: ...

@@ -22,20 +22,18 @@ def xarray_sel_iter(
     var_names: Sequence[Hashable] | None = ...,
     combined: bool | None = ...,
     skip_dims: set | None = ...,
-    dim_to_idx: Mapping[Hashable, Hashable] | None = ...,
+    dim_to_idx: Mapping[Any, Hashable] | None = ...,
     reverse_selections: bool = ...,
-) -> Generator[tuple[str, dict[Hashable, Any], dict[Hashable, Any]]]: ...
+) -> Generator[tuple[str, dict[Any, Any], dict[Any, Any]]]: ...
 def xarray_var_iter(
     data: xarray.Dataset,
     var_names: Sequence[Hashable] | None = ...,
     combined: bool | None = ...,
     skip_dims: set | None = ...,
-    dim_to_idx: Mapping[Hashable, Hashable] | None = ...,
+    dim_to_idx: Mapping[Any, Hashable] | None = ...,
     reverse_selections: bool = ...,
     dim_order: list | None = ...,
-) -> Generator[
-    tuple[str, dict[Hashable, Any], dict[Hashable, Any], xarray.DataArray]
-]: ...
+) -> Generator[tuple[str, dict[Any, Any], dict[Any, Any], xarray.DataArray]]: ...
 def xarray_to_ndarray(
     data: xarray.Dataset,
     *,
