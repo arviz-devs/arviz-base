@@ -37,7 +37,7 @@ class PyStanConverter:
         observed_data=None,
         constant_data=None,
         predictions_constant_data=None,
-        log_likelihood=None,
+        log_likelihood=False,
         coords=None,
         dims=None,
         save_warmup=None,
@@ -53,9 +53,7 @@ class PyStanConverter:
         self.observed_data = observed_data
         self.constant_data = constant_data
         self.predictions_constant_data = predictions_constant_data
-        self.log_likelihood = (
-            rcParams["data.log_likelihood"] if log_likelihood is None else log_likelihood
-        )
+        self.log_likelihood = log_likelihood
         self.coords = coords
         self.dims = dims
         self.save_warmup = rcParams["data.save_warmup"] if save_warmup is None else save_warmup
