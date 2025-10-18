@@ -2,12 +2,12 @@
 
 import datetime
 import importlib
-import numbers
 import re
 import types
 import warnings
-from collections.abc import Callable, Hashable, Iterable, Mapping
+from collections.abc import Callable, Hashable, Iterable, Mapping, Sequence
 from copy import deepcopy
+from numbers import Number
 from typing import TYPE_CHECKING, Any, TypeVar
 
 import numpy as np
@@ -18,7 +18,6 @@ from numpy.typing import ArrayLike, NDArray
 
 from arviz_base._version import __version__
 from arviz_base.rcparams import rcParams
-from arviz_base.types import CoordSpec, DictData, DimSpec
 
 if TYPE_CHECKING:
     pass
@@ -28,38 +27,39 @@ RequiresReturnTypeT: Incomplete
 
 def generate_dims_coords(
     shape: Iterable[int],
-    var_name: Iterable[Hashable],
+    var_name: Hashable,
     dims: Iterable[Hashable] | None = ...,
-    coords: dict[Hashable, ArrayLike] | None = ...,
+    coords: dict[Any, ArrayLike] | None = ...,
     index_origin: int | None = ...,
     skip_event_dims: bool = ...,
     check_conventions: bool = ...,
-) -> tuple[list[Hashable], dict[Hashable, NDArray]]: ...
+) -> tuple[list[Hashable], dict[Any, NDArray]]: ...
 def ndarray_to_dataarray(
-    ary: numbers.Number | ArrayLike,
+    ary: Number | ArrayLike,
     var_name: Hashable,
     *,
     dims: Iterable[Hashable] | None = ...,
     sample_dims: Iterable[Hashable] | None = ...,
-    coords: dict[Hashable, ArrayLike] | None = ...,
+    coords: dict[Any, ArrayLike] | None = ...,
     index_origin: int | None = ...,
     skip_event_dims: bool = ...,
     check_conventions: bool = ...,
 ) -> xarray.DataArray: ...
 def dict_to_dataset(
-    data: dict[Hashable, ArrayLike],
+    data: Mapping[Any, ArrayLike],
     *,
-    attrs: dict | None = ...,
+    attrs: Mapping[Any, Any] | None = ...,
     inference_library: types.ModuleType | None = ...,
-    coords: dict[Hashable, ArrayLike] | None = ...,
-    dims: dict[Hashable, Iterable[Hashable]] | None = ...,
-    sample_dims: Iterable[Hashable] | None = ...,
+    coords: dict[Any, ArrayLike] | None = ...,
+    dims: dict[Hashable, Sequence[Hashable]] | None = ...,
+    sample_dims: Sequence[Hashable] | None = ...,
     index_origin: int | None = ...,
     skip_event_dims: bool = ...,
     check_conventions: bool = ...,
 ) -> xarray.Dataset: ...
 def make_attrs(
-    attrs: dict | None = ..., inference_library: types.ModuleType | None = ...
+    attrs: Mapping[Any, Any] | None = ...,
+    inference_library: types.ModuleType | None = ...,
 ) -> dict: ...
 
 class requires:

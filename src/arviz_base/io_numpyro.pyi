@@ -7,7 +7,6 @@ from typing import Any
 
 import numpy as np
 import numpyro
-import xarray
 from _typeshed import Incomplete
 from xarray import DataTree
 
@@ -77,4 +76,4 @@ def from_numpyro(
     pred_dims: dict | None = ...,
     extra_event_dims: dict | None = ...,
     num_chains: int = ...,
-) -> xarray.DataTree: ...
+) -> DataTree: ...
