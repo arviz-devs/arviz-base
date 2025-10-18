@@ -5,6 +5,7 @@ pandas = "pandas"
 numpyro = "numpyro"
 emcee = "emcee"
 cmdstanpy = "cmdstanpy"
+stan = "stan"
 types = "types"
 
 # Specify human-friendly aliases that can be used instead of Python-parsable
