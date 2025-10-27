@@ -7,9 +7,9 @@ from typing import Literal
 import numpy as np
 import pandas
 import pandas as pd
-import xarray
 import xarray as xr
 from numpy.typing import ArrayLike
+from xarray import DataArray, Dataset
 
 from arviz_base.converters import convert_to_dataset
 from arviz_base.labels import BaseLabeller
@@ -40,31 +40,29 @@ def extract(
     resampling_method: str | None = ...,
     keep_dataset: bool = ...,
     random_seed: int | None = ...,
-) -> xarray.DataArray | xarray.Dataset: ...
+) -> DataArray | Dataset: ...
 def _stratified_resample(weights, rng) -> None: ...
 def dataset_to_dataarray(
-    ds: xarray.Dataset,
+    ds: Dataset,
     sample_dims: Sequence[Hashable] | None = ...,
     labeller: Labeller | None = ...,
     add_coords: bool = ...,
     new_dim: Hashable = ...,
     label_type: Literal["flat", "vert"] = ...,
-) -> xarray.DataArray: ...
+) -> DataArray: ...
 def dataset_to_dataframe(
-    ds: xarray.Dataset,
+    ds: Dataset,
     sample_dims: Sequence[Hashable] | None = ...,
     labeller: Labeller | None = ...,
     multiindex: Literal["row", "column"] | bool = ...,
     new_dim: Hashable = ...,
 ) -> pandas.DataFrame: ...
 def explode_dataset_dims(
-    ds: xarray.Dataset,
-    dim: Hashable | Sequence[Hashable],
-    labeller: Labeller | None = ...,
-) -> xarray.Dataset: ...
+    ds: Dataset, dim: Hashable | Sequence[Hashable], labeller: Labeller | None = ...
+) -> Dataset: ...
 def references_to_dataset(
-    references: Number | ArrayLike | dict | xarray.DataArray | xarray.Dataset,
-    ds: xarray.Dataset,
+    references: Number | ArrayLike | dict | DataArray | Dataset,
+    ds: Dataset,
     sample_dims: Iterable[Hashable] | None = ...,
     ref_dim: str | list | None = ...,
-) -> xarray.Dataset: ...
+) -> Dataset: ...

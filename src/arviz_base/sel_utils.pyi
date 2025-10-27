@@ -5,10 +5,10 @@ from itertools import product, tee
 from typing import Any
 
 import numpy as np
-import xarray
 import xarray as xr
 from _typeshed import Incomplete
 from numpy.typing import NDArray
+from xarray import DataArray, Dataset
 
 from arviz_base.labels import BaseLabeller
 from arviz_base.rcparams import rcParams
@@ -18,7 +18,7 @@ __all__ = ["xarray_sel_iter", "xarray_var_iter", "xarray_to_ndarray"]
 def _dims(data: Incomplete, var_name: Incomplete, skip_dims: Incomplete) -> None: ...
 def _zip_dims(new_dims: Incomplete, vals: Incomplete) -> None: ...
 def xarray_sel_iter(
-    data: xarray.Dataset | xarray.DataArray,
+    data: Dataset | DataArray,
     var_names: Sequence[Hashable] | None = ...,
     combined: bool | None = ...,
     skip_dims: set | None = ...,
@@ -26,16 +26,16 @@ def xarray_sel_iter(
     reverse_selections: bool = ...,
 ) -> Generator[tuple[str, dict[Any, Any], dict[Any, Any]]]: ...
 def xarray_var_iter(
-    data: xarray.Dataset,
+    data: Dataset,
     var_names: Sequence[Hashable] | None = ...,
     combined: bool | None = ...,
     skip_dims: set | None = ...,
     dim_to_idx: Mapping[Any, Hashable] | None = ...,
     reverse_selections: bool = ...,
     dim_order: list | None = ...,
-) -> Generator[tuple[str, dict[Any, Any], dict[Any, Any], xarray.DataArray]]: ...
+) -> Generator[tuple[str, dict[Any, Any], dict[Any, Any], DataArray]]: ...
 def xarray_to_ndarray(
-    data: xarray.Dataset,
+    data: Dataset,
     *,
     var_names: Sequence[Hashable] | None = ...,
     combined: bool = ...,

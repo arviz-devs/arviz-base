@@ -8,9 +8,8 @@ import shutil
 from collections import namedtuple
 from urllib.request import urlretrieve
 
-import xarray
 from _typeshed import Incomplete
-from xarray import open_datatree
+from xarray import Dataset, open_datatree
 
 from arviz_base.rcparams import rcParams
 
@@ -33,5 +32,5 @@ def clear_data_home(data_home: str | None = ...) -> None: ...
 def _sha256(path) -> None: ...
 def load_arviz_data(
     dataset: str | None = ..., data_home: str | None = ..., **kwargs: dict
-) -> xarray.Dataset: ...
+) -> Dataset: ...
 def list_datasets() -> list[str]: ...

@@ -63,6 +63,10 @@ jobs:
     displayName: 'pre-commit'
 
   - script: |
+      python -c "import cmdstanpy; cmdstanpy.install_cmdstan()"
+    displayName: "install cmdstan"
+
+  - script: |
       pytest external_tests/helpers.py
     displayName: 'precompile models'
 

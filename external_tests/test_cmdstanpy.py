@@ -1,6 +1,16 @@
 # pylint: disable=redefined-outer-name, no-self-use
+"""Integration tests for the cmdstanpy converter.
+
+Whenever it is necessary to update the saved models for cmdstanpy,
+delete the `external_tests/saved_models/cmdstanpy` folder and
+run `pytest external_tests/test_cmdstanpy.py`.
+
+All saved stan and csv files will be regenerated automatically.
+"""
+
 import os
 from glob import glob
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -18,25 +28,24 @@ def _create_test_data(target_dir):
     """
     import platform
     import shutil
-    from pathlib import Path
 
     import cmdstanpy
 
     model_code = """
         data {
             int<lower=0> J;
-            real y[J];
-            real<lower=0> sigma[J];
+            array[J] real y;
+            array[J] real<lower=0> sigma;
         }
 
         parameters {
             real mu;
             real<lower=0> tau;
-            real eta[2, J / 2];
+            array[2, J / 2] real eta;
         }
 
         transformed parameters {
-            real theta[J];
+            array[J] real theta;
             for (j in 1:J/2) {
                 theta[j] = mu + tau * eta[1, j];
                 theta[j + 4] = mu + tau * eta[2, j];
@@ -52,19 +61,18 @@ def _create_test_data(target_dir):
         }
 
         generated quantities {
-            vector[J] log_lik;
-            vector[J] y_hat;
+            array[J] real log_lik;
+            array[J] real y_hat;
             for (j in 1:J) {
                 log_lik[j] = normal_lpdf(y[j] | theta[j], sigma[j]);
                 y_hat[j] = normal_rng(theta[j], sigma[j]);
             }
         }
     """
-    stan_file = "stan_test_data.stan"
+    stan_file = Path(target_dir) / "stan_model_test.stan"
     with open(stan_file, "w", encoding="utf8") as file_handle:
         file_handle.write(model_code)
     model = cmdstanpy.CmdStanModel(stan_file=stan_file)
-    os.remove(stan_file)
     stan_data = {
         "J": 8,
         "y": np.array([28.0, 8.0, -3.0, 7.0, -1.0, 1.0, 18.0, 12.0]),
@@ -92,9 +100,9 @@ def _create_test_data(target_dir):
         new_path = path.parent / ("cmdstanpy_eight_schools_warmup-" + num + path.suffix)
         shutil.move(path, new_path)
         fit_files["cmdstanpy_eight_schools_warmup"].append(new_path)
-    path = Path(stan_file)
-    os.remove(str(path.parent / (path.stem + (".exe" if platform.system() == "Windows" else ""))))
-    os.remove(str(path.parent / (path.stem + ".hpp")))
+    stan_file.unlink()
+    stan_file.with_suffix(".exe" if platform.system() == "Windows" else "").unlink()
+    stan_file.with_suffix(".hpp").unlink(missing_ok=True)
     return fit_files
 
 
@@ -121,7 +129,7 @@ class TestDataCmdStanPy:
         return files
 
     @pytest.fixture(scope="class")
-    def data(self, filepaths, data_directory):
+    def data(self, filepaths, data_directory, tmp_path_factory):
         # Skip tests if cmdstanpy not installed
         cmdstanpy = importorskip("cmdstanpy")
         CmdStanModel = cmdstanpy.CmdStanModel  # pylint: disable=invalid-name
@@ -153,8 +161,19 @@ class TestDataCmdStanPy:
             obj_warmup = CmdStanMCMC(runset_obj_warmup)
             obj_warmup._assemble_draws()  # pylint: disable=protected-access
 
-            stan_file = os.path.join(data_directory, "stan_model_test.stan")
-            model = CmdStanModel(stan_file=stan_file, compile=False)
+            temp_dir = tmp_path_factory.mktemp("stan_model")
+            stan_file = temp_dir / "modified_dtype.stan"
+            with open(stan_file, "w", encoding="utf8") as file_handle:
+                modified_dtype_model = """
+                generated quantities {
+                    int eta;
+                    array[8] int theta;
+                }
+                """
+                file_handle.write(modified_dtype_model)
+            exe_file = temp_dir / "modified_dtype"
+            exe_file.touch()
+            model = CmdStanModel(stan_file=stan_file, exe_file=exe_file, force_compile=False)
 
         return Data
 
