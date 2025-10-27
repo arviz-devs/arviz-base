@@ -4,9 +4,8 @@ from collections.abc import Callable
 from copy import deepcopy
 from typing import Literal
 
-import xarray
 import xarray as xr
-from xarray import DataTree
+from xarray import Dataset, DataTree
 
 from arviz_base.utils import _var_names
 
@@ -17,4 +16,4 @@ def get_unconstrained_samples(
     transform_funcs: dict[str, Callable[[xr.DataArray], xr.DataArray]] | None = ...,
     group: str = ...,
     return_dataset: bool = ...,
-) -> DataTree | xarray.Dataset: ...
+) -> DataTree | Dataset: ...

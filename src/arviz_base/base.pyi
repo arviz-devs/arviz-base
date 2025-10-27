@@ -11,10 +11,10 @@ from numbers import Number
 from typing import TYPE_CHECKING, Any, TypeVar
 
 import numpy as np
-import xarray
 import xarray as xr
 from _typeshed import Incomplete
 from numpy.typing import ArrayLike, NDArray
+from xarray import DataArray, Dataset
 
 from arviz_base._version import __version__
 from arviz_base.rcparams import rcParams
@@ -44,7 +44,7 @@ def ndarray_to_dataarray(
     index_origin: int | None = ...,
     skip_event_dims: bool = ...,
     check_conventions: bool = ...,
-) -> xarray.DataArray: ...
+) -> DataArray: ...
 def dict_to_dataset(
     data: Mapping[Any, ArrayLike],
     *,
@@ -56,7 +56,7 @@ def dict_to_dataset(
     index_origin: int | None = ...,
     skip_event_dims: bool = ...,
     check_conventions: bool = ...,
-) -> xarray.Dataset: ...
+) -> Dataset: ...
 def make_attrs(
     attrs: Mapping[Any, Any] | None = ...,
     inference_library: types.ModuleType | None = ...,

@@ -7,7 +7,6 @@ from math import ceil
 
 import numpy as np
 import stan
-import xarray
 from _typeshed import Incomplete
 from xarray import DataArray, Dataset, DataTree
 
@@ -87,4 +86,4 @@ def from_pystan(
     prior_model: stan.model.Model | None = ...,
     save_warmup: bool | None = ...,
     dtypes: dict | None = ...,
-) -> xarray.DataTree: ...
+) -> DataTree: ...
