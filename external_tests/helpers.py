@@ -132,7 +132,7 @@ def _numpyro_noncentered_guide(J, sigma, y=None):
 
 
 def numpyro_schools_model(data, draws, chains):
-    """Noncentered eight schools implementation in NumPyro."""
+    """Non-centered eight schools implementation in NumPyro."""
     from jax.random import PRNGKey
     from numpyro.infer import MCMC, NUTS
 
@@ -156,7 +156,7 @@ def numpyro_schools_model(data, draws, chains):
 
 
 def numpyro_schools_model_svi(data, draws, chains):
-    """Centered eight schools implementation in NumPyro."""
+    """Non-centered eight schools implementation in NumPyro."""
     from jax.random import PRNGKey
     from numpyro.infer import SVI, Trace_ELBO, init_to_sample
     from numpyro.infer.autoguide import AutoNormal
@@ -169,7 +169,7 @@ def numpyro_schools_model_svi(data, draws, chains):
 
 
 def numpyro_schools_model_svi_custom_guide(data, draws, chains):
-    """Centered eight schools implementation in NumPyro."""
+    """Non-centered eight schools implementation in NumPyro."""
     from jax.random import PRNGKey
     from numpyro.infer import SVI, Trace_ELBO
     from numpyro.optim import Adam

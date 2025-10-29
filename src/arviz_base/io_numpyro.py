@@ -22,7 +22,6 @@ class SVIWrapper:
         model_args=None,
         model_kwargs=None,
         num_samples: int = 1000,
-        thinning: int = 1,
     ):
         import jax
         import numpyro
@@ -32,7 +31,7 @@ class SVIWrapper:
         self._args = model_args or tuple()
         self._kwargs = model_kwargs or dict()
         self.num_samples = num_samples
-        self.thinning = thinning
+        self.thinning = 1
         self.num_chains = 0
         self.sample_dims = ["samples"]
         self.kind = "svi"
