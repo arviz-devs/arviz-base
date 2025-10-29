@@ -334,7 +334,7 @@ class TestDataNumPyro:
 
         result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
         from_numpyro_func = from_numpyro_svi if svi else from_numpyro
-        sample_dims = ("samples",) if svi else ("chain", "draw")
+        sample_dims = ("sample",) if svi else ("chain", "draw")
 
         inference_data = from_numpyro_func(
             **result, coords={"group1": np.arange(10), "group2": np.arange(5)}
@@ -380,7 +380,7 @@ class TestDataNumPyro:
 
         result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
         from_numpyro_func = from_numpyro_svi if svi else from_numpyro
-        sample_dims = ("samples",) if svi else ("chain", "draw")
+        sample_dims = ("sample",) if svi else ("chain", "draw")
 
         inference_data = from_numpyro_func(
             **result, coords={"group1": np.arange(10), "group2": np.arange(5)}
@@ -417,7 +417,7 @@ class TestDataNumPyro:
 
         result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
         from_numpyro_func = from_numpyro_svi if svi else from_numpyro
-        sample_dims = ("samples",) if svi else ("chain", "draw")
+        sample_dims = ("sample",) if svi else ("chain", "draw")
 
         inference_data = from_numpyro_func(**result)
         assert inference_data.posterior.param.dims == sample_dims + ("group",)
@@ -453,7 +453,7 @@ class TestDataNumPyro:
 
         result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
         from_numpyro_func = from_numpyro_svi if svi else from_numpyro
-        sample_dims = ("samples",) if svi else ("chain", "draw")
+        sample_dims = ("sample",) if svi else ("chain", "draw")
 
         inference_data = from_numpyro_func(**result, coords={"groups": np.arange(10)})
         assert inference_data.posterior.gamma.dims == sample_dims + ("groups",)
@@ -535,7 +535,7 @@ class TestDataNumPyro:
 
         result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
         from_numpyro_func = from_numpyro_svi if svi else from_numpyro
-        sample_dims = ("samples",) if svi else ("chain", "draw")
+        sample_dims = ("sample",) if svi else ("chain", "draw")
         inference_data = from_numpyro_func(
             **result, coords={"groups": np.arange(10)}, extra_event_dims={"gamma_plus1": ["groups"]}
         )
@@ -548,7 +548,7 @@ class TestDataNumPyro:
         inference_data = self.get_inference_data(
             data, eight_schools_params, predictions_data, predictions_params, infer_dims=True
         )
-        sample_dims = ("samples",) if isinstance(data.obj, dict) else ("chain", "draw")
+        sample_dims = ("sample",) if isinstance(data.obj, dict) else ("chain", "draw")
         assert inference_data.predictions.obs.dims == (sample_dims + ("J",))
         assert "J" in inference_data.predictions.obs.coords
 

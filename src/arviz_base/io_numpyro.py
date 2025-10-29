@@ -33,7 +33,7 @@ class SVIWrapper:
         self.num_samples = num_samples
         self.thinning = 1
         self.num_chains = 0
-        self.sample_dims = ["samples"]
+        self.sample_dims = ["sample"]
         self.kind = "svi"
 
         self.numpyro = numpyro
@@ -703,7 +703,7 @@ def from_numpyro_svi(
         model_kwargs=model_kwargs,
         num_samples=num_samples,
     )
-    with rc_context(rc={"data.sample_dims": ["samples"]}):
+    with rc_context(rc={"data.sample_dims": ["sample"]}):
         return NumPyroConverter(
             posterior=posterior,
             prior=prior,
