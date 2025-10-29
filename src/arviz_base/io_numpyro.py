@@ -667,7 +667,7 @@ def from_numpyro_svi(
     model_args : tuple, optional
         Model arguments, should match those used for fitting the model.
     model_kwargs : dict, optional
-        Model keyword arguments, should match those used for fitting the model.\
+        Model keyword arguments, should match those used for fitting the model.
     prior : dict, optional
         Prior samples from a NumPyro model
     posterior_predictive : dict, optional
