@@ -67,6 +67,7 @@ Thus, to install all user facing optional dependencies you should use `arviz-bas
 tutorial/WorkingWithDataTree
 tutorial/label_guide
 how_to/ConversionGuideEmcee
+how_to/ConversionGuideNumPyro
 ArviZ in Context <https://arviz-devs.github.io/EABM/>
 :::
 
