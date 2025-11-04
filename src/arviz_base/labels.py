@@ -80,8 +80,9 @@ def mix_labellers(labellers, class_name="MixtureLabeller"):
         )(dim_map={"dim1": "$d_1$", "dim2": r"$d_2$"})
         print(f"Output of mixture labeller > {l3.sel_to_str(sel, sel)}")
 
-    We can see how the mappings are taken into account as well as the dim+coord style. However,
-    he order in the ``labellers`` arg iterator is important! See for yourself:
+    We can see how the mappings are taken into account as well as the dim+coord style.
+    However, the order in the ``labellers`` arg iterator is important!
+    See for yourself:
 
     .. jupyter-execute::
 
