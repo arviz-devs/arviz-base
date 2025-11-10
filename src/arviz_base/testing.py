@@ -108,6 +108,34 @@ def datatree_binary(seed=17):
     )
 
 
+def datatree_regression(seed=17):
+    """Generate a DataTree for regression data."""
+    from scipy.stats import norm
+
+    rng = np.random.default_rng(seed)
+    n_obs = 100
+    true_sigma = 0.9
+    true_mu = 2 * np.linspace(-1, 1, n_obs)
+    observed_data = true_mu + rng.normal(0, true_sigma, size=n_obs)
+
+    posterior_sigma = rng.normal(true_sigma, 0.1, size=(4, 500))
+    posterior_sigma = np.abs(posterior_sigma)
+
+    posterior_mu = rng.normal(true_mu, true_sigma * 0.5, size=(4, 500, n_obs))
+    posterior_predictive = rng.normal(posterior_mu, true_sigma, size=(4, 500, n_obs))
+    log_likelihood = norm(posterior_mu, true_sigma).logpdf(observed_data)
+
+    return from_dict(
+        {
+            "posterior": {"mu": posterior_mu, "sigma": posterior_sigma},
+            "posterior_predictive": {"y": posterior_predictive},
+            "observed_data": {"y": observed_data},
+            "log_likelihood": {"y": log_likelihood},
+        },
+        dims={"y": ["obs_dim"]},
+    )
+
+
 def datatree_4d(seed=31):
     """Generate a DataTree with a 4D posterior."""
     rng = np.random.default_rng(seed)
@@ -167,7 +195,7 @@ def cmp():
 
 
 def fake_dt():
-    """Generate a fake prior/posterior DataTreeZ."""
+    """Generate a fake prior/posterior DataTree."""
     rng = np.random.default_rng(42)
 
     return from_dict(
