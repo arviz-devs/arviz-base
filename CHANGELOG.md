@@ -1,3 +1,56 @@
+<a id="v0.7.0"></a>
+# [v0.7.0](https://github.com/arviz-devs/arviz-base/releases/tag/v0.7.0) - 2025-11-11
+
+## What's Changed
+
+### New Features
+
+* add some more flexibility to dataset_to conveters by [@OriolAbril](https://github.com/OriolAbril) in [#63](https://github.com/arviz-devs/arviz-base/pull/63)
+* adds label_type parameter in dataset_to_dataarray function by [@The-Broken-Keyboard](https://github.com/The-Broken-Keyboard) in [#81](https://github.com/arviz-devs/arviz-base/pull/81)
+* Add `get_unconstrained_samples` function by [@symeneses](https://github.com/symeneses) in [#82](https://github.com/arviz-devs/arviz-base/pull/82)
+* Add function to retrieve citations for arviz or methods implemented in arviz by [@aloctavodia](https://github.com/aloctavodia) in [#77](https://github.com/arviz-devs/arviz-base/pull/77) and in [#89](https://github.com/arviz-devs/arviz-base/pull/89)
+* add flag to disable checking in variables are present by [@aloctavodia](https://github.com/aloctavodia) in [#93](https://github.com/arviz-devs/arviz-base/pull/93)
+* Numpyro MCMC autodims migration by [@kylejcaron](https://github.com/kylejcaron) in [#88](https://github.com/arviz-devs/arviz-base/pull/88)
+* Set default ci_prob to 0.89 by [@aloctavodia](https://github.com/aloctavodia) in [#99](https://github.com/arviz-devs/arviz-base/pull/99)
+* Add censored cats example and test datatree for plot_pcc_censored by [@aloctavodia](https://github.com/aloctavodia) in [#100](https://github.com/arviz-devs/arviz-base/pull/100)
+* Add PyStan converter by [@aloctavodia](https://github.com/aloctavodia) in [#47](https://github.com/arviz-devs/arviz-base/pull/47)
+
+
+### Maintenance and bug fixes
+* Revert docstub install and update version by [@aloctavodia](https://github.com/aloctavodia) in [#74](https://github.com/arviz-devs/arviz-base/pull/74)
+* Type checking by [@symeneses](https://github.com/symeneses) in [#75](https://github.com/arviz-devs/arviz-base/pull/75)
+* Fix CI error due to jax-numpyro incompatibility by [@OriolAbril](https://github.com/OriolAbril) in [#84](https://github.com/arviz-devs/arviz-base/pull/84)
+* Bump actions/checkout from 4 to 5 by [@dependabot](https://github.com/dependabot)[bot] in [#91](https://github.com/arviz-devs/arviz-base/pull/91)
+* Bump actions/download-artifact from 4 to 5 by [@dependabot](https://github.com/dependabot)[bot] in [#92](https://github.com/arviz-devs/arviz-base/pull/92)
+* Patch CI so it passes again by [@OriolAbril](https://github.com/OriolAbril) in [#94](https://github.com/arviz-devs/arviz-base/pull/94)
+* Bump actions/setup-python from 5 to 6 by [@dependabot](https://github.com/dependabot)[bot] in [#96](https://github.com/arviz-devs/arviz-base/pull/96)
+* Update docstub and improve some type hints by [@OriolAbril](https://github.com/OriolAbril) in [#86](https://github.com/arviz-devs/arviz-base/pull/86)
+* Fix and update CI by [@OriolAbril](https://github.com/OriolAbril) in [#111](https://github.com/arviz-devs/arviz-base/pull/111)
+* Added `from_numpyro_svi` converter by [@kylejcaron](https://github.com/kylejcaron) in [#95](https://github.com/arviz-devs/arviz-base/pull/95)
+* Add dataset for testing R2 function and add reference pseudo-variance bernoulli by [@aloctavodia](https://github.com/aloctavodia) in [#115](https://github.com/arviz-devs/arviz-base/pull/115)
+
+
+### Documentation
+* Add new citations from `loo_score()` by [@jordandeklerk](https://github.com/jordandeklerk) in [#98](https://github.com/arviz-devs/arviz-base/pull/98)
+* Add Kaplan Meir reference by [@aloctavodia](https://github.com/aloctavodia) in [#101](https://github.com/arviz-devs/arviz-base/pull/101)
+* Correct two more typos in documentation by [@star1327p](https://github.com/star1327p) in [#102](https://github.com/arviz-devs/arviz-base/pull/102)
+* Fix typo compabible -> compatible by [@star1327p](https://github.com/star1327p) in [#103](https://github.com/arviz-devs/arviz-base/pull/103)
+* Add cross-ref link to the function `arviz_base.clear_data_home` by [@star1327p](https://github.com/star1327p) in [#104](https://github.com/arviz-devs/arviz-base/pull/104)
+* Correct a few formatting issues in Working with Data Tree by [@star1327p](https://github.com/star1327p) in [#112](https://github.com/arviz-devs/arviz-base/pull/112)
+* Fix typo "he order" -> "the order" by [@star1327p](https://github.com/star1327p) in [#114](https://github.com/arviz-devs/arviz-base/pull/114)
+
+
+## New Contributors
+* [@symeneses](https://github.com/symeneses) made their first contribution in [#75](https://github.com/arviz-devs/arviz-base/pull/75)
+* [@The-Broken-Keyboard](https://github.com/The-Broken-Keyboard) made their first contribution in [#81](https://github.com/arviz-devs/arviz-base/pull/81)
+* [@kylejcaron](https://github.com/kylejcaron) made their first contribution in [#88](https://github.com/arviz-devs/arviz-base/pull/88)
+* [@jordandeklerk](https://github.com/jordandeklerk) made their first contribution in [#98](https://github.com/arviz-devs/arviz-base/pull/98)
+
+**Full Changelog**: https://github.com/arviz-devs/arviz-base/compare/v0.6.0...v0.7.0
+
+[Changes][v0.7.0]
+
+
 <a id="v0.6.0"></a>
 # [v0.6.0](https://github.com/arviz-devs/arviz-base/releases/tag/v0.6.0) - 2025-06-16
 
@@ -73,8 +126,9 @@
 [Changes][v0.4.0]
 
 
+[v0.7.0]: https://github.com/arviz-devs/arviz-base/compare/v0.6.0...v0.7.0
 [v0.6.0]: https://github.com/arviz-devs/arviz-base/compare/v0.5.0...v0.6.0
 [v0.5.0]: https://github.com/arviz-devs/arviz-base/compare/v0.4.0...v0.5.0
 [v0.4.0]: https://github.com/arviz-devs/arviz-base/tree/v0.4.0
 
-<!-- Generated by https://github.com/rhysd/changelog-from-release v3.9.0 -->
+<!-- Generated by https://github.com/rhysd/changelog-from-release v3.9.1 -->
