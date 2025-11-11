@@ -1,3 +1,4 @@
+(api_reference)=
 # API reference
 
 ## Data reorganization
@@ -88,6 +89,7 @@ Otherwise, datasets are stored at `~/arviz_data/`
    arviz_base.ndarray_to_dataarray
 ```
 
+(labeller_api)=
 ## Labels
 
 ```{eval-rst}
