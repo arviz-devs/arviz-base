@@ -25,7 +25,7 @@ from arviz_base.reorg import (
 )
 from arviz_base.sel_utils import xarray_sel_iter, xarray_var_iter, xarray_to_ndarray
 from arviz_base.transform import get_unconstrained_samples
-from arviz_base import testing
+from arviz_base import testing, labels
 
 
 __all__ = [
@@ -50,6 +50,8 @@ __all__ = [
     "from_emcee",
     "from_numpyro",
     "from_numpyro_svi",
+    # labels submodule
+    "labels",
     # rcparams
     "rc_context",
     "rcParams",
