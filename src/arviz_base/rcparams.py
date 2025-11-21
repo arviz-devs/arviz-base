@@ -141,6 +141,36 @@ def _validate_probability(value):
     return value
 
 
+def _validate_rounding(value):
+    """Validate rounding value.
+
+    Parameters
+    ----------
+    value : int or str or None
+
+    Returns
+    -------
+    str or int or None
+
+    Raises
+    ------
+    ValueError
+        If the rounding specification is invalid.
+    """
+    if value is None or (isinstance(value, str) and value.lower() == "none"):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        value = value.strip().lower()
+        if re.fullmatch(r"\d+g", value):
+            return value
+    raise ValueError(
+        "Rounding must be an integer (number of decimal places), "
+        "'Ng' (number of significant digits) or None."
+    )
+
+
 def _validate_boolean(value):
     """Validate value is a float."""
     if isinstance(value, str):
@@ -306,6 +336,7 @@ defaultParams = {  # pylint: disable=invalid-name
     "stats.module": ("base", _validate_stats_module),
     "stats.ci_kind": ("eti", _make_validate_choice({"eti", "hdi"})),
     "stats.ci_prob": (0.89, _validate_probability),
+    "stats.round_to": ("2g", _validate_rounding),
     "stats.ic_pointwise": (True, _validate_boolean),
     "stats.ic_scale": (
         "log",
