@@ -222,6 +222,15 @@ which sometimes requires updating default values, for example to use new algorit
     The default probability of computed credible intervals. Its default value here
     is also a friendly reminder of the arbitrary nature of commonly values like 95%
 
+.. py:data:: stats.round_to
+    :type: int or str
+    :value: "2g"
+
+    Default rounding for statistical summaries. If an integer, specifies decimal places. If a string
+    ending in 'g', specifies significant digits. Integers can be negative. Use the strings
+    "None" or "none" for no rounding.
+
+
 .. py:data:: stats.ic_compare_method
     :type: str
     :value: "stacking"
