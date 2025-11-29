@@ -96,5 +96,19 @@
         "url": "http://figshare.com/ndownloader/files/58114255",
         "checksum": "02432a7972a5f599645b6c952e0f236d5192fdd72d77f381060155aca1872b4d",
         "description": "Simple model of the survival curve for cat adoptions from an animal shelter in Austin, Texas. The dataset comes from the City of Austin Open Data Portal for more details of the model you can check bambi's documentation"
+    },
+    {
+        "name": "roaches_nb",
+        "filename": "roaches_nb.nc",
+        "url": "http://figshare.com/ndownloader/files/59961428",
+        "checksum": "d23cdcac455e664026aecded63448ec00d8644c1e0ea850b8ef4632c0b3c72e2",
+        "description": "The roaches data example comes from Chapter 8.3 of of Gelman and Hill (2007)."
+    },
+    {
+        "name": "roaches_zinb",
+        "filename": "roaches_zinb.nc",
+        "url": "http://figshare.com/ndownloader/files/59961557",
+        "checksum": "0cbbaa033e327b9b27e719b1fae34e3e24a19700493ece7e55b47b0fe5d8d3ab",
+        "description": "The roaches data example comes from Chapter 8.3 of of Gelman and Hill (2007)."
     }
 ]
