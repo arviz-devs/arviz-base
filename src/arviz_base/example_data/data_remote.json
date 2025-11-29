@@ -107,8 +107,8 @@
     {
         "name": "roaches_zinb",
         "filename": "roaches_zinb.nc",
-        "url": "http://figshare.com/ndownloader/files/59961557",
-        "checksum": "0cbbaa033e327b9b27e719b1fae34e3e24a19700493ece7e55b47b0fe5d8d3ab",
+        "url": "http://figshare.com/ndownloader/files/59961890",
+        "checksum": "49dc422da36ffd8c1ba58a0888a178cf229444b527459af2a88376eb151b28bc",
         "description": "The roaches data example comes from Chapter 8.3 of of Gelman and Hill (2007)."
     }
 ]
