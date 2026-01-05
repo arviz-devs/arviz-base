@@ -288,6 +288,22 @@ def test_validate_stats_module(args):
         assert value is validated
 
 
+def test_bfmi_threshold_default():
+    """Test bfmi_threshold rcParam has correct default and validates properly."""
+    assert rcParams["stats.bfmi_threshold"] == 0.3
+    with rc_context(rc={"stats.bfmi_threshold": 0.2}):
+        assert rcParams["stats.bfmi_threshold"] == 0.2
+    assert rcParams["stats.bfmi_threshold"] == 0.3
+
+
+def test_bfmi_threshold_validation():
+    """Test bfmi_threshold validation rejects invalid values."""
+    with pytest.raises(ValueError, match="between 0 and 1"):
+        rcParams["stats.bfmi_threshold"] = 1.5
+    with pytest.raises(ValueError, match="between 0 and 1"):
+        rcParams["stats.bfmi_threshold"] = -0.1
+
+
 ## Some simple integration checks with rcparams
 def test_sample_dims():
     rng = np.random.default_rng(3)
