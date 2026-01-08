@@ -112,7 +112,6 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
     Returns
     -------
     xarray.Dataset
-
     """
     if dataset in LOCAL_DATASETS:
         resource = LOCAL_DATASETS[dataset]
@@ -125,10 +124,23 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
 
         if not os.path.exists(file_path):
             http_type = rcParams["data.http_protocol"]
-
             # Replaces http type. Redundant if http_type is http, useful if http_type is https
             url = remote.url.replace("http", http_type)
-            urlretrieve(url, file_path)
+
+            download_success = False
+            try:
+                urlretrieve(url, file_path)
+                if os.path.exists(file_path) and os.path.getsize(file_path) >= 100:
+                    download_success = True
+                elif os.path.exists(file_path):
+                    os.remove(file_path)
+            except Exception:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+
+            if not download_success:
+                github_url = f"https://raw.githubusercontent.com/arviz-devs/arviz_example_data/main/data/{remote.filename}"
+                urlretrieve(github_url, file_path)
 
         checksum = _sha256(file_path)
         if remote.checksum != checksum:
@@ -137,9 +149,12 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
                 "({remote.checksum}), file may be corrupted. "
                 "Run `arviz.clear_data_home()` and try again, or please open an issue."
             )
+
         return open_datatree(file_path, **kwargs).load()
+
     if dataset is None:
         return dict(itertools.chain(LOCAL_DATASETS.items(), REMOTE_DATASETS.items()))
+
     raise ValueError(
         f"Dataset {dataset} not found! The following are available:\n{list_datasets()}"
     )
