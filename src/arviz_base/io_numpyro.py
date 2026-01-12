@@ -239,7 +239,7 @@ class BaseNumPyroConverter(ABC):
         pass
 
     @abstractmethod
-    def _prepare_predictive_data(self, dct):
+    def _prepare_predictive_data(self, dct: dict) -> dict:
         """Prepare and reshape posterior_predictive/predictions data.
 
         Parameters
