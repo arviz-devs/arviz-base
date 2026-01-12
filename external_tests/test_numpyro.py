@@ -4,7 +4,7 @@ from collections import namedtuple
 import numpy as np
 import pytest
 
-from arviz_base.io_numpyro import SVIWrapper, from_numpyro, from_numpyro_svi
+from arviz_base.io_numpyro import from_numpyro, from_numpyro_svi
 from arviz_base.testing import check_multiple_attrs
 
 from .helpers import importorskip, load_cached_models
@@ -16,6 +16,61 @@ numpyro = importorskip("numpyro")
 Predictive = numpyro.infer.Predictive
 autoguide = numpyro.infer.autoguide
 numpyro.set_host_device_count(2)
+
+
+def _create_test_posterior_wrapper(data_obj):
+    """Create a test wrapper with uniform interface for MCMC and SVI.
+
+    This is a minimal test helper to provide the same interface that
+    SVIWrapper used to provide, without the full implementation.
+    """
+    if isinstance(data_obj, dict):
+        # SVI case: data_obj contains svi, svi_result, etc.
+        class _SVITestWrapper:
+            def __init__(self, svi, svi_result, model_args=None, model_kwargs=None):
+                self.svi = svi
+                self.svi_result = svi_result
+                self._args = model_args or tuple()
+                self._kwargs = model_kwargs or dict()
+                self.num_chains = 0  # SVI has no chains
+                self.num_samples = 1000  # Number of samples to draw from guide
+                self.thinning = 1
+
+            def get_samples(self, seed=None, **kwargs):
+                key = PRNGKey(seed or 0)
+                if isinstance(self.svi.guide, numpyro.infer.autoguide.AutoGuide):
+                    return self.svi.guide.sample_posterior(
+                        key,
+                        self.svi_result.params,
+                        *self._args,
+                        sample_shape=(1000,),
+                        **self._kwargs,
+                    )
+                predictive = Predictive(
+                    self.svi.guide, params=self.svi_result.params, num_samples=1000
+                )
+                return predictive(key, *self._args, **self._kwargs)
+
+            def get_extra_fields(self, **kwargs):
+                """SVI has no extra fields like divergences, step_size, etc."""
+                return {}
+
+            @property
+            def sampler(self):
+                class Sampler:
+                    def __init__(self, model):
+                        self._model = model
+
+                    @property
+                    def model(self):
+                        return self._model
+
+                return Sampler(getattr(self.svi.guide, "model", self.svi.model))
+
+        return _SVITestWrapper(**data_obj)
+    else:
+        # MCMC case: data_obj is already an MCMC object with the right interface
+        return data_obj
 
 
 class TestDataNumPyro:
@@ -37,7 +92,7 @@ class TestDataNumPyro:
     @pytest.fixture(scope="class")
     def predictions_data(self, data, predictions_params):
         """Generate predictions for predictions_params"""
-        posterior = SVIWrapper(**data.obj) if isinstance(data.obj, dict) else data.obj
+        posterior = _create_test_posterior_wrapper(data.obj)
         posterior_samples = posterior.get_samples()
         model = posterior.sampler.model
         predictions = Predictive(model, posterior_samples)(
@@ -49,7 +104,7 @@ class TestDataNumPyro:
         self, data, eight_schools_params, predictions_data, predictions_params, infer_dims=False
     ):
         if isinstance(data.obj, dict):  # SVI cached data obj is a tuple
-            posterior = SVIWrapper(**data.obj)
+            posterior = _create_test_posterior_wrapper(data.obj)
             from_numpyro_func = from_numpyro_svi
             posterior_kwarg = data.obj
         else:  # regular MCMC
@@ -86,7 +141,7 @@ class TestDataNumPyro:
         )
 
     def test_inference_data_namedtuple(self, data):
-        posterior = SVIWrapper(**data.obj) if isinstance(data.obj, dict) else data.obj
+        posterior = _create_test_posterior_wrapper(data.obj)
         samples = posterior.get_samples()
         Samples = namedtuple("Samples", samples)
         data_namedtuple = Samples(**samples)
@@ -128,7 +183,7 @@ class TestDataNumPyro:
     def test_inference_data_no_posterior(
         self, data, eight_schools_params, predictions_data, predictions_params
     ):
-        posterior = SVIWrapper(**data.obj) if isinstance(data.obj, dict) else data.obj
+        posterior = _create_test_posterior_wrapper(data.obj)
         posterior_samples = posterior.get_samples()
         model = posterior.sampler.model
         posterior_predictive = Predictive(model, posterior_samples)(
@@ -571,41 +626,3 @@ class TestDataNumPyro:
             mcmc = MCMC(NUTS(model), num_warmup=10, num_samples=10)
             mcmc.run(PRNGKey(0))
             return {"posterior": mcmc}
-
-
-class TestSVIWrapper:
-    @pytest.fixture(scope="class", params=["numpyro_svi", "numpyro_svi_custom_guide"])
-    def data(self, request, eight_schools_params, draws, chains):
-        class Data:
-            obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[request.param]
-
-        return Data
-
-    def test_init_without_args_kwargs(self):
-        from numpyro.infer import Trace_ELBO
-        from numpyro.infer.svi import SVI, SVIRunResult
-        from numpyro.optim import Adam
-
-        model = guide = lambda x: x
-        svi = SVI(model, guide, optim=Adam(0.05), loss=Trace_ELBO())
-        svi_result = SVIRunResult(params=jax.numpy.ones(5), state=None, losses=jax.numpy.zeros(10))
-
-        posterior = SVIWrapper(svi, svi_result=svi_result)
-        assert isinstance(posterior._args, tuple)
-        assert isinstance(posterior._kwargs, dict)
-
-    def test_get_samples(self, data, eight_schools_params):
-        svi_posterior = SVIWrapper(
-            data.obj["svi"], svi_result=data.obj["svi_result"], model_kwargs=eight_schools_params
-        )
-        out = svi_posterior.get_samples(seed=0)
-        assert isinstance(out, dict)
-        for v in out.values():  # values are array-like
-            assert isinstance(v, (jax.numpy.ndarray | np.ndarray))
-
-    def test_sampler_attr(self, data, eight_schools_params):
-        svi_posterior = SVIWrapper(
-            data.obj["svi"], svi_result=data.obj["svi_result"], model_kwargs=eight_schools_params
-        )
-        assert hasattr(svi_posterior, "sampler")
-        assert hasattr(svi_posterior.sampler, "model")
