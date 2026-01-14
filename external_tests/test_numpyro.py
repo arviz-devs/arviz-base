@@ -18,59 +18,60 @@ autoguide = numpyro.infer.autoguide
 numpyro.set_host_device_count(2)
 
 
-def _create_test_posterior_wrapper(data_obj):
-    """Create a test wrapper with uniform interface for MCMC and SVI.
+def _is_svi_data(data_obj):
+    """Check if data object is SVI (dict format) or MCMC."""
+    return isinstance(data_obj, dict)
 
-    This is a minimal test helper to provide the same interface that
-    SVIWrapper used to provide, without the full implementation.
-    """
-    if isinstance(data_obj, dict):
-        # SVI case: data_obj contains svi, svi_result, etc.
-        class _SVITestWrapper:
-            def __init__(self, svi, svi_result, model_args=None, model_kwargs=None):
-                self.svi = svi
-                self.svi_result = svi_result
-                self._args = model_args or tuple()
-                self._kwargs = model_kwargs or dict()
-                self.num_chains = 0  # SVI has no chains
-                self.num_samples = 1000  # Number of samples to draw from guide
-                self.thinning = 1
 
-            def get_samples(self, seed=None, **kwargs):
-                key = PRNGKey(seed or 0)
-                if isinstance(self.svi.guide, numpyro.infer.autoguide.AutoGuide):
-                    return self.svi.guide.sample_posterior(
-                        key,
-                        self.svi_result.params,
-                        *self._args,
-                        sample_shape=(1000,),
-                        **self._kwargs,
-                    )
-                predictive = Predictive(
-                    self.svi.guide, params=self.svi_result.params, num_samples=1000
-                )
-                return predictive(key, *self._args, **self._kwargs)
-
-            def get_extra_fields(self, **kwargs):
-                """SVI has no extra fields like divergences, step_size, etc."""
-                return {}
-
-            @property
-            def sampler(self):
-                class Sampler:
-                    def __init__(self, model):
-                        self._model = model
-
-                    @property
-                    def model(self):
-                        return self._model
-
-                return Sampler(getattr(self.svi.guide, "model", self.svi.model))
-
-        return _SVITestWrapper(**data_obj)
+def _get_model_from_data(data_obj):
+    """Extract model from either MCMC or SVI data."""
+    if _is_svi_data(data_obj):
+        svi = data_obj["svi"]
+        return getattr(svi.guide, "model", svi.model)
     else:
-        # MCMC case: data_obj is already an MCMC object with the right interface
-        return data_obj
+        return data_obj.sampler.model
+
+
+def _get_samples_from_data(data_obj):
+    """Extract samples from either MCMC or SVI data."""
+    if _is_svi_data(data_obj):
+        import jax
+
+        svi = data_obj["svi"]
+        svi_result = data_obj["svi_result"]
+        model_args = data_obj.get("model_args", tuple())
+        model_kwargs = data_obj.get("model_kwargs", dict())
+
+        key = jax.random.PRNGKey(0)
+        if isinstance(svi.guide, numpyro.infer.autoguide.AutoGuide):
+            return svi.guide.sample_posterior(
+                key, svi_result.params, *model_args, sample_shape=(1000,), **model_kwargs
+            )
+        predictive = Predictive(svi.guide, params=svi_result.params, num_samples=1000)
+        return predictive(key, *model_args, **model_kwargs)
+    else:
+        return data_obj.get_samples()
+
+
+def _from_numpyro_auto(data_obj, **kwargs):
+    """Test helper to auto-route to correct converter based on data type."""
+    if _is_svi_data(data_obj):
+        return from_numpyro_svi(**data_obj, **kwargs)
+    else:
+        return from_numpyro(posterior=data_obj, **kwargs)
+
+
+def _from_numpyro_inference_result(result_dict, **kwargs):
+    """Test helper for _run_inference results.
+
+    Handles dicts from _run_inference which are either:
+    - {"svi": svi, "svi_result": result} for SVI
+    - {"posterior": mcmc} for MCMC
+    """
+    if "svi" in result_dict:
+        return from_numpyro_svi(**result_dict, **kwargs)
+    else:
+        return from_numpyro(**result_dict, **kwargs)
 
 
 class TestDataNumPyro:
@@ -92,9 +93,8 @@ class TestDataNumPyro:
     @pytest.fixture(scope="class")
     def predictions_data(self, data, predictions_params):
         """Generate predictions for predictions_params"""
-        posterior = _create_test_posterior_wrapper(data.obj)
-        posterior_samples = posterior.get_samples()
-        model = posterior.sampler.model
+        posterior_samples = _get_samples_from_data(data.obj)
+        model = _get_model_from_data(data.obj)
         predictions = Predictive(model, posterior_samples)(
             PRNGKey(2), predictions_params["J"], predictions_params["sigma"]
         )
@@ -103,35 +103,26 @@ class TestDataNumPyro:
     def get_inference_data(
         self, data, eight_schools_params, predictions_data, predictions_params, infer_dims=False
     ):
-        if isinstance(data.obj, dict):  # SVI cached data obj is a tuple
-            posterior = _create_test_posterior_wrapper(data.obj)
-            from_numpyro_func = from_numpyro_svi
-            posterior_kwarg = data.obj
-        else:  # regular MCMC
-            posterior = data.obj
-            from_numpyro_func = from_numpyro
-            posterior_kwarg = {"posterior": posterior}
+        posterior_samples = _get_samples_from_data(data.obj)
+        model = _get_model_from_data(data.obj)
 
-        posterior_samples = posterior.get_samples()
-        model = posterior.sampler.model
         posterior_predictive = Predictive(model, posterior_samples)(
             PRNGKey(1), eight_schools_params["J"], eight_schools_params["sigma"]
         )
         prior = Predictive(model, num_samples=500)(
             PRNGKey(2), eight_schools_params["J"], eight_schools_params["sigma"]
         )
+
         dims = {"theta": ["school"], "eta": ["school"], "obs": ["school"]}
         pred_dims = {"theta": ["school_pred"], "eta": ["school_pred"], "obs": ["school_pred"]}
         if infer_dims:
             dims = pred_dims = None
 
-        predictions = predictions_data
-
-        return from_numpyro_func(
-            **posterior_kwarg,
+        return _from_numpyro_auto(
+            data.obj,
             prior=prior,
             posterior_predictive=posterior_predictive,
-            predictions=predictions,
+            predictions=predictions_data,
             coords={
                 "school": np.arange(eight_schools_params["J"]),
                 "school_pred": np.arange(predictions_params["J"]),
@@ -141,7 +132,10 @@ class TestDataNumPyro:
         )
 
     def test_inference_data_namedtuple(self, data):
-        posterior = _create_test_posterior_wrapper(data.obj)
+        if _is_svi_data(data.obj):
+            pytest.skip("Namedtuple test only applies to MCMC")
+
+        posterior = data.obj
         samples = posterior.get_samples()
         Samples = namedtuple("Samples", samples)
         data_namedtuple = Samples(**samples)
@@ -183,9 +177,11 @@ class TestDataNumPyro:
     def test_inference_data_no_posterior(
         self, data, eight_schools_params, predictions_data, predictions_params
     ):
-        posterior = _create_test_posterior_wrapper(data.obj)
-        posterior_samples = posterior.get_samples()
-        model = posterior.sampler.model
+        if _is_svi_data(data.obj):
+            pytest.skip("This test only runs with MCMC (numpyro)")
+
+        posterior_samples = _get_samples_from_data(data.obj)
+        model = _get_model_from_data(data.obj)
         posterior_predictive = Predictive(model, posterior_samples)(
             PRNGKey(1), eight_schools_params["J"], eight_schools_params["sigma"]
         )
@@ -232,14 +228,12 @@ class TestDataNumPyro:
         assert not fails, f"prior and posterior_predictive: {fails}"
 
     def test_inference_data_only_posterior(self, data):
-        kwargs = data.obj if isinstance(data.obj, dict) else {"posterior": data.obj}
-        from_numpyro_func = from_numpyro_svi if isinstance(data.obj, dict) else from_numpyro
-        idata = from_numpyro_func(**kwargs)
+        idata = _from_numpyro_auto(data.obj)
         test_dict = {
             "posterior": ["mu", "tau", "eta"],
             "sample_stats": ["diverging"],
         }
-        if isinstance(data.obj, dict):
+        if _is_svi_data(data.obj):
             test_dict.pop("sample_stats")
         fails = check_multiple_attrs(test_dict, idata)
         assert not fails
@@ -310,7 +304,9 @@ class TestDataNumPyro:
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails
 
-    def test_inference_data_num_chains(self, predictions_data, chains):
+    def test_inference_data_num_chains(self, data, predictions_data, chains):
+        if _is_svi_data(data.obj):
+            pytest.skip("This test only runs with MCMC (numpyro)")
         predictions = predictions_data
         inference_data = from_numpyro(predictions=predictions, num_chains=chains)
         nchains = inference_data.predictions.sizes["chain"]
@@ -388,11 +384,10 @@ class TestDataNumPyro:
             guide_fn = guide
 
         result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
-        from_numpyro_func = from_numpyro_svi if svi else from_numpyro
         sample_dims = ("sample",) if svi else ("chain", "draw")
 
-        inference_data = from_numpyro_func(
-            **result, coords={"group1": np.arange(10), "group2": np.arange(5)}
+        inference_data = _from_numpyro_inference_result(
+            result, coords={"group1": np.arange(10), "group2": np.arange(5)}
         )
         assert inference_data.posterior.param.dims == sample_dims + ("group1", "group2")
         assert all(dim in inference_data.posterior.param.coords for dim in ("group1", "group2"))
@@ -434,11 +429,10 @@ class TestDataNumPyro:
             guide_fn = guide
 
         result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
-        from_numpyro_func = from_numpyro_svi if svi else from_numpyro
         sample_dims = ("sample",) if svi else ("chain", "draw")
 
-        inference_data = from_numpyro_func(
-            **result, coords={"group1": np.arange(10), "group2": np.arange(5)}
+        inference_data = _from_numpyro_inference_result(
+            result, coords={"group1": np.arange(10), "group2": np.arange(5)}
         )
         assert inference_data.posterior.param.dims == sample_dims + ("group2", "group1")
         assert all(dim in inference_data.posterior.param.coords for dim in ("group1", "group2"))
@@ -471,10 +465,9 @@ class TestDataNumPyro:
             guide_fn = guide
 
         result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
-        from_numpyro_func = from_numpyro_svi if svi else from_numpyro
         sample_dims = ("sample",) if svi else ("chain", "draw")
 
-        inference_data = from_numpyro_func(**result)
+        inference_data = _from_numpyro_inference_result(result)
         assert inference_data.posterior.param.dims == sample_dims + ("group",)
 
     @pytest.mark.parametrize(
@@ -507,10 +500,9 @@ class TestDataNumPyro:
             guide_fn = guide
 
         result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
-        from_numpyro_func = from_numpyro_svi if svi else from_numpyro
         sample_dims = ("sample",) if svi else ("chain", "draw")
 
-        inference_data = from_numpyro_func(**result, coords={"groups": np.arange(10)})
+        inference_data = _from_numpyro_inference_result(result, coords={"groups": np.arange(10)})
         assert inference_data.posterior.gamma.dims == sample_dims + ("groups",)
         assert "groups" in inference_data.posterior.gamma.coords
 
@@ -555,9 +547,8 @@ class TestDataNumPyro:
             guide_fn = guide
 
         result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
-        from_numpyro_func = from_numpyro_svi if svi else from_numpyro
         with pytest.raises(ValueError):
-            from_numpyro_func(**result, coords={"obs_idx": np.arange(3)})
+            _from_numpyro_inference_result(result, coords={"obs_idx": np.arange(3)})
 
     @pytest.mark.parametrize(
         "svi,guide_fn",
@@ -589,10 +580,9 @@ class TestDataNumPyro:
             guide_fn = guide
 
         result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
-        from_numpyro_func = from_numpyro_svi if svi else from_numpyro
         sample_dims = ("sample",) if svi else ("chain", "draw")
-        inference_data = from_numpyro_func(
-            **result, coords={"groups": np.arange(10)}, extra_event_dims={"gamma_plus1": ["groups"]}
+        inference_data = _from_numpyro_inference_result(
+            result, coords={"groups": np.arange(10)}, extra_event_dims={"gamma_plus1": ["groups"]}
         )
         assert inference_data.posterior.gamma_plus1.dims == sample_dims + ("groups",)
         assert "groups" in inference_data.posterior.gamma_plus1.coords
@@ -603,7 +593,7 @@ class TestDataNumPyro:
         inference_data = self.get_inference_data(
             data, eight_schools_params, predictions_data, predictions_params, infer_dims=True
         )
-        sample_dims = ("sample",) if isinstance(data.obj, dict) else ("chain", "draw")
+        sample_dims = ("sample",) if _is_svi_data(data.obj) else ("chain", "draw")
         assert inference_data.predictions.obs.dims == (sample_dims + ("J",))
         assert "J" in inference_data.predictions.obs.coords
 
@@ -619,7 +609,6 @@ class TestDataNumPyro:
             return {
                 "svi": svi,
                 "svi_result": svi_result,
-                "model": None if is_autoguide else model,
             }
 
         else:

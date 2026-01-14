@@ -115,10 +115,6 @@ class BaseNumPyroConverter(ABC):
 
     # pylint: disable=too-many-instance-attributes
 
-    model = None
-    nchains = None
-    ndraws = None
-
     def __init__(
         self,
         *,
@@ -134,7 +130,6 @@ class BaseNumPyroConverter(ABC):
         dims=None,
         pred_dims=None,
         extra_event_dims=None,
-        num_chains=1,
     ):
         """Convert NumPyro data into an InferenceData object.
 
@@ -159,8 +154,6 @@ class BaseNumPyroConverter(ABC):
             Map variable names to their coordinates. Will be inferred if they are not provided.
         pred_dims : dict, optional
             Dims for predictions data. Map variable names to their coordinates.
-        num_chains : int, optional
-            Number of chains used for sampling. Ignored if posterior is present.
         extra_event_dims : dict, optional
             Maps event dims that couldnt be inferred (ie deterministic sites) to their coordinates.
         """
@@ -181,33 +174,14 @@ class BaseNumPyroConverter(ABC):
         self.extra_event_dims = extra_event_dims
         self.numpyro = numpyro
 
-        def arbitrary_element(dct):
-            return next(iter(dct.values()))
-
+        self.sample_shape = self._infer_sample_shape()
+        self._args, self._kwargs = self._get_train_args_kwargs()
         if posterior is not None:
-            # Call abstract method to extract samples
-            self._extract_samples_from_posterior(posterior)
+            self._samples = self._get_samples()
             self.dims = self.dims if self.dims is not None else self.infer_dims()
             self.pred_dims = (
                 self.pred_dims if self.pred_dims is not None else self.infer_pred_dims()
             )
-        else:
-            self.nchains = num_chains
-            get_from = None
-            if predictions is not None:
-                get_from = predictions
-            elif posterior_predictive is not None:
-                get_from = posterior_predictive
-            elif prior is not None:
-                get_from = prior
-            if get_from is None and constant_data is None and predictions_constant_data is None:
-                raise ValueError(
-                    "When constructing InferenceData must have at least"
-                    " one of posterior, prior, posterior_predictive or predictions."
-                )
-            if get_from is not None:
-                aelem = arbitrary_element(get_from)
-                self.ndraws = aelem.shape[0] // self.nchains
 
         observations = {}
         if self.model is not None:
@@ -224,37 +198,36 @@ class BaseNumPyroConverter(ABC):
             }
         self.observations = observations if observations else None
 
+    @property
     @abstractmethod
-    def _extract_samples_from_posterior(self, posterior):
-        """Extract samples and metadata from posterior object.
+    def model(self):
+        """Return the internal model."""
+        pass
 
-        Should set:
-        - self._samples: dict of samples
-        - self.nchains: number of chains (0 for SVI, >0 for MCMC)
-        - self.ndraws: number of draws
-        - self.model: the model function
+    @abstractmethod
+    def _infer_sample_shape(self):
+        """Return the expected sample shape."""
+        pass
+
+    @abstractmethod
+    def _get_train_args_kwargs(self):
+        """Extract training metadata from posterior object.
+
+        Should return:
         - self._args: model args
         - self._kwargs: model kwargs
         """
         pass
 
     @abstractmethod
-    def _prepare_predictive_data(self, dct: dict) -> dict:
-        """Prepare and reshape posterior_predictive/predictions data.
+    def _get_samples(self):
+        """Extract samples from posterior object.
 
-        Parameters
-        ----------
-        dct : dict
-            Dictionary of arrays to prepare
-
-        Returns
-        -------
-        dict
-            Dictionary with properly shaped arrays for this sampler
+        Should set:
+        - self._samples: dict of samples
         """
         pass
 
-    @abstractmethod
     def sample_stats_to_xarray(self):
         """Extract sampler-specific statistics.
 
@@ -263,7 +236,7 @@ class BaseNumPyroConverter(ABC):
         xarray.Dataset | None
             Sample statistics dataset, or None if not available
         """
-        pass
+        return None
 
     def _get_model_trace(self, model, model_args, model_kwargs, key):
         """Extract the numpyro model trace."""
@@ -277,6 +250,40 @@ class BaseNumPyroConverter(ABC):
         )
         trace = self.numpyro.handlers.trace(seeded_model).get_trace(*model_args, **model_kwargs)
         return trace
+
+    def _prepare_predictive_data(self, dct: dict) -> dict:
+        """Prepare and reshape posterior_predictive/predictions data.
+
+        Parameters
+        ----------
+        dct : dict
+            Dictionary of arrays to prepare
+
+        Returns
+        -------
+        dict
+            Dictionary with properly shaped arrays for this sampler
+        """
+        expected_size = np.prod(self.sample_shape)  # flatten sample dimensions
+        data = {}
+        for k, ary in dct.items():
+            shape = ary.shape
+
+            if shape[: len(self.sample_shape)] == self.sample_shape:
+                # Already in desired sample shape
+                data[k] = ary
+            elif shape[0] == expected_size:
+                # Flattened sample dimension: reshape to sample_shape + remaining dims
+                data[k] = ary.reshape(self.sample_shape + shape[1:])
+            else:
+                # Not compatible, expand dims and warn
+                data[k] = np.expand_dims(ary, axis=0)
+                warnings.warn(
+                    f"posterior predictive shape {shape} not compatible with "
+                    "sample_shape {self.sample_shape}. "
+                    "This can mean that some draws or even whole chains are not represented."
+                )
+        return data
 
     @requires("posterior")
     def posterior_to_xarray(self):
@@ -298,14 +305,14 @@ class BaseNumPyroConverter(ABC):
             return None
         data = {}
         if self.observations is not None:
-            samples = self.posterior.get_samples(group_by_chain=False)
+            samples = self._get_samples()
             if hasattr(samples, "_asdict"):
                 samples = samples._asdict()
             log_likelihood_dict = self.numpyro.infer.log_likelihood(
                 self.model, samples, *self._args, **self._kwargs
             )
             for obs_name, log_like in log_likelihood_dict.items():
-                shape = (self.nchains, self.ndraws) + log_like.shape[1:]
+                shape = self.sample_shape + log_like.shape[1:]
                 data[obs_name] = np.reshape(np.asarray(log_like), shape)
         return dict_to_dataset(
             data,
@@ -350,14 +357,14 @@ class BaseNumPyroConverter(ABC):
             prior_vars = self.prior.keys()
             prior_predictive_vars = None
 
-        # Use nchains > 0 to decide whether to expand dims
+        has_chains = len(self.sample_shape) > 1
         priors_dict = {
             group: (
                 None
                 if var_names is None
                 else dict_to_dataset(
                     {
-                        k: expand_dims(self.prior[k]) if self.nchains > 0 else self.prior[k]
+                        k: expand_dims(self.prior[k]) if has_chains else self.prior[k]
                         for k in var_names
                     },
                     inference_library=self.numpyro,
@@ -451,13 +458,131 @@ class BaseNumPyroConverter(ABC):
 
 
 class MCMCConverter(BaseNumPyroConverter):
-    """Converter for MCMC samplers."""
+    """Converter for numpyro MCMC inference results."""
 
-    def _extract_samples_from_posterior(self, posterior):
+    def __init__(
+        self,
+        *,
+        posterior=None,
+        prior=None,
+        posterior_predictive=None,
+        predictions=None,
+        constant_data=None,
+        predictions_constant_data=None,
+        log_likelihood=False,
+        index_origin=None,
+        coords=None,
+        dims=None,
+        pred_dims=None,
+        extra_event_dims=None,
+        num_chains=1,
+    ):
+        """Convert NumPyro data into an InferenceData object.
+
+        Parameters
+        ----------
+        posterior : numpyro.mcmc.MCMC
+            Fitted MCMC object from NumPyro
+        prior : dict, optional
+            Prior samples from a NumPyro model
+        posterior_predictive : dict, optional
+            Posterior predictive samples for the posterior
+        predictions : dict, optional
+            Out of sample predictions
+        constant_data : dict, optional
+            Dictionary containing constant data variables mapped to their values.
+        predictions_constant_data : dict, optional
+            Constant data used for out-of-sample predictions.
+        index_origin : int, optional
+        coords : dict, optional
+            Map of dimensions to coordinates
+        dims : dict of {str : list of str}, optional
+            Map variable names to their coordinates. Will be inferred if they are not provided.
+        pred_dims : dict, optional
+            Dims for predictions data. Map variable names to their coordinates.
+        extra_event_dims : dict, optional
+            Maps event dims that couldnt be inferred (ie deterministic sites) to their coordinates.
+        num_chains : int, optional
+            Number of chains used for sampling. Ignored if posterior is present.
+        """
+        self.nchains = num_chains
+        super().__init__(
+            posterior=posterior,
+            prior=prior,
+            posterior_predictive=posterior_predictive,
+            predictions=predictions,
+            constant_data=constant_data,
+            predictions_constant_data=predictions_constant_data,
+            log_likelihood=log_likelihood,
+            index_origin=index_origin,
+            coords=coords,
+            dims=dims,
+            pred_dims=pred_dims,
+            extra_event_dims=extra_event_dims,
+        )
+
+    @property
+    def model(self):
+        """Return the internal model."""
+        if self.posterior is None:
+            return None
+        return self.posterior.sampler.model
+
+    def _infer_sample_shape(self):
+        """Return the expected sample shape."""
+        if self.posterior is not None:
+            return (
+                self.posterior.num_chains,
+                self.posterior.num_samples // self.posterior.thinning,
+            )
+
+        def arbitrary_element(dct):
+            return next(iter(dct.values()))
+
+        get_from = None
+        if self.predictions is not None:
+            get_from = self.predictions
+        elif self.posterior_predictive is not None:
+            get_from = self.posterior_predictive
+        elif self.prior is not None:
+            get_from = self.prior
+        if (
+            get_from is None
+            and self.constant_data is None
+            and self.predictions_constant_data is None
+        ):
+            raise ValueError(
+                "When constructing InferenceData must have at least"
+                " one of posterior, prior, posterior_predictive or predictions."
+            )
+        if get_from is not None:
+            aelem = arbitrary_element(get_from)
+            self.ndraws = (
+                aelem.shape[0] // self.nchains if self.nchains is not None else aelem.shape[0]
+            )
+            return (
+                self.nchains,
+                self.ndraws,
+            )
+
+    def _get_train_args_kwargs(self):
+        """Extract training metadata from posterior object.
+
+        Should return:
+        - self._args: model args
+        - self._kwargs: model kwargs
+        """
+        return (
+            (self.posterior._args, self.posterior._kwargs)
+            if self.posterior is not None
+            else (tuple(), dict())
+        )
+
+    def _get_samples(self):
         """Extract samples from MCMC posterior."""
         import jax
 
-        samples = jax.device_get(posterior.get_samples(group_by_chain=True))
+        samples = jax.device_get(self.posterior.get_samples(group_by_chain=True))
         if hasattr(samples, "_asdict"):
             # In case it is easy to convert to a dictionary, as in the case of namedtuples
             samples = {k: expand_dims(v) for k, v in samples._asdict().items()}
@@ -467,32 +592,15 @@ class MCMCConverter(BaseNumPyroConverter):
             # (e.g. f(x) = x ** 2)
             tree_flatten_samples = jax.tree_util.tree_flatten(samples)[0]
             samples = {f"Param:{i}": jax.device_get(v) for i, v in enumerate(tree_flatten_samples)}
-        self._samples = samples
-        self.nchains, self.ndraws = (
-            posterior.num_chains,
-            posterior.num_samples // posterior.thinning,
-        )
-        self.model = posterior.sampler.model
-        # model arguments and keyword arguments
-        self._args = posterior._args  # pylint: disable=protected-access
-        self._kwargs = posterior._kwargs  # pylint: disable=protected-access
-
-    def _prepare_predictive_data(self, dct: dict) -> dict:
-        """Prepare and reshape predictive data for MCMC."""
-        data = {}
-        for k, ary in dct.items():
-            shape = ary.shape
-            if shape[0] == self.nchains and shape[1] == self.ndraws:
-                data[k] = ary
-            elif shape[0] == self.nchains * self.ndraws:
-                data[k] = ary.reshape((self.nchains, self.ndraws, *shape[1:]))
-            else:
-                data[k] = expand_dims(ary)
-                warnings.warn(
-                    "posterior predictive shape not compatible with number of chains and draws. "
-                    "This can mean that some draws or even whole chains are not represented."
-                )
-        return data
+        return samples
+        # self.nchains, self.ndraws = (
+        #     self.posterior.num_chains,
+        #     self.posterior.num_samples // self.posterior.thinning,
+        # )
+        # self.model = posterior.sampler.model
+        # # model arguments and keyword arguments
+        # self._args = posterior._args  # pylint: disable=protected-access
+        # self._kwargs = posterior._kwargs  # pylint: disable=protected-access
 
     @requires("posterior")
     def sample_stats_to_xarray(self):
@@ -548,63 +656,43 @@ class SVIConverter(BaseNumPyroConverter):
         self.svi = svi
         self.svi_result = svi_result
         self.num_samples = num_samples
-        self._svi_args = model_args or tuple()
-        self._svi_kwargs = model_kwargs or dict()
-
-        # Create a minimal posterior-like object for base class
-        self._posterior_wrapper = self._create_posterior_wrapper()
+        self._args = model_args or tuple()
+        self._kwargs = model_kwargs or dict()
+        self.num_samples = num_samples
 
         # Pass the wrapper as 'posterior' to base class
-        super().__init__(posterior=self._posterior_wrapper, **base_kwargs)
+        super().__init__(posterior=svi, **base_kwargs)
 
-    def _create_posterior_wrapper(self):
-        """Create a minimal object with MCMC-like interface."""
+    @property
+    def model(self):
+        """Return the internal model."""
+        return getattr(self.svi.guide, "model", self.svi.model)
 
-        class _SVIPosteriorWrapper:
-            def __init__(self):
-                self.num_chains = 0
-                self.thinning = 1
+    def _infer_sample_shape(self):
+        """Return the expected sample shape."""
+        return (self.num_samples,)
 
-        return _SVIPosteriorWrapper()
+    def _get_train_args_kwargs(self):
+        return (self._args, self._kwargs) if self.svi is not None else (tuple(), dict())
 
-    def _extract_samples_from_posterior(self, posterior):
+    def _get_samples(self):
         """Extract samples from SVI guide."""
         import jax
 
         key = jax.random.PRNGKey(0)
         if isinstance(self.svi.guide, self.numpyro.infer.autoguide.AutoGuide):
-            samples = self.svi.guide.sample_posterior(
+            return self.svi.guide.sample_posterior(
                 key,
                 self.svi_result.params,
-                *self._svi_args,
+                *self._args,
                 sample_shape=(self.num_samples,),
-                **self._svi_kwargs,
+                **self._kwargs,
             )
-        else:
-            # if a custom guide is provided, sample by hand
-            predictive = self.numpyro.infer.Predictive(
-                self.svi.guide, params=self.svi_result.params, num_samples=self.num_samples
-            )
-            samples = predictive(key, *self._svi_args, **self._svi_kwargs)
-
-        self._samples = samples
-        self.nchains = 0  # SVI has no chains
-        self.ndraws = self.num_samples
-        self.model = getattr(self.svi.guide, "model", self.svi.model)
-        self._args = self._svi_args
-        self._kwargs = self._svi_kwargs
-
-    def _prepare_predictive_data(self, dct: dict) -> dict:
-        """Prepare predictive data for SVI (no reshaping needed)."""
-        data = {}
-        for k, ary in dct.items():
-            # SVI samples are already flat (num_samples, ...)
-            data[k] = ary
-        return data
-
-    def sample_stats_to_xarray(self):
-        """SVI has no sample stats."""
-        return None
+        # if a custom guide is provided, sample by hand
+        predictive = self.numpyro.infer.Predictive(
+            self.svi.guide, params=self.svi_result.params, num_samples=self.num_samples
+        )
+        return predictive(key, *self._args, **self._kwargs)
 
 
 def from_numpyro(
@@ -708,7 +796,6 @@ def from_numpyro_svi(
     dims=None,
     pred_dims=None,
     extra_event_dims=None,
-    model=None,
     num_samples: int = 1000,
 ):
     """Convert NumPyro SVI results into a DataTree object.
@@ -760,8 +847,6 @@ def from_numpyro_svi(
     extra_event_dims : dict, optional
         Extra event dims for deterministic sites. Maps event dims that couldnt be inferred to
         their coordinates.
-    num_chains : int, default 1
-        Number of chains used for sampling. Ignored if posterior is present.
 
     Returns
     -------
