@@ -640,28 +640,76 @@ class SVIConverter(BaseNumPyroConverter):
         svi_result,
         model_args=None,
         model_kwargs=None,
+        prior=None,
+        posterior_predictive=None,
+        predictions=None,
+        constant_data=None,
+        predictions_constant_data=None,
+        log_likelihood=None,
+        index_origin=None,
+        coords=None,
+        dims=None,
+        pred_dims=None,
+        extra_event_dims=None,
         num_samples=1000,
-        **base_kwargs,
     ):
         """Initialize SVI converter.
 
-        Args:
-            svi: numpyro.infer.svi.SVI instance
-            svi_result: numpyro.infer.svi.SVIRunResult
-            model_args: tuple of model args
-            model_kwargs: dict of model kwargs
-            num_samples: number of samples to draw from guide
-            **base_kwargs: other args passed to BaseNumPyroConverter.__init__
+        Parameters
+        ----------
+        svi : numpyro.infer.svi.SVI
+            Numpyro SVI instance used for fitting the model.
+        svi_result : numpyro.infer.svi.SVIRunResult
+            SVI results from a fitted model.
+        model_args : tuple, optional
+            Model arguments, should match those used for fitting the model.
+        model_kwargs : dict, optional
+            Model keyword arguments, should match those used for fitting the model.
+        prior : dict, optional
+            Prior samples from a NumPyro model
+        posterior_predictive : dict, optional
+            Posterior predictive samples for the posterior
+        predictions : dict, optional
+            Out of sample predictions
+        constant_data : dict, optional
+            Dictionary containing constant data variables mapped to their values.
+        predictions_constant_data : dict, optional
+            Constant data used for out-of-sample predictions.
+        index_origin : int, optional
+        coords : dict, optional
+            Map of dimensions to coordinates
+        dims : dict of {str : list of str}, optional
+            Map variable names to their coordinates. Will be inferred if they are not provided.
+        pred_dims : dict, optional
+            Dims for predictions data. Map variable names to their coordinates. Default behavior is
+            to infer dims if this is not provided
+        extra_event_dims : dict, optional
+            Extra event dims for deterministic sites. Maps event dims that couldnt be inferred to
+            their coordinates.
+        num_samples : int, optional
+            The number of posterior samples to use.
         """
         self.svi = svi
         self.svi_result = svi_result
-        self.num_samples = num_samples
         self._args = model_args or tuple()
         self._kwargs = model_kwargs or dict()
         self.num_samples = num_samples
 
         # Pass the wrapper as 'posterior' to base class
-        super().__init__(posterior=svi, **base_kwargs)
+        super().__init__(
+            posterior=svi,
+            prior=prior,
+            posterior_predictive=posterior_predictive,
+            predictions=predictions,
+            constant_data=constant_data,
+            predictions_constant_data=predictions_constant_data,
+            log_likelihood=log_likelihood,
+            index_origin=index_origin,
+            coords=coords,
+            dims=dims,
+            pred_dims=pred_dims,
+            extra_event_dims=extra_event_dims,
+        )
 
     @property
     def model(self):

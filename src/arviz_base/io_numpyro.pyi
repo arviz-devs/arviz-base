@@ -95,13 +95,23 @@ class MCMCConverter(BaseNumPyroConverter):
 class SVIConverter(BaseNumPyroConverter):
     def __init__(
         self,
-        svi,
+        svi: numpyro.infer.svi.SVI,
         *,
-        svi_result,
-        model_args=...,
-        model_kwargs=...,
-        num_samples=...,
-        **base_kwargs,
+        svi_result: numpyro.infer.svi.SVIRunResult,
+        model_args: tuple | None = ...,
+        model_kwargs: dict | None = ...,
+        prior: dict | None = ...,
+        posterior_predictive: dict | None = ...,
+        predictions: dict | None = ...,
+        constant_data: dict | None = ...,
+        predictions_constant_data: dict | None = ...,
+        log_likelihood=...,
+        index_origin: int | None = ...,
+        coords: dict | None = ...,
+        dims: dict[str, list[str]] | None = ...,
+        pred_dims: dict | None = ...,
+        extra_event_dims: dict | None = ...,
+        num_samples: int = ...,
     ) -> None: ...
     @property
     def model(self) -> None: ...
