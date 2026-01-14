@@ -212,6 +212,12 @@ which sometimes requires updating default values, for example to use new algorit
     functions for stats and plots to work properly.
     When validating the input though, only the ``eti`` and ``rhat`` methods are checked.
 
+.. py:data:: stats.bfmi_threshold
+    :type: float
+    :value: 0.3
+
+    Threshold used to flag low BFMI values.
+
 .. py:data:: stats.ci_kind
     :type: str
     :value: "eti"
@@ -232,7 +238,6 @@ which sometimes requires updating default values, for example to use new algorit
     The default probability of envelopes used in diagnostic plots. The relatively high
     default value reflects their role in highlighting systematic departures
     from the model while reducing false positives due to random variation.
-
 
 .. py:data:: stats.round_to
     :type: int or str

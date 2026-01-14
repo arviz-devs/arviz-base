@@ -120,6 +120,14 @@ def _validate_float(value):
     return value
 
 
+def _validate_positive_float(value):
+    """Validate value is a float greater than or equal to zero."""
+    value = _validate_float(value)
+    if value < 0:
+        raise ValueError("Only non-negative values are valid")
+    return value
+
+
 def _validate_str(value):
     """Validate a string."""
     try:
@@ -326,7 +334,7 @@ defaultParams = {  # pylint: disable=invalid-name
     "data.sample_dims": (("chain", "draw"), _validate_dims),
     "data.save_warmup": (False, _validate_boolean),
     "stats.module": ("base", _validate_stats_module),
-    "stats.bfmi_threshold": (0.3, _validate_probability),
+    "stats.bfmi_threshold": (0.3, _validate_positive_float),
     "stats.ci_kind": ("eti", _make_validate_choice({"eti", "hdi"})),
     "stats.ci_prob": (0.89, _validate_probability),
     "stats.envelope_prob": (0.99, _validate_probability),
