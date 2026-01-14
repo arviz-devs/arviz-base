@@ -139,8 +139,10 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
                     os.remove(file_path)
 
             if not download_success:
-                github_url = f"https://raw.githubusercontent.com/arviz-devs/arviz_example_data/main/data/{remote.filename}"
-                urlretrieve(github_url, file_path)
+                zenodo_url = (
+                    f"https://zenodo.org/records/18241644/files/{remote.filename}?download=1"
+                )
+                urlretrieve(zenodo_url, file_path)
 
         checksum = _sha256(file_path)
         if remote.checksum != checksum:
