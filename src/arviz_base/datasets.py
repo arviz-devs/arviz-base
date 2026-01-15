@@ -148,7 +148,7 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
         if remote.checksum != checksum:
             raise OSError(
                 f"{file_path} has an SHA256 checksum ({checksum}) differing from expected "
-                "({remote.checksum}), file may be corrupted. "
+                f"({remote.checksum}), file may be corrupted. "
                 "Run `arviz.clear_data_home()` and try again, or please open an issue."
             )
 
