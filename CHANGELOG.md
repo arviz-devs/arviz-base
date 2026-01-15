@@ -1,3 +1,32 @@
+<a id="v0.8.0"></a>
+# [v0.8.0](https://github.com/arviz-devs/arviz-base/releases/tag/v0.8.0) - 2026-01-15
+
+## What's Changed
+
+### New Features
+
+* Add `"round_to"` entry to `rcParams` by [@aloctavodia](https://github.com/aloctavodia) in [#120](https://github.com/arviz-devs/arviz-base/pull/120)
+
+### Maintenance and bug fixes
+
+* Bump the actions group with 2 updates by [@dependabot](https://github.com/dependabot)[bot] in [#125](https://github.com/arviz-devs/arviz-base/pull/125)
+* Use Zenodo as a backup source for datasets by [@aloctavodia](https://github.com/aloctavodia) in [#127](https://github.com/arviz-devs/arviz-base/pull/127)
+
+### Documentation
+
+* Update labels related imports and cross-references by [@OriolAbril](https://github.com/OriolAbril) in [#118](https://github.com/arviz-devs/arviz-base/pull/118)
+* Correct typo by [@star1327p](https://github.com/star1327p) in [#119](https://github.com/arviz-devs/arviz-base/pull/119)
+* Add roaches example by [@aloctavodia](https://github.com/aloctavodia) in [#121](https://github.com/arviz-devs/arviz-base/pull/121) and [#122](https://github.com/arviz-devs/arviz-base/pull/122)
+
+## New Contributors
+
+* [@tomicapretto](https://github.com/tomicapretto) made their first contribution in [#129](https://github.com/arviz-devs/arviz-base/pull/129)
+
+**Full Changelog**: https://github.com/arviz-devs/arviz-base/compare/v0.7.0...v0.8.0
+
+[Changes][v0.8.0]
+
+
 <a id="v0.7.0"></a>
 # [v0.7.0](https://github.com/arviz-devs/arviz-base/releases/tag/v0.7.0) - 2025-11-11
 
@@ -126,6 +155,7 @@
 [Changes][v0.4.0]
 
 
+[v0.8.0]: https://github.com/arviz-devs/arviz-base/compare/v0.7.0...v0.8.0
 [v0.7.0]: https://github.com/arviz-devs/arviz-base/compare/v0.6.0...v0.7.0
 [v0.6.0]: https://github.com/arviz-devs/arviz-base/compare/v0.5.0...v0.6.0
 [v0.5.0]: https://github.com/arviz-devs/arviz-base/compare/v0.4.0...v0.5.0
