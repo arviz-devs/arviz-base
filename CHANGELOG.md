@@ -1,3 +1,17 @@
+<a id="v0.8.1"></a>
+# [v0.8.1](https://github.com/arviz-devs/arviz-base/releases/tag/v0.8.1) - 2026-01-15
+
+## What's Changed
+
+### Maintenance and bug fixes
+
+* Update example data by [@OriolAbril](https://github.com/OriolAbril) in [#132](https://github.com/arviz-devs/arviz-base/pull/132)
+
+**Full Changelog**: https://github.com/arviz-devs/arviz-base/compare/v0.8.0...v0.8.1
+
+[Changes][v0.8.1]
+
+
 <a id="v0.8.0"></a>
 # [v0.8.0](https://github.com/arviz-devs/arviz-base/releases/tag/v0.8.0) - 2026-01-15
 
@@ -155,6 +169,7 @@
 [Changes][v0.4.0]
 
 
+[v0.8.1]: https://github.com/arviz-devs/arviz-base/compare/v0.8.0...v0.8.1
 [v0.8.0]: https://github.com/arviz-devs/arviz-base/compare/v0.7.0...v0.8.0
 [v0.7.0]: https://github.com/arviz-devs/arviz-base/compare/v0.6.0...v0.7.0
 [v0.6.0]: https://github.com/arviz-devs/arviz-base/compare/v0.5.0...v0.6.0
