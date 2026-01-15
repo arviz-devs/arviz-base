@@ -358,7 +358,7 @@ defaultParams = {  # pylint: disable=invalid-name
         "mean",
         _make_validate_choice({"mean", "median", "mode"}, allow_none=True),
     ),
-    "stats.bfmi_threshold": (0.3, _validate_probability),
+    "stats.bfmi_threshold": (0.3, _validate_positive_float),
 }
 
 
