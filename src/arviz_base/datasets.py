@@ -124,8 +124,8 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
 
         if not os.path.exists(file_path):
             http_type = rcParams["data.http_protocol"]
-            # Replaces http type. Redundant if http_type is http, useful if http_type is https
-            url = remote.url.replace("http", http_type)
+            # Replaces http type. Redundant if http_type is https, useful if http_type is http
+            url = remote.url.replace("https", http_type)
 
             download_success = False
             try:
