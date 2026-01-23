@@ -25,21 +25,21 @@ class PyStanConverter:
     def __init__(
         self,
         *,
-        posterior: Incomplete = ...,
-        posterior_model: Incomplete = ...,
-        posterior_predictive: Incomplete = ...,
-        predictions: Incomplete = ...,
-        prior: Incomplete = ...,
-        prior_model: Incomplete = ...,
-        prior_predictive: Incomplete = ...,
-        observed_data: Incomplete = ...,
-        constant_data: Incomplete = ...,
-        predictions_constant_data: Incomplete = ...,
-        log_likelihood: Incomplete = ...,
-        coords: Incomplete = ...,
-        dims: Incomplete = ...,
-        save_warmup: Incomplete = ...,
-        dtypes: Incomplete = ...,
+        posterior=...,
+        posterior_model=...,
+        posterior_predictive=...,
+        predictions=...,
+        prior=...,
+        prior_model=...,
+        prior_predictive=...,
+        observed_data=...,
+        constant_data=...,
+        predictions_constant_data=...,
+        log_likelihood=...,
+        coords=...,
+        dims=...,
+        save_warmup=...,
+        dtypes=...,
     ) -> None: ...
     def _warmup_return_to_dict(
         self,
@@ -62,22 +62,13 @@ class PyStanConverter:
     def to_datatree(self) -> None: ...
 
 def get_draws(
-    fit: Incomplete,
-    model: Incomplete = ...,
-    variables: Incomplete = ...,
-    ignore: Incomplete = ...,
-    warmup: Incomplete = ...,
-    dtypes: Incomplete = ...,
+    fit, model=..., variables=..., ignore=..., warmup=..., dtypes=...
 ) -> None: ...
 def get_sample_stats(
-    fit: Incomplete,
-    variables: Incomplete = ...,
-    ignore: Incomplete = ...,
-    warmup: Incomplete = ...,
-    dtypes: Incomplete = ...,
+    fit, variables=..., ignore=..., warmup=..., dtypes=...
 ) -> None: ...
-def get_attrs(fit: Incomplete, model: Incomplete = ...) -> None: ...
-def infer_dtypes(fit: Incomplete, model: Incomplete = ...) -> None: ...
+def get_attrs(fit, model=...) -> None: ...
+def infer_dtypes(fit, model=...) -> None: ...
 def from_pystan(
     posterior: stan.fit.Fit | None = ...,
     *,
