@@ -336,6 +336,7 @@ defaultParams = {  # pylint: disable=invalid-name
     "stats.module": ("base", _validate_stats_module),
     "stats.ci_kind": ("eti", _make_validate_choice({"eti", "hdi"})),
     "stats.ci_prob": (0.89, _validate_probability),
+    "stats.envelope_prob": (0.99, _validate_probability),
     "stats.round_to": ("2g", _validate_rounding),
     "stats.ic_pointwise": (True, _validate_boolean),
     "stats.ic_scale": (
