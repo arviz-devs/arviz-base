@@ -1,6 +1,7 @@
 # File generated with docstub
 
 import warnings
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable
 from typing import Any
@@ -14,7 +15,18 @@ from arviz_base.base import dict_to_dataset, requires
 from arviz_base.rcparams import rc_context, rcParams
 from arviz_base.utils import expand_dims
 
-class SVIWrapper:
+class NumPyroInferenceAdapter(ABC):
+    def __init__(
+        self, inference_obj, model, model_args, model_kwargs, sample_shape
+    ) -> None: ...
+    @property
+    @abstractmethod
+    def sample_dims(self) -> None: ...
+    @abstractmethod
+    def get_samples(self) -> None: ...
+    def get_extra_fields(self, **kwargs) -> None: ...
+
+class SVIAdapter(NumPyroInferenceAdapter):
     def __init__(
         self,
         svi,
@@ -24,9 +36,15 @@ class SVIWrapper:
         model_kwargs=...,
         num_samples: int = ...,
     ) -> None: ...
-    def get_samples(self, seed=..., **kwargs) -> None: ...
     @property
-    def sampler(self) -> None: ...
+    def sample_dims(self) -> None: ...
+    def get_samples(self, seed=..., group_by_chain=..., **kwargs) -> None: ...
+
+class MCMCAdapter(NumPyroInferenceAdapter):
+    def __init__(self, mcmc) -> None: ...
+    @property
+    def sample_dims(self) -> None: ...
+    def get_samples(self, seed=..., group_by_chain=..., **kwargs) -> None: ...
     def get_extra_fields(self, **kwargs) -> None: ...
 
 def _add_dims(
@@ -41,13 +59,11 @@ def infer_dims(
 class NumPyroConverter:
 
     model: Incomplete
-    nchains: Incomplete
-    ndraws: Incomplete
 
     def __init__(
         self,
         *,
-        posterior: numpyro.mcmc.MCMC | None = ...,
+        posterior: numpyro.mcmc.MCMC | NumPyroInferenceAdapter | None = ...,
         prior: dict | None = ...,
         posterior_predictive: dict | None = ...,
         predictions: dict | None = ...,
@@ -59,7 +75,7 @@ class NumPyroConverter:
         dims: dict[str, list[str]] | None = ...,
         pred_dims: dict | None = ...,
         extra_event_dims: dict | None = ...,
-        num_chains: int = ...,
+        sample_shape: int | None = ...,
     ) -> None: ...
     def _get_model_trace(self, model, model_args, model_kwargs, key) -> None: ...
     def posterior_to_xarray(self) -> None: ...
@@ -93,9 +109,9 @@ def from_numpyro(
     num_chains: int = ...,
 ) -> DataTree: ...
 def from_numpyro_svi(
-    svi: numpyro.infer.svi.SVI,
+    svi: numpyro.infer.svi.SVI | None = ...,
     *,
-    svi_result: numpyro.infer.svi.SVIRunResult,
+    svi_result: numpyro.infer.svi.SVIRunResult | None = ...,
     model_args: tuple | None = ...,
     model_kwargs: dict | None = ...,
     prior: dict | None = ...,
@@ -109,6 +125,5 @@ def from_numpyro_svi(
     dims: dict[str, list[str]] | None = ...,
     pred_dims: dict | None = ...,
     extra_event_dims: dict | None = ...,
-    model=...,
     num_samples: int = ...,
 ) -> DataTree: ...
