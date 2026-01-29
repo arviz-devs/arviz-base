@@ -37,8 +37,13 @@ class TestDataNumPyro:
             adapter = ADAPTER_TYPES[request.param]
             from_numpyro_func = FROM_NUMPYRO_FUNC[request.param]
 
-        print("got data")
         return Data
+
+    def _prepare_posterior_kwargs(self, data):
+        """Prepare kwargs for from_numpyro functions, handling MCMC objects."""
+        if "mcmc" in data.obj:
+            return {"posterior": data.obj["mcmc"]}
+        return data.obj
 
     @pytest.fixture(scope="class")
     def predictions_params(self):
@@ -78,7 +83,7 @@ class TestDataNumPyro:
 
         predictions = predictions_data
         return data.from_numpyro_func(
-            posterior,
+            **self._prepare_posterior_kwargs(data),
             prior=prior,
             posterior_predictive=posterior_predictive,
             predictions=predictions,
@@ -97,8 +102,8 @@ class TestDataNumPyro:
         data_namedtuple = Samples(**samples)
         _old_fn = posterior.get_samples
         posterior.get_samples = lambda *args, **kwargs: data_namedtuple
-        inference_data = data.from_numpyro(
-            posterior,
+        inference_data = data.from_numpyro_func(
+            **self._prepare_posterior_kwargs(data),
             dims={},  # This mock test needs to turn off autodims like so or mock group_by_chain
         )
         assert isinstance(posterior.get_samples(), Samples)
@@ -138,7 +143,6 @@ class TestDataNumPyro:
         posterior_predictive = Predictive(posterior.model, posterior_samples)(
             PRNGKey(1), eight_schools_params["J"], eight_schools_params["sigma"]
         )
-        print(posterior_predictive.keys(), posterior_predictive["obs"].shape)
         prior = Predictive(posterior.model, num_samples=500)(
             PRNGKey(2), eight_schools_params["J"], eight_schools_params["sigma"]
         )
@@ -151,13 +155,11 @@ class TestDataNumPyro:
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails, f"only prior: {fails}"
         ## only posterior_predictive
-        print("test post pred")
         inference_data = data.from_numpyro_func(posterior_predictive=posterior_predictive)
         test_dict = {"posterior_predictive": ["obs"]}
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails, f"only posterior_predictive: {fails}"
         ## only predictions
-        print("test preds")
         inference_data = data.from_numpyro_func(predictions=predictions)
         test_dict = {"predictions": ["obs"]}
         fails = check_multiple_attrs(test_dict, inference_data)
@@ -183,7 +185,7 @@ class TestDataNumPyro:
         assert not fails, f"prior and posterior_predictive: {fails}"
 
     def test_inference_data_only_posterior(self, data):
-        kwargs = data.obj if isinstance(data.obj, dict) else {"posterior": data.obj}
+        kwargs = data.obj if "mcmc" not in data.obj.keys() else {"posterior": data.obj["mcmc"]}
         idata = data.from_numpyro_func(**kwargs)
         test_dict = {
             "posterior": ["mu", "tau", "eta"],
@@ -211,7 +213,7 @@ class TestDataNumPyro:
         nuts_kernel = NUTS(model_example_multiple_obs)
         mcmc = MCMC(nuts_kernel, num_samples=10, num_warmup=2)
         mcmc.run(PRNGKey(0), y1=y1, y2=y2)
-        inference_data = data.from_numpyro(mcmc)
+        inference_data = from_numpyro(mcmc)
         test_dict = {
             "posterior": ["x"],
             "sample_stats": ["diverging"],
@@ -386,7 +388,6 @@ class TestDataNumPyro:
         result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
         from_numpyro_func = from_numpyro_svi if svi else from_numpyro
         sample_dims = ("sample",) if svi else ("chain", "draw")
-
         inference_data = from_numpyro_func(
             **result, coords={"group1": np.arange(10), "group2": np.arange(5)}
         )
@@ -553,7 +554,7 @@ class TestDataNumPyro:
         inference_data = self.get_inference_data(
             data, eight_schools_params, predictions_data, predictions_params, infer_dims=True
         )
-        sample_dims = ("sample",) if isinstance(data.obj, dict) else ("chain", "draw")
+        sample_dims = ("chain", "draw") if data.adapter == MCMCAdapter else ("sample",)
         assert inference_data.predictions.obs.dims == (sample_dims + ("J",))
         assert "J" in inference_data.predictions.obs.coords
 
@@ -569,7 +570,6 @@ class TestDataNumPyro:
             return {
                 "svi": svi,
                 "svi_result": svi_result,
-                "model": None if is_autoguide else model,
             }
 
         else:
@@ -607,10 +607,3 @@ class TestSVIAdapter:
         assert isinstance(out, dict)
         for v in out.values():  # values are array-like
             assert isinstance(v, (jax.numpy.ndarray | np.ndarray))
-
-    def test_sampler_attr(self, data, eight_schools_params):
-        svi_posterior = SVIAdapter(
-            data.obj["svi"], svi_result=data.obj["svi_result"], model_kwargs=eight_schools_params
-        )
-        assert hasattr(svi_posterior, "sampler")
-        assert hasattr(svi_posterior.sampler, "model")

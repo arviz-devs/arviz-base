@@ -69,13 +69,13 @@ class NumPyroConverter:
         predictions: dict | None = ...,
         constant_data: dict | None = ...,
         predictions_constant_data: dict | None = ...,
-        log_likelihood=...,
+        log_likelihood: bool = ...,
         index_origin: int | None = ...,
         coords: dict | None = ...,
         dims: dict[str, list[str]] | None = ...,
         pred_dims: dict | None = ...,
         extra_event_dims: dict | None = ...,
-        sample_shape: int | None = ...,
+        num_chains: int | None = ...,
     ) -> None: ...
     def _get_model_trace(self, model, model_args, model_kwargs, key) -> None: ...
     def posterior_to_xarray(self) -> None: ...
@@ -100,7 +100,7 @@ def from_numpyro(
     predictions: dict | None = ...,
     constant_data: dict | None = ...,
     predictions_constant_data: dict | None = ...,
-    log_likelihood=...,
+    log_likelihood: bool | None = ...,
     index_origin: int | None = ...,
     coords: dict | None = ...,
     dims: dict[str, list[str]] | None = ...,
@@ -119,7 +119,7 @@ def from_numpyro_svi(
     predictions: dict | None = ...,
     constant_data: dict | None = ...,
     predictions_constant_data: dict | None = ...,
-    log_likelihood=...,
+    log_likelihood: bool | None = ...,
     index_origin: int | None = ...,
     coords: dict | None = ...,
     dims: dict[str, list[str]] | None = ...,
