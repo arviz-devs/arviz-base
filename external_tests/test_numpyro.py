@@ -34,8 +34,9 @@ class TestDataNumPyro:
     def data(self, request, eight_schools_params, draws, chains):
         class Data:
             obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[request.param]
-            adapter = ADAPTER_TYPES[request.param]
             from_numpyro_func = FROM_NUMPYRO_FUNC[request.param]
+            # Store adapter instance instead of class
+            adapter = ADAPTER_TYPES[request.param](**obj)
 
         return Data
 
@@ -56,11 +57,9 @@ class TestDataNumPyro:
     @pytest.fixture(scope="class")
     def predictions_data(self, data, predictions_params):
         """Generate predictions for predictions_params"""
-        posterior = data.adapter(**data.obj)
-
         # call internal posterior to avoid group_by_chain in MCMC
-        posterior_samples = posterior.get_samples(group_by_chain=False)
-        predictions = Predictive(posterior.model, posterior_samples)(
+        posterior_samples = data.adapter.get_samples(group_by_chain=False)
+        predictions = Predictive(data.adapter.model, posterior_samples)(
             PRNGKey(2), predictions_params["J"], predictions_params["sigma"]
         )
         return predictions
@@ -68,12 +67,11 @@ class TestDataNumPyro:
     def get_inference_data(
         self, data, eight_schools_params, predictions_data, predictions_params, infer_dims=False
     ):
-        posterior = data.adapter(**data.obj)
-        posterior_samples = posterior.get_samples(group_by_chain=False)
-        posterior_predictive = Predictive(posterior.model, posterior_samples)(
+        posterior_samples = data.adapter.get_samples(group_by_chain=False)
+        posterior_predictive = Predictive(data.adapter.model, posterior_samples)(
             PRNGKey(1), eight_schools_params["J"], eight_schools_params["sigma"]
         )
-        prior = Predictive(posterior.model, num_samples=500)(
+        prior = Predictive(data.adapter.model, num_samples=500)(
             PRNGKey(2), eight_schools_params["J"], eight_schools_params["sigma"]
         )
         dims = {"theta": ["school"], "eta": ["school"], "obs": ["school"]}
@@ -96,18 +94,17 @@ class TestDataNumPyro:
         )
 
     def test_inference_data_namedtuple(self, data):
-        posterior = data.adapter(**data.obj)
-        samples = posterior.get_samples()
+        samples = data.adapter.get_samples()
         Samples = namedtuple("Samples", samples)
         data_namedtuple = Samples(**samples)
-        _old_fn = posterior.get_samples
-        posterior.get_samples = lambda *args, **kwargs: data_namedtuple
+        _old_fn = data.adapter.get_samples
+        data.adapter.get_samples = lambda *args, **kwargs: data_namedtuple
         inference_data = data.from_numpyro_func(
             **self._prepare_posterior_kwargs(data),
             dims={},  # This mock test needs to turn off autodims like so or mock group_by_chain
         )
-        assert isinstance(posterior.get_samples(), Samples)
-        posterior.get_samples = _old_fn
+        assert isinstance(data.adapter.get_samples(), Samples)
+        data.adapter.get_samples = _old_fn
         for key in samples:
             assert key in inference_data.posterior
 
@@ -138,12 +135,11 @@ class TestDataNumPyro:
     def test_inference_data_no_posterior(
         self, data, eight_schools_params, predictions_data, predictions_params
     ):
-        posterior = data.adapter(**data.obj)
-        posterior_samples = posterior.get_samples(group_by_chain=False)
-        posterior_predictive = Predictive(posterior.model, posterior_samples)(
+        posterior_samples = data.adapter.get_samples(group_by_chain=False)
+        posterior_predictive = Predictive(data.adapter.model, posterior_samples)(
             PRNGKey(1), eight_schools_params["J"], eight_schools_params["sigma"]
         )
-        prior = Predictive(posterior.model, num_samples=500)(
+        prior = Predictive(data.adapter.model, num_samples=500)(
             PRNGKey(2), eight_schools_params["J"], eight_schools_params["sigma"]
         )
         predictions = predictions_data
@@ -191,7 +187,7 @@ class TestDataNumPyro:
             "posterior": ["mu", "tau", "eta"],
             "sample_stats": ["diverging"],
         }
-        if isinstance(data.obj, dict):
+        if not isinstance(data.adapter, MCMCAdapter):
             test_dict.pop("sample_stats")
         fails = check_multiple_attrs(test_dict, idata)
         assert not fails
@@ -554,7 +550,7 @@ class TestDataNumPyro:
         inference_data = self.get_inference_data(
             data, eight_schools_params, predictions_data, predictions_params, infer_dims=True
         )
-        sample_dims = ("chain", "draw") if data.adapter == MCMCAdapter else ("sample",)
+        sample_dims = tuple(data.adapter.sample_dims)
         assert inference_data.predictions.obs.dims == (sample_dims + ("J",))
         assert "J" in inference_data.predictions.obs.coords
 
