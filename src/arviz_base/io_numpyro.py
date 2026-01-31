@@ -432,8 +432,8 @@ class NumPyroConverter:
 
         Parameters
         ----------
-        posterior : numpyro.infer.MCMC | NumPyroInferenceAdapter
-            Fitted MCMC object from NumPyro or a NumPyroInferenceAdapter child class
+        posterior : NumPyroInferenceAdapter
+            A NumPyroInferenceAdapter child class
         prior : dict, optional
             Prior samples from a NumPyro model
         posterior_predictive : dict, optional
@@ -780,7 +780,7 @@ def from_numpyro(
     predictions=None,
     constant_data=None,
     predictions_constant_data=None,
-    log_likelihood=None,
+    log_likelihood=False,
     index_origin=None,
     coords=None,
     dims=None,
@@ -820,7 +820,7 @@ def from_numpyro(
         Dictionary containing constant data variables mapped to their values.
     predictions_constant_data : dict, optional
         Constant data used for out-of-sample predictions.
-    log_likelihood : bool, optional
+    log_likelihood : bool, default False
         Whether to compute and include log likelihood in the output.
     index_origin : int, optional
     coords : dict, optional
@@ -870,7 +870,7 @@ def from_numpyro_svi(
     predictions=None,
     constant_data=None,
     predictions_constant_data=None,
-    log_likelihood=None,
+    log_likelihood=False,
     index_origin=None,
     coords=None,
     dims=None,
@@ -918,7 +918,7 @@ def from_numpyro_svi(
         Dictionary containing constant data variables mapped to their values.
     predictions_constant_data : dict, optional
         Constant data used for out-of-sample predictions.
-    log_likelihood : bool, optional
+    log_likelihood : bool, default False
         Whether to compute and include log likelihood in the output.
     index_origin : int, optional
     coords : dict, optional
@@ -976,7 +976,7 @@ def from_numpyro_nested_sampler(
     predictions=None,
     constant_data=None,
     predictions_constant_data=None,
-    log_likelihood=None,
+    log_likelihood=False,
     index_origin=None,
     coords=None,
     dims=None,
@@ -1022,7 +1022,7 @@ def from_numpyro_nested_sampler(
         Dictionary containing constant data variables mapped to their values.
     predictions_constant_data : dict, optional
         Constant data used for out-of-sample predictions.
-    log_likelihood : bool, optional
+    log_likelihood : bool, default False
         Whether to compute and include log likelihood in the output.
     index_origin : int, optional
     coords : dict, optional
