@@ -57,6 +57,21 @@ class MCMCAdapter(NumPyroInferenceAdapter):
     ) -> dict[str, ArrayLike]: ...
     def get_extra_fields(self, **kwargs: dict) -> dict[str, ArrayLike]: ...
 
+class NestedSamplerAdapter(NumPyroInferenceAdapter):
+    def __init__(
+        self,
+        nested_sampler: numpyro.contrib.nested_sampling.NestedSampler,
+        *,
+        model_args: tuple | None = ...,
+        model_kwargs: dict | None = ...,
+        num_samples: int = ...,
+    ) -> None: ...
+    @property
+    def sample_dims(self) -> list[str]: ...
+    def get_samples(
+        self, seed: int | None = ..., group_by_chain: bool = ..., **kwargs: dict
+    ) -> dict[str, ArrayLike]: ...
+
 def _add_dims(
     dims_a: dict[str, list[str]], dims_b: dict[str, list[str]]
 ) -> dict[str, list[str]]: ...
@@ -123,6 +138,24 @@ def from_numpyro_svi(
     svi: numpyro.infer.SVI | None = ...,
     *,
     svi_result: numpyro.infer.svi.SVIRunResult | None = ...,
+    model_args: tuple | None = ...,
+    model_kwargs: dict | None = ...,
+    prior: dict | None = ...,
+    posterior_predictive: dict | None = ...,
+    predictions: dict | None = ...,
+    constant_data: dict | None = ...,
+    predictions_constant_data: dict | None = ...,
+    log_likelihood: bool | None = ...,
+    index_origin: int | None = ...,
+    coords: dict | None = ...,
+    dims: dict[str, list[str]] | None = ...,
+    pred_dims: dict | None = ...,
+    extra_event_dims: dict | None = ...,
+    num_samples: int = ...,
+) -> DataTree: ...
+def from_numpyro_nested_sampler(
+    nested_sampler: numpyro.contrib.nested_sampling.NestedSampler | None = ...,
+    *,
     model_args: tuple | None = ...,
     model_kwargs: dict | None = ...,
     prior: dict | None = ...,

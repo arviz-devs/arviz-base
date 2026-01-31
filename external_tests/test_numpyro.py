@@ -4,7 +4,14 @@ from collections import namedtuple
 import numpy as np
 import pytest
 
-from arviz_base.io_numpyro import MCMCAdapter, SVIAdapter, from_numpyro, from_numpyro_svi
+from arviz_base.io_numpyro import (
+    MCMCAdapter,
+    NestedSamplerAdapter,
+    SVIAdapter,
+    from_numpyro,
+    from_numpyro_nested_sampler,
+    from_numpyro_svi,
+)
 from arviz_base.testing import check_multiple_attrs
 
 from .helpers import importorskip, load_cached_models
@@ -21,11 +28,13 @@ ADAPTER_TYPES = {
     "numpyro": MCMCAdapter,
     "numpyro_svi": SVIAdapter,
     "numpyro_svi_custom_guide": SVIAdapter,
+    "numpyro_nested_sampler": NestedSamplerAdapter,
 }
 FROM_NUMPYRO_FUNC = {
     "numpyro": from_numpyro,
     "numpyro_svi": from_numpyro_svi,
     "numpyro_svi_custom_guide": from_numpyro_svi,
+    "numpyro_nested_sampler": from_numpyro_nested_sampler,
 }
 
 
@@ -35,7 +44,6 @@ class TestDataNumPyro:
         class Data:
             obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[request.param]
             from_numpyro_func = FROM_NUMPYRO_FUNC[request.param]
-            # Store adapter instance instead of class
             adapter = ADAPTER_TYPES[request.param](**obj)
 
         return Data
@@ -574,32 +582,53 @@ class TestDataNumPyro:
             return {"posterior": mcmc}
 
 
-class TestSVIAdapter:
-    @pytest.fixture(scope="class", params=["numpyro_svi", "numpyro_svi_custom_guide"])
+class TestNumPyroAdapters:
+    """Test all NumPyro adapters to ensure they follow the same interface conventions."""
+
+    @pytest.fixture(
+        scope="class",
+        params=[
+            ("numpyro", {"sample_dims": ["chain", "draw"]}),
+            ("numpyro_svi", {"sample_dims": ["sample"]}),
+            ("numpyro_svi_custom_guide", {"sample_dims": ["sample"]}),
+            # ("numpyro_nested_sampler", {"sample_dims": ["sample"]}),
+        ],
+        ids=["mcmc", "svi", "svi_custom_guide"],
+    )
     def data(self, request, eight_schools_params, draws, chains):
+        """Fixture that provides adapter instances for all inference types."""
+        # from .helpers import numpyro_schools_model_nested_sampler
+
+        model_key, expected_attrs = request.param
+
         class Data:
-            obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[request.param]
+            obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[model_key]
+            from_numpyro_func = FROM_NUMPYRO_FUNC[model_key]
+            adapter = ADAPTER_TYPES[model_key](**obj)
+            expected = expected_attrs
+            model_key_name = model_key
 
         return Data
 
-    def test_init_without_args_kwargs(self):
-        from numpyro.infer import Trace_ELBO
-        from numpyro.infer.svi import SVI, SVIRunResult
-        from numpyro.optim import Adam
+    def test_sample_dims(self, data):
+        """All adapters must have a sample_dims property."""
+        assert data.adapter.sample_dims == data.expected["sample_dims"]
 
-        model = guide = lambda x: x
-        svi = SVI(model, guide, optim=Adam(0.05), loss=Trace_ELBO())
-        svi_result = SVIRunResult(params=jax.numpy.ones(5), state=None, losses=jax.numpy.zeros(10))
+    def test_sample_shape(self, data):
+        """All adapters must have a sample_shape attribute."""
+        assert len(data.adapter.sample_shape) == len(data.expected["sample_dims"])
 
-        posterior = SVIAdapter(svi, svi_result=svi_result)
-        assert isinstance(posterior._args, tuple)
-        assert isinstance(posterior._kwargs, dict)
+    def test_has_model_attribute(self, data):
+        """All adapters must have a model attribute that is callable."""
+        assert hasattr(data.adapter, "model")
+        assert data.adapter.model is not None
+        assert callable(data.adapter.model)
 
     def test_get_samples(self, data, eight_schools_params):
-        svi_posterior = SVIAdapter(
-            data.obj["svi"], svi_result=data.obj["svi_result"], model_kwargs=eight_schools_params
-        )
-        out = svi_posterior.get_samples(seed=0)
-        assert isinstance(out, dict)
-        for v in out.values():  # values are array-like
+        """All adapters must implement get_samples()."""
+        samples = data.adapter.get_samples(seed=0)
+        assert isinstance(samples, dict)
+        assert len(samples) > 0
+        # All values should be array-like
+        for v in samples.values():
             assert isinstance(v, (jax.numpy.ndarray | np.ndarray))

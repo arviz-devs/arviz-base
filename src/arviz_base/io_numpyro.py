@@ -238,6 +238,74 @@ class MCMCAdapter(NumPyroInferenceAdapter):
         return self.posterior.get_extra_fields(group_by_chain=True, **kwargs)
 
 
+class NestedSamplerAdapter(NumPyroInferenceAdapter):
+    """Adapter for NestedSampler to standardize attributes and methods."""
+
+    def __init__(
+        self,
+        nested_sampler,
+        *,
+        model_args=None,
+        model_kwargs=None,
+        num_samples=1000,
+    ):
+        """Initialize NestedSampler adapter from fitted NestedSampler object.
+
+        Parameters
+        ----------
+        nested_sampler : numpyro.contrib.nested_sampling.NestedSampler
+            Fitted NestedSampler instance. Must have already called run() to generate results.
+        model_args : tuple, optional
+            Positional arguments for the model.
+        model_kwargs : dict, optional
+            Keyword arguments for the model.
+        num_samples : int, default 1000
+            Number of posterior samples to draw from the nested sampler results.
+        """
+        if nested_sampler is None:
+            raise ValueError("nested_sampler parameter is required for NestedSamplerAdapter")
+
+        super().__init__(
+            nested_sampler,
+            model=nested_sampler.model,
+            model_args=model_args,
+            model_kwargs=model_kwargs,
+            sample_shape=(num_samples,),
+        )
+        self.num_samples = num_samples
+
+    @property
+    def sample_dims(self):
+        """Return sample dimension names for NestedSampler.
+
+        Returns
+        -------
+        list of str
+            Sample dimension names for NestedSampler: ["sample"].
+        """
+        return ["sample"]
+
+    def get_samples(self, seed=None, group_by_chain=False, **kwargs):
+        """Get posterior samples from NestedSampler. Note: group_by_chain is ignored.
+
+        Parameters
+        ----------
+        seed : int, optional
+            Random seed for sampling.
+        group_by_chain : bool, default False
+            Ignored for NestedSampler (included for API compatibility).
+        **kwargs : dict
+            Additional keyword arguments.
+
+        Returns
+        -------
+        dict of {str: array-like}
+            Dictionary mapping parameter names to their sampled values.
+        """
+        key = self.prng_key_func(seed or 0)
+        return self.posterior.get_samples(key, self.num_samples)
+
+
 def _add_dims(dims_a, dims_b):
     """Merge two dimension mappings by concatenating dimension labels.
 
@@ -880,6 +948,109 @@ def from_numpyro_svi(
                 num_samples=num_samples,
             )
             if svi is not None
+            else None
+        )
+        return NumPyroConverter(
+            posterior=posterior,
+            prior=prior,
+            posterior_predictive=posterior_predictive,
+            predictions=predictions,
+            constant_data=constant_data,
+            predictions_constant_data=predictions_constant_data,
+            log_likelihood=log_likelihood,
+            index_origin=index_origin,
+            coords=coords,
+            dims=dims,
+            pred_dims=pred_dims,
+            extra_event_dims=extra_event_dims,
+        ).to_datatree()
+
+
+def from_numpyro_nested_sampler(
+    nested_sampler=None,
+    *,
+    model_args=None,
+    model_kwargs=None,
+    prior=None,
+    posterior_predictive=None,
+    predictions=None,
+    constant_data=None,
+    predictions_constant_data=None,
+    log_likelihood=None,
+    index_origin=None,
+    coords=None,
+    dims=None,
+    pred_dims=None,
+    extra_event_dims=None,
+    num_samples: int = 1000,
+):
+    """Convert NumPyro NestedSampler results into a DataTree object.
+
+    For a usage example read :ref:`numpyro_conversion`
+
+    If no dims are provided, this will infer batch dim names from NumPyro model plates.
+    For event dim names, such as with the ZeroSumNormal, `infer={"event_dims":dim_names}`
+    can be provided in numpyro.sample, i.e.::
+
+        # equivalent to dims entry, {"gamma": ["groups"]}
+        gamma = numpyro.sample(
+            "gamma",
+            dist.ZeroSumNormal(1, event_shape=(n_groups,)),
+            infer={"event_dims":["groups"]}
+        )
+
+    There is also an additional `extra_event_dims` input to cover any edge cases, for instance
+    deterministic sites with event dims (which dont have an `infer` argument to provide metadata).
+
+    Parameters
+    ----------
+    nested_sampler : numpyro.contrib.nested_sampling.NestedSampler, optional
+        Fitted NestedSampler instance. Must have already called run() to generate results.
+        If not provided, no posterior will be included in the output, and at least one of
+        prior, posterior_predictive, or predictions must be provided.
+    model_args : tuple, optional
+        Model arguments, should match those used for fitting the model.
+    model_kwargs : dict, optional
+        Model keyword arguments, should match those used for fitting the model.
+    prior : dict, optional
+        Prior samples from a NumPyro model
+    posterior_predictive : dict, optional
+        Posterior predictive samples for the posterior
+    predictions : dict, optional
+        Out of sample predictions
+    constant_data : dict, optional
+        Dictionary containing constant data variables mapped to their values.
+    predictions_constant_data : dict, optional
+        Constant data used for out-of-sample predictions.
+    log_likelihood : bool, optional
+        Whether to compute and include log likelihood in the output.
+    index_origin : int, optional
+    coords : dict, optional
+        Map of dimensions to coordinates
+    dims : dict of {str : list of str}, optional
+        Map variable names to their coordinates. Will be inferred if they are not provided.
+    pred_dims : dict, optional
+        Dims for predictions data. Map variable names to their coordinates. Default behavior is to
+        infer dims if this is not provided
+    extra_event_dims : dict, optional
+        Extra event dims for deterministic sites. Maps event dims that couldnt be inferred to
+        their coordinates.
+    num_samples : int, default 1000
+        Number of posterior samples to generate from nested sampler results
+
+    Returns
+    -------
+    DataTree
+    """
+    with rc_context(rc={"data.sample_dims": ["sample"]}):
+        posterior = (
+            NestedSamplerAdapter(
+                nested_sampler,
+                model_args=model_args,
+                model_kwargs=model_kwargs,
+                num_samples=num_samples,
+            )
+            if nested_sampler is not None
             else None
         )
         return NumPyroConverter(

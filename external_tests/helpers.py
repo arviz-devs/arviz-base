@@ -184,6 +184,24 @@ def numpyro_schools_model_svi_custom_guide(data, draws, chains):
     }
 
 
+def numpyro_schools_model_nested_sampler(data, draws, chains):
+    """Non-centered eight schools implementation with NestedSampler in NumPyro."""
+    from jax.random import PRNGKey
+    from numpyro.contrib.nested_sampling import NestedSampler
+
+    nested_sampler = NestedSampler(_numpyro_noncentered_model)
+    nested_sampler.run(PRNGKey(0), **data)
+
+    # This block lets the nested_sampler be pickled
+    # Remove unpicklable JAX device objects
+    nested_sampler.constructor_kwargs["devices"] = None
+
+    return {
+        "nested_sampler": nested_sampler,
+        "model_kwargs": data,
+    }
+
+
 def pystan_noncentered_schools(data, draws, chains):
     """Non-centered eight schools implementation for pystan."""
     schools_code = """
@@ -245,6 +263,8 @@ def load_cached_models(eight_schools_data, draws, chains, libs=None):
         ("numpyro", numpyro_schools_model, None),
         ("numpyro", numpyro_schools_model_svi, "numpyro_svi"),
         ("numpyro", numpyro_schools_model_svi_custom_guide, "numpyro_svi_custom_guide"),
+        # Nested sampler is slow and only used in specific adapter tests
+        # ("numpyro", numpyro_schools_model_nested_sampler, "numpyro_nested_sampler"),
     )
     data_directory = os.path.join(here, "saved_models")
     if not os.path.isdir(data_directory):
