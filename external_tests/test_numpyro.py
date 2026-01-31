@@ -591,14 +591,12 @@ class TestNumPyroAdapters:
             ("numpyro", {"sample_dims": ["chain", "draw"]}),
             ("numpyro_svi", {"sample_dims": ["sample"]}),
             ("numpyro_svi_custom_guide", {"sample_dims": ["sample"]}),
-            # ("numpyro_nested_sampler", {"sample_dims": ["sample"]}),
+            ("numpyro_nested_sampler", {"sample_dims": ["sample"]}),
         ],
-        ids=["mcmc", "svi", "svi_custom_guide"],
+        ids=["mcmc", "svi", "svi_custom_guide", "nested_sampler"],
     )
     def data(self, request, eight_schools_params, draws, chains):
         """Fixture that provides adapter instances for all inference types."""
-        # from .helpers import numpyro_schools_model_nested_sampler
-
         model_key, expected_attrs = request.param
 
         class Data:

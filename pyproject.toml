@@ -157,7 +157,12 @@ disallow_untyped_calls = false
 # ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-filterwarnings = ["error"]
+filterwarnings = [
+    "error",
+    # Ignore warnings from JAXNS (used by NestedSampler tests)
+    "ignore:JAX x64 is not enabled:UserWarning:jaxns.internals.mixed_precision",
+    "ignore:jax.experimental.shard_map is deprecated:DeprecationWarning",
+]
 testpaths = [
     "tests",
 ]

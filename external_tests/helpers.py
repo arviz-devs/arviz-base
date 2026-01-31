@@ -263,8 +263,7 @@ def load_cached_models(eight_schools_data, draws, chains, libs=None):
         ("numpyro", numpyro_schools_model, None),
         ("numpyro", numpyro_schools_model_svi, "numpyro_svi"),
         ("numpyro", numpyro_schools_model_svi_custom_guide, "numpyro_svi_custom_guide"),
-        # Nested sampler is slow and only used in specific adapter tests
-        # ("numpyro", numpyro_schools_model_nested_sampler, "numpyro_nested_sampler"),
+        ("numpyro", numpyro_schools_model_nested_sampler, "numpyro_nested_sampler"),
     )
     data_directory = os.path.join(here, "saved_models")
     if not os.path.isdir(data_directory):
