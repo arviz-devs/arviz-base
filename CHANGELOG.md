@@ -3,11 +3,15 @@
 
 ## What's Changed
 
- - `SVIWrapper` was changed to `SVIAdapter`
- - A new `NumPyroInferenceAdapter` base class was added to standardize NumPyro inference objects
- - `MCMCAdapter` and `NestedSamplerAdapter` were added for MCMC and NestedSampler inference
- - NumPyroConverter was adjusted to work for both MCMC and a `NumPyroInferenceAdapter` by default
+ - **Breaking**: `SVIWrapper` was renamed to `SVIAdapter`
+ - Added `NumPyroInferenceAdapter` base class (ABC) to standardize NumPyro inference objects
+ - Added `MCMCAdapter` for MCMC inference with consistent interface
+ - Added `NestedSamplerAdapter` for nested sampling support
  - Added `from_numpyro_nested_sampler()` function for converting NestedSampler results
+ - All adapters now follow a consistent interface: `sample_dims`, `sample_shape`, `get_samples()`, `get_extra_fields()`
+ - `NumPyroConverter` works uniformly with all adapter types
+ - Changed `log_likelihood` parameter default from `None` to `False` in all `from_numpyro*` functions for clarity
+ - Implemented lazy import caching for JAX and NumPyro to avoid redundant imports
 
 ### New Features
 
