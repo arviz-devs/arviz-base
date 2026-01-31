@@ -314,35 +314,8 @@ class NumPyroConverter:
             self.pred_dims = (
                 self.pred_dims if self.pred_dims is not None else self.infer_pred_dims()
             )
-
-        # NOTE: ndraws from predictions
         else:
-            sources = [
-                self.predictions,
-                self.posterior_predictive,
-                self.prior,
-            ]
-            # pick first available source
-            get_from = next((src for src in sources if src is not None), None)
-            if (
-                get_from is None
-                and self.constant_data is None
-                and self.predictions_constant_data is None
-            ):
-                raise ValueError(
-                    "When constructing InferenceData, must have at least one of "
-                    "posterior, prior, posterior_predictive, or predictions."
-                )
-            if get_from is not None:
-                aelem = next(iter(get_from.values()))  # pick an arbitrary element
-                if num_chains is not None:
-                    ndraws = aelem.shape[0] // self.nchains
-                    self.sample_shape = (self.nchains, ndraws)
-                else:
-                    self.sample_shape = aelem.shape[: len(rcParams["data.sample_dims"])]
-            # fallback shape
-            else:
-                self.sample_shape = (1,) * len(rcParams["data.sample_dims"])
+            self.sample_shape = self._infer_sample_shape()
 
         observations = {}
         if self.model is not None:
@@ -371,6 +344,35 @@ class NumPyroConverter:
         )
         trace = self.numpyro.handlers.trace(seeded_model).get_trace(*model_args, **model_kwargs)
         return trace
+
+    def _infer_sample_shape(self):
+        # try to use these sources to infer sample shape
+        sources = [
+            self.predictions,
+            self.posterior_predictive,
+            self.prior,
+        ]
+        # pick first available source
+        get_from = next((src for src in sources if src is not None), None)
+        no_constant_data = self.constant_data is None and self.predictions_constant_data is None
+        if get_from is not None:
+            aelem = next(iter(get_from.values()))  # pick an arbitrary element
+
+            # For MCMC from numpyro, we need to reshape the sample shape
+            # based on the number of chains provided
+            if self.nchains is not None:
+                ndraws = aelem.shape[0] // self.nchains
+                return (self.nchains, ndraws)
+            else:
+                return aelem.shape[: len(rcParams["data.sample_dims"])]
+        elif no_constant_data:
+            raise ValueError(
+                "When constructing InferenceData, must have at least one of "
+                "posterior, prior, posterior_predictive, or predictions."
+            )
+        else:
+            # fallback shape when theres no inference, but there is constant data
+            return (1,) * len(rcParams["data.sample_dims"])
 
     @requires("posterior")
     def posterior_to_xarray(self):
