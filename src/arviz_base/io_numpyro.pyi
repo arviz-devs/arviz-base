@@ -16,6 +16,11 @@ from arviz_base.base import dict_to_dataset, requires
 from arviz_base.rcparams import rc_context, rcParams
 from arviz_base.utils import expand_dims
 
+_IMPORT_CACHE: Incomplete
+
+def _get_jax() -> None: ...
+def _get_numpyro() -> None: ...
+
 class NumPyroInferenceAdapter(ABC):
     def __init__(
         self,

@@ -11,6 +11,27 @@ from arviz_base.base import dict_to_dataset, requires
 from arviz_base.rcparams import rc_context, rcParams
 from arviz_base.utils import expand_dims
 
+# Module-level cache for lazy imports of optional dependencies
+_IMPORT_CACHE = {}
+
+
+def _get_jax():
+    """Lazy import jax with caching."""
+    if "jax" not in _IMPORT_CACHE:
+        import jax
+
+        _IMPORT_CACHE["jax"] = jax
+    return _IMPORT_CACHE["jax"]
+
+
+def _get_numpyro():
+    """Lazy import numpyro with caching."""
+    if "numpyro" not in _IMPORT_CACHE:
+        import numpyro
+
+        _IMPORT_CACHE["numpyro"] = numpyro
+    return _IMPORT_CACHE["numpyro"]
+
 
 class NumPyroInferenceAdapter(ABC):
     """Standardize methods across NumPyro inference objects for use with NumPyroConverter."""
@@ -45,10 +66,8 @@ class NumPyroInferenceAdapter(ABC):
         self._kwargs = model_kwargs or dict()
         self.sample_shape = sample_shape
 
-        import jax
-        import numpyro
-
-        self.numpyro = numpyro
+        jax = _get_jax()
+        self.numpyro = _get_numpyro()
         self.prng_key_func = jax.random.PRNGKey
 
     @property
@@ -355,11 +374,12 @@ def infer_dims(
     dict of {str: list of str(s)}
         Mapping from model site name to list of dimension labels.
     """
-    import jax
-    from numpyro import distributions as dist
-    from numpyro import handlers
-    from numpyro.infer.initialization import init_to_sample
-    from numpyro.ops.pytree import PytreeTrace
+    jax = _get_jax()
+    numpyro = _get_numpyro()
+    dist = numpyro.distributions
+    handlers = numpyro.handlers
+    init_to_sample = numpyro.infer.initialization.init_to_sample
+    PytreeTrace = numpyro.ops.pytree.PytreeTrace
 
     model_args = tuple() if model_args is None else model_args
     model_kwargs = dict() if model_kwargs is None else model_kwargs
@@ -459,8 +479,8 @@ class NumPyroConverter:
             Number of chains used for sampling MCMC. Ignored if posterior is present, or if
             inference method is not MCMC.
         """
-        import jax
-        import numpyro
+        jax = _get_jax()
+        numpyro = _get_numpyro()
 
         self.posterior = posterior
         self.prior = jax.device_get(prior)
