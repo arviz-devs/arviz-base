@@ -16,6 +16,29 @@ class NumPyroInferenceAdapter(ABC):
     """Standardize methods across NumPyro inference objects for use with NumPyroConverter."""
 
     def __init__(self, inference_obj, model, model_args, model_kwargs, sample_shape):
+        """Initialize the adapter with common attributes for NumPyro inference objects.
+
+        This base class constructor sets up the shared infrastructure needed by all
+        NumPyro inference adapters (MCMC, SVI, etc.) to provide a unified interface
+        for the NumPyroConverter.
+
+        Parameters
+        ----------
+        inference_obj : Any
+            The NumPyro inference object to adapt (e.g., MCMC, SVI, or other inference types).
+        model : callable
+            The NumPyro model function that was used for inference.
+        model_args : tuple, optional
+            Positional arguments passed to the model during inference.
+            If None, defaults to an empty tuple.
+        model_kwargs : dict, optional
+            Keyword arguments passed to the model during inference.
+            If None, defaults to an empty dict.
+        sample_shape : tuple of int
+            Shape of the samples to be returned by get_samples().
+            For MCMC: (num_chains, num_draws)
+            For SVI: (num_samples,)
+        """
         self.posterior = inference_obj
         self.model = model
         self._args = model_args or tuple()
@@ -31,16 +54,34 @@ class NumPyroInferenceAdapter(ABC):
     @property
     @abstractmethod
     def sample_dims(self):
-        """Return the sample dimension names."""
+        """Return the sample dimension names.
+
+        Returns
+        -------
+        list of str
+            Sample dimension names (e.g., ["chain", "draw"] for MCMC, ["sample"] for SVI).
+        """
         raise NotImplementedError
 
     @abstractmethod
     def get_samples(self):
-        """Get posterior samples from the inference object."""
+        """Get posterior samples from the inference object.
+
+        Returns
+        -------
+        dict of {str: array-like}
+            Dictionary mapping parameter names to their sampled values.
+        """
         raise NotImplementedError
 
     def get_extra_fields(self, **kwargs):
-        """Mimics mcmc.get_extra_fields()."""
+        """Get extra fields from the inference object (e.g., divergences for MCMC).
+
+        Returns
+        -------
+        dict of {str: array-like}
+            Dictionary of extra diagnostic fields. Empty dict by default.
+        """
         return dict()
 
 
@@ -56,6 +97,21 @@ class SVIAdapter(NumPyroInferenceAdapter):
         model_kwargs=None,
         num_samples: int = 1000,
     ):
+        """Initialize SVI adapter for variational inference results.
+
+        Parameters
+        ----------
+        svi : numpyro.infer.SVI
+            Fitted SVI object.
+        svi_result : numpyro.infer.svi.SVIRunResult
+            SVI optimization results containing learned parameters.
+        model_args : tuple, optional
+            Positional arguments for the model.
+        model_kwargs : dict, optional
+            Keyword arguments for the model.
+        num_samples : int, default 1000
+            Number of posterior samples to generate from the guide.
+        """
         if svi is None:
             raise ValueError("svi parameter is required for SVIAdapter")
         if svi_result is None:
@@ -72,11 +128,32 @@ class SVIAdapter(NumPyroInferenceAdapter):
 
     @property
     def sample_dims(self):
-        """Return the sample dimension names."""
+        """Return sample dimension names for SVI.
+
+        Returns
+        -------
+        list of str
+            Sample dimension names for SVI: ["sample"].
+        """
         return ["sample"]
 
     def get_samples(self, seed=None, group_by_chain=False, **kwargs):
-        """Mimics mcmc.get_samples()."""
+        """Generate samples from SVI guide. Note: group_by_chain is ignored.
+
+        Parameters
+        ----------
+        seed : int, optional
+            Random seed for sampling.
+        group_by_chain : bool, default False
+            Ignored for SVI (included for API compatibility).
+        **kwargs : dict
+            Additional keyword arguments.
+
+        Returns
+        -------
+        dict of {str: array-like}
+            Dictionary mapping parameter names to their sampled values.
+        """
         key = self.prng_key_func(seed or 0)
         if isinstance(self.posterior.guide, self.numpyro.infer.autoguide.AutoGuide):
             return self.posterior.guide.sample_posterior(
@@ -98,6 +175,13 @@ class MCMCAdapter(NumPyroInferenceAdapter):
     """Adapter for MCMC to standardize attributes and methods with other inference objects."""
 
     def __init__(self, mcmc):
+        """Initialize MCMC adapter from fitted MCMC object.
+
+        Parameters
+        ----------
+        mcmc : numpyro.infer.MCMC
+            Fitted MCMC object with completed sampling.
+        """
         self.nchains = mcmc.num_chains
         self.ndraws = mcmc.num_samples // mcmc.thinning
         super().__init__(
@@ -110,16 +194,48 @@ class MCMCAdapter(NumPyroInferenceAdapter):
 
     @property
     def sample_dims(self):
-        """Return the sample dimension names."""
+        """Return sample dimension names for MCMC.
+
+        Returns
+        -------
+        list of str
+            Sample dimension names for MCMC: ["chain", "draw"].
+        """
         return ["chain", "draw"]
 
     def get_samples(self, seed=None, group_by_chain=True, **kwargs):
-        """Mimics mcmc.get_samples()."""
+        """Get MCMC samples. Note: seed is ignored.
+
+        Parameters
+        ----------
+        seed : int, optional
+            Ignored for MCMC (included for API compatibility).
+        group_by_chain : bool, default True
+            Whether to group samples by chain.
+        **kwargs : dict
+            Additional keyword arguments passed to MCMC.get_samples().
+
+        Returns
+        -------
+        dict of {str: array-like}
+            Dictionary mapping parameter names to their sampled values.
+        """
         return self.posterior.get_samples(group_by_chain=group_by_chain, **kwargs)
 
     def get_extra_fields(self, **kwargs):
-        """Mimics mcmc.get_extra_fields()."""
-        return self.posterior.get_extra_fields(group_by_chain=True, **kwargs)
+        """Get MCMC diagnostic fields (e.g., divergences, energy).
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Additional keyword arguments passed to MCMC.get_extra_fields().
+
+        Returns
+        -------
+        dict of {str: array-like}
+            Dictionary of extra diagnostic fields from MCMC sampling.
+        """
+        return self.posterior.get_extra_fields(group_by_chain=True, **kwargs) or {}
 
 
 def _add_dims(dims_a, dims_b):
@@ -718,7 +834,7 @@ def from_numpyro_svi(
         Numpyro SVI instance used for fitting the model. If not provided, no posterior
         will be included in the output, and at least one of prior, posterior_predictive,
         or predictions must be provided.
-    svi_result : numpyro.infer.svi.SVIRunResult, , optional
+    svi_result : numpyro.infer.svi.SVIRunResult, optional
         SVI results from a fitted model. Required if SVI is provided.
     model_args : tuple, optional
         Model arguments, should match those used for fitting the model.

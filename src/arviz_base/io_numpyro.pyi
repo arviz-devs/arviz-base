@@ -9,6 +9,7 @@ from typing import Any
 import numpy as np
 import numpyro
 from _typeshed import Incomplete
+from numpy.typing import ArrayLike
 from xarray import DataTree
 
 from arviz_base.base import dict_to_dataset, requires
@@ -17,35 +18,44 @@ from arviz_base.utils import expand_dims
 
 class NumPyroInferenceAdapter(ABC):
     def __init__(
-        self, inference_obj, model, model_args, model_kwargs, sample_shape
+        self,
+        inference_obj: Any,
+        model: Callable,
+        model_args: tuple,
+        model_kwargs: dict,
+        sample_shape: tuple[int],
     ) -> None: ...
     @property
     @abstractmethod
-    def sample_dims(self) -> None: ...
+    def sample_dims(self) -> list[str]: ...
     @abstractmethod
-    def get_samples(self) -> None: ...
-    def get_extra_fields(self, **kwargs) -> None: ...
+    def get_samples(self) -> dict[str, ArrayLike]: ...
+    def get_extra_fields(self, **kwargs) -> dict[str, ArrayLike]: ...
 
 class SVIAdapter(NumPyroInferenceAdapter):
     def __init__(
         self,
-        svi,
+        svi: numpyro.infer.SVI,
         *,
-        svi_result,
-        model_args=...,
-        model_kwargs=...,
+        svi_result: numpyro.infer.svi.SVIRunResult,
+        model_args: tuple | None = ...,
+        model_kwargs: dict | None = ...,
         num_samples: int = ...,
     ) -> None: ...
     @property
-    def sample_dims(self) -> None: ...
-    def get_samples(self, seed=..., group_by_chain=..., **kwargs) -> None: ...
+    def sample_dims(self) -> list[str]: ...
+    def get_samples(
+        self, seed: int | None = ..., group_by_chain: bool = ..., **kwargs: dict
+    ) -> dict[str, ArrayLike]: ...
 
 class MCMCAdapter(NumPyroInferenceAdapter):
-    def __init__(self, mcmc) -> None: ...
+    def __init__(self, mcmc: numpyro.infer.MCMC) -> None: ...
     @property
-    def sample_dims(self) -> None: ...
-    def get_samples(self, seed=..., group_by_chain=..., **kwargs) -> None: ...
-    def get_extra_fields(self, **kwargs) -> None: ...
+    def sample_dims(self) -> list[str]: ...
+    def get_samples(
+        self, seed: int | None = ..., group_by_chain: bool = ..., **kwargs: dict
+    ) -> dict[str, ArrayLike]: ...
+    def get_extra_fields(self, **kwargs: dict) -> dict[str, ArrayLike]: ...
 
 def _add_dims(
     dims_a: dict[str, list[str]], dims_b: dict[str, list[str]]
