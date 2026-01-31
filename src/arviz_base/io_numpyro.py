@@ -3,6 +3,7 @@
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from importlib import import_module
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -16,22 +17,20 @@ from arviz_base.utils import expand_dims
 _IMPORT_CACHE = {}
 
 
-def _get_jax():
-    """Lazy import jax with caching."""
-    if "jax" not in _IMPORT_CACHE:
-        import jax
+def _lazy_import(module_name: str):
+    """Lazy import a module with caching."""
+    if module_name not in _IMPORT_CACHE:
+        _IMPORT_CACHE[module_name] = import_module(module_name)
+    return _IMPORT_CACHE[module_name]
 
-        _IMPORT_CACHE["jax"] = jax
-    return _IMPORT_CACHE["jax"]
+
+# Convenience accessors for optional dependencies
+def _get_jax():
+    return _lazy_import("jax")
 
 
 def _get_numpyro():
-    """Lazy import numpyro with caching."""
-    if "numpyro" not in _IMPORT_CACHE:
-        import numpyro
-
-        _IMPORT_CACHE["numpyro"] = numpyro
-    return _IMPORT_CACHE["numpyro"]
+    return _lazy_import("numpyro")
 
 
 class NumPyroInferenceAdapter(ABC):

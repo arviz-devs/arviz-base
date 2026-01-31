@@ -4,6 +4,7 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable
+from importlib import import_module
 from typing import Any
 
 import numpy as np
@@ -18,6 +19,7 @@ from arviz_base.utils import expand_dims
 
 _IMPORT_CACHE: Incomplete
 
+def _lazy_import(module_name: str) -> None: ...
 def _get_jax() -> None: ...
 def _get_numpyro() -> None: ...
 
