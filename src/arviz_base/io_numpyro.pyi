@@ -176,3 +176,19 @@ def from_numpyro_nested_sampler(
     extra_event_dims: dict | None = ...,
     num_samples: int = ...,
 ) -> DataTree: ...
+def from_numpyro_adapter(
+    posterior: NumPyroInferenceAdapter | None = ...,
+    *,
+    prior: dict | None = ...,
+    posterior_predictive: dict | None = ...,
+    predictions: dict | None = ...,
+    constant_data: dict | None = ...,
+    predictions_constant_data: dict | None = ...,
+    log_likelihood: bool = ...,
+    index_origin: int | None = ...,
+    coords: dict | None = ...,
+    dims: dict[str, list[str]] | None = ...,
+    pred_dims: dict | None = ...,
+    extra_event_dims: dict | None = ...,
+    sample_dims: list[str] | None = ...,
+) -> DataTree: ...

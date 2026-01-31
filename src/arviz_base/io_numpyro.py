@@ -896,7 +896,7 @@ def from_numpyro_svi(
     dims=None,
     pred_dims=None,
     extra_event_dims=None,
-    num_samples: int = 1000,
+    num_samples=1000,
 ):
     """Convert NumPyro SVI results into a DataTree object.
 
@@ -1002,11 +1002,9 @@ def from_numpyro_nested_sampler(
     dims=None,
     pred_dims=None,
     extra_event_dims=None,
-    num_samples: int = 1000,
+    num_samples=1000,
 ):
     """Convert NumPyro NestedSampler results into a DataTree object.
-
-    For a usage example read :ref:`numpyro_conversion`
 
     If no dims are provided, this will infer batch dim names from NumPyro model plates.
     For event dim names, such as with the ZeroSumNormal, `infer={"event_dims":dim_names}`
@@ -1073,6 +1071,103 @@ def from_numpyro_nested_sampler(
             if nested_sampler is not None
             else None
         )
+        return NumPyroConverter(
+            posterior=posterior,
+            prior=prior,
+            posterior_predictive=posterior_predictive,
+            predictions=predictions,
+            constant_data=constant_data,
+            predictions_constant_data=predictions_constant_data,
+            log_likelihood=log_likelihood,
+            index_origin=index_origin,
+            coords=coords,
+            dims=dims,
+            pred_dims=pred_dims,
+            extra_event_dims=extra_event_dims,
+        ).to_datatree()
+
+
+def from_numpyro_adapter(
+    posterior=None,
+    *,
+    prior=None,
+    posterior_predictive=None,
+    predictions=None,
+    constant_data=None,
+    predictions_constant_data=None,
+    log_likelihood=False,
+    index_origin=None,
+    coords=None,
+    dims=None,
+    pred_dims=None,
+    extra_event_dims=None,
+    sample_dims=None,
+):
+    """Convert a NumPyroInferenceAdapter into a DataTree object.
+
+    For a usage example read :ref:`numpyro_conversion`
+
+    If no dims are provided, this will infer batch dim names from NumPyro model plates.
+    For event dim names, such as with the ZeroSumNormal, `infer={"event_dims":dim_names}`
+    can be provided in numpyro.sample, i.e.::
+
+        # equivalent to dims entry, {"gamma": ["groups"]}
+        gamma = numpyro.sample(
+            "gamma",
+            dist.ZeroSumNormal(1, event_shape=(n_groups,)),
+            infer={"event_dims":["groups"]}
+        )
+
+    There is also an additional `extra_event_dims` input to cover any edge cases, for instance
+    deterministic sites with event dims (which dont have an `infer` argument to provide metadata).
+
+    Parameters
+    ----------
+    posterior : NumPyroInferenceAdapter, optional
+        Fitted NestedSampler instance. Must have already called run() to generate results.
+        If not provided, no posterior will be included in the output, and at least one of
+        prior, posterior_predictive, or predictions must be provided.
+    model_args : tuple, optional
+        Model arguments, should match those used for fitting the model.
+    model_kwargs : dict, optional
+        Model keyword arguments, should match those used for fitting the model.
+    prior : dict, optional
+        Prior samples from a NumPyro model
+    posterior_predictive : dict, optional
+        Posterior predictive samples for the posterior
+    predictions : dict, optional
+        Out of sample predictions
+    constant_data : dict, optional
+        Dictionary containing constant data variables mapped to their values.
+    predictions_constant_data : dict, optional
+        Constant data used for out-of-sample predictions.
+    log_likelihood : bool, default False
+        Whether to compute and include log likelihood in the output.
+    index_origin : int, optional
+    coords : dict, optional
+        Map of dimensions to coordinates
+    dims : dict of {str : list of str}, optional
+        Map variable names to their coordinates. Will be inferred if they are not provided.
+    pred_dims : dict, optional
+        Dims for predictions data. Map variable names to their coordinates. Default behavior is to
+        infer dims if this is not provided
+    extra_event_dims : dict, optional
+        Extra event dims for deterministic sites. Maps event dims that couldnt be inferred to
+        their coordinates.
+    sample_dims : list of str, optional
+        Names of the sample dimensions (e.g., ["chain", "draw"] for MCMC, ["sample"] for SVI).
+        Must be provided if `posterior` is None. If `posterior` is provided, this argument
+        is ignored and overwritten with `posterior.sample_dims`.
+
+    Returns
+    -------
+    DataTree
+    """
+    sample_dims = posterior.sample_dims if posterior is not None else sample_dims
+    if posterior is None and sample_dims is None:
+        raise ValueError("`sample_dims` must be provided if `posterior` is not provided")
+
+    with rc_context(rc={"data.sample_dims": sample_dims}):
         return NumPyroConverter(
             posterior=posterior,
             prior=prior,

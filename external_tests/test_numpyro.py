@@ -9,6 +9,7 @@ from arviz_base.io_numpyro import (
     NestedSamplerAdapter,
     SVIAdapter,
     from_numpyro,
+    from_numpyro_adapter,
     from_numpyro_nested_sampler,
     from_numpyro_svi,
 )
@@ -29,27 +30,51 @@ ADAPTER_TYPES = {
     "numpyro_svi": SVIAdapter,
     "numpyro_svi_custom_guide": SVIAdapter,
     "numpyro_nested_sampler": NestedSamplerAdapter,
+    "numpyro_adapter_mcmc": MCMCAdapter,
+    "numpyro_adapter_svi": SVIAdapter,
 }
 FROM_NUMPYRO_FUNC = {
     "numpyro": from_numpyro,
     "numpyro_svi": from_numpyro_svi,
     "numpyro_svi_custom_guide": from_numpyro_svi,
     "numpyro_nested_sampler": from_numpyro_nested_sampler,
+    "numpyro_adapter_mcmc": from_numpyro_adapter,
+    "numpyro_adapter_svi": from_numpyro_adapter,
 }
 
 
 class TestDataNumPyro:
-    @pytest.fixture(scope="class", params=["numpyro", "numpyro_svi", "numpyro_svi_custom_guide"])
+    @pytest.fixture(
+        scope="class",
+        params=[
+            "numpyro",
+            "numpyro_svi",
+            "numpyro_svi_custom_guide",
+            "numpyro_adapter_mcmc",
+            "numpyro_adapter_svi",
+        ],
+    )
     def data(self, request, eight_schools_params, draws, chains):
         class Data:
-            obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[request.param]
+            # For numpyro_adapter_*, use the underlying model but pass through adapter
+            param_name = request.param
+            if request.param == "numpyro_adapter_mcmc":
+                model_key = "numpyro"
+            elif request.param == "numpyro_adapter_svi":
+                model_key = "numpyro_svi"
+            else:
+                model_key = request.param
+            obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[model_key]
             from_numpyro_func = FROM_NUMPYRO_FUNC[request.param]
-            adapter = ADAPTER_TYPES[request.param](**obj)
+            adapter = ADAPTER_TYPES[model_key](**obj)
 
         return Data
 
     def _prepare_posterior_kwargs(self, data):
         """Prepare kwargs for from_numpyro functions, handling MCMC objects."""
+        # For numpyro_adapter_*, pass the adapter instead of the raw object
+        if data.param_name.startswith("numpyro_adapter_"):
+            return {"posterior": data.adapter}
         if "mcmc" in data.obj:
             return {"posterior": data.obj["mcmc"]}
         return data.obj
@@ -154,27 +179,37 @@ class TestDataNumPyro:
         constant_data = {"J": 8, "sigma": eight_schools_params["sigma"]}
         predictions_constant_data = predictions_params
         ##  only prior
-        inference_data = data.from_numpyro_func(prior=prior)
+        # from_numpyro_adapter requires sample_dims when posterior is None
+        extra_kwargs = (
+            {"sample_dims": data.adapter.sample_dims}
+            if data.param_name.startswith("numpyro_adapter_")
+            else {}
+        )
+        inference_data = data.from_numpyro_func(prior=prior, **extra_kwargs)
         test_dict = {"prior": ["mu", "tau", "eta"]}
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails, f"only prior: {fails}"
         ## only posterior_predictive
-        inference_data = data.from_numpyro_func(posterior_predictive=posterior_predictive)
+        inference_data = data.from_numpyro_func(
+            posterior_predictive=posterior_predictive, **extra_kwargs
+        )
         test_dict = {"posterior_predictive": ["obs"]}
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails, f"only posterior_predictive: {fails}"
         ## only predictions
-        inference_data = data.from_numpyro_func(predictions=predictions)
+        inference_data = data.from_numpyro_func(predictions=predictions, **extra_kwargs)
         test_dict = {"predictions": ["obs"]}
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails, f"only predictions: {fails}"
         ## only constant_data
-        inference_data = data.from_numpyro_func(constant_data=constant_data)
+        inference_data = data.from_numpyro_func(constant_data=constant_data, **extra_kwargs)
         test_dict = {"constant_data": ["J", "sigma"]}
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails, f"only constant_data: {fails}"
         ## only predictions_constant_data
-        inference_data = data.from_numpyro_func(predictions_constant_data=predictions_constant_data)
+        inference_data = data.from_numpyro_func(
+            predictions_constant_data=predictions_constant_data, **extra_kwargs
+        )
         test_dict = {"predictions_constant_data": ["J", "sigma"]}
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails, f"only predictions_constant_data: {fails}"
@@ -183,13 +218,14 @@ class TestDataNumPyro:
             posterior_predictive=posterior_predictive,
             coords={"school": np.arange(eight_schools_params["J"])},
             dims={"theta": ["school"], "eta": ["school"]},
+            **extra_kwargs,
         )
         test_dict = {"posterior_predictive": ["obs"], "prior": ["mu", "tau", "eta", "obs"]}
         fails = check_multiple_attrs(test_dict, idata)
         assert not fails, f"prior and posterior_predictive: {fails}"
 
     def test_inference_data_only_posterior(self, data):
-        kwargs = data.obj if "mcmc" not in data.obj.keys() else {"posterior": data.obj["mcmc"]}
+        kwargs = self._prepare_posterior_kwargs(data)
         idata = data.from_numpyro_func(**kwargs)
         test_dict = {
             "posterior": ["mu", "tau", "eta"],

@@ -26,7 +26,12 @@ from arviz_base.io_cmdstanpy import from_cmdstanpy
 from arviz_base.io_dict import from_dict
 from arviz_base.io_emcee import from_emcee
 from arviz_base.io_numpyro import (
+    MCMCAdapter,
+    NestedSamplerAdapter,
+    NumPyroInferenceAdapter,
+    SVIAdapter,
     from_numpyro,
+    from_numpyro_adapter,
     from_numpyro_nested_sampler,
     from_numpyro_svi,
 )
@@ -59,7 +64,13 @@ __all__ = [
     "from_dict",
     "from_emcee",
     "from_numpyro",
+    "from_numpyro_adapter",
     "from_numpyro_svi",
+    "from_numpyro_nested_sampler",
+    "NumPyroInferenceAdapter",
+    "MCMCAdapter",
+    "SVIAdapter",
+    "NestedSamplerAdapter",
     "labels",
     "rc_context",
     "rcParams",

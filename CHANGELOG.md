@@ -6,6 +6,7 @@
  - **Breaking**: `SVIWrapper` was renamed to `SVIAdapter`
  - Added `NumPyroInferenceAdapter` base class (ABC) to standardize NumPyro inference objects
  - Added `MCMCAdapter` for MCMC inference with consistent interface
+ - Added `from_numpyro_adapter()` function for simplifying future inference additions
  - Added `NestedSamplerAdapter` for nested sampling support
  - Added `from_numpyro_nested_sampler()` function for converting NestedSampler results
  - All adapters now follow a consistent interface: `sample_dims`, `sample_shape`, `get_samples()`, `get_extra_fields()`
