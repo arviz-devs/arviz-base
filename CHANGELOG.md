@@ -3,6 +3,10 @@
 
 ## What's Changed
 
+ - `SVIWrapper` was changed to `SVIAdapter`
+ - A new `NumPyroInferenceAdapter` base class was added to standardize NumPyro inference objects
+ - NumPyroConverter was adjusted to work for both MCMC and a `NumPyroInferenceAdapter` by default
+
 ### New Features
 
 * add some more flexibility to dataset_to conveters by [@OriolAbril](https://github.com/OriolAbril) in [#63](https://github.com/arviz-devs/arviz-base/pull/63)

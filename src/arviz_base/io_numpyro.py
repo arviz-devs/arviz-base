@@ -56,6 +56,11 @@ class SVIAdapter(NumPyroInferenceAdapter):
         model_kwargs=None,
         num_samples: int = 1000,
     ):
+        if svi is None:
+            raise ValueError("svi parameter is required for SVIAdapter")
+        if svi_result is None:
+            raise ValueError("svi_result parameter is required for SVIAdapter")
+
         super().__init__(
             svi,
             model=getattr(svi.guide, "model", svi.model),
@@ -243,7 +248,7 @@ class NumPyroConverter:
 
         Parameters
         ----------
-        posterior : numpyro.mcmc.MCMC | NumPyroInferenceAdapter
+        posterior : numpyro.infer.MCMC | NumPyroInferenceAdapter
             Fitted MCMC object from NumPyro or a NumPyroInferenceAdapter child class
         prior : dict, optional
             Prior samples from a NumPyro model
@@ -439,7 +444,6 @@ class NumPyroConverter:
             skip_event_dims=True,
         )
 
-    # TODO: check this
     def translate_posterior_predictive_dict_to_xarray(self, dct, dims):
         """Convert posterior_predictive or prediction samples to xarray."""
         data = {}
@@ -493,7 +497,6 @@ class NumPyroConverter:
                 None
                 if var_names is None
                 else dict_to_dataset(
-                    # {k: self.prior[k] for k in var_names},
                     {k: expand_dims_func(self.prior[k]) for k in var_names},
                     inference_library=self.numpyro,
                     coords=self.coords,
@@ -621,7 +624,7 @@ def from_numpyro(
 
     Parameters
     ----------
-    posterior : numpyro.mcmc.MCMC
+    posterior : numpyro.infer.MCMC
         Fitted MCMC object from NumPyro
     prior : dict, optional
         Prior samples from a NumPyro model
@@ -711,10 +714,12 @@ def from_numpyro_svi(
 
     Parameters
     ----------
-    svi : numpyro.infer.svi.SVI
-        Numpyro SVI instance used for fitting the model.
-    svi_result : numpyro.infer.svi.SVIRunResult
-        SVI results from a fitted model.
+    svi : numpyro.infer.SVI, optional
+        Numpyro SVI instance used for fitting the model. If not provided, no posterior
+        will be included in the output, and at least one of prior, posterior_predictive,
+        or predictions must be provided.
+    svi_result : numpyro.infer.svi.SVIRunResult, , optional
+        SVI results from a fitted model. Required if SVI is provided.
     model_args : tuple, optional
         Model arguments, should match those used for fitting the model.
     model_kwargs : dict, optional

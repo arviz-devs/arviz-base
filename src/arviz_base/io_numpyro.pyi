@@ -63,7 +63,7 @@ class NumPyroConverter:
     def __init__(
         self,
         *,
-        posterior: numpyro.mcmc.MCMC | NumPyroInferenceAdapter | None = ...,
+        posterior: numpyro.infer.MCMC | NumPyroInferenceAdapter | None = ...,
         prior: dict | None = ...,
         posterior_predictive: dict | None = ...,
         predictions: dict | None = ...,
@@ -94,7 +94,7 @@ class NumPyroConverter:
     def infer_pred_dims(self) -> dict[str, list[str]]: ...
 
 def from_numpyro(
-    posterior: numpyro.mcmc.MCMC | None = ...,
+    posterior: numpyro.infer.MCMC | None = ...,
     *,
     prior: dict | None = ...,
     posterior_predictive: dict | None = ...,
@@ -110,7 +110,7 @@ def from_numpyro(
     num_chains: int = ...,
 ) -> DataTree: ...
 def from_numpyro_svi(
-    svi: numpyro.infer.svi.SVI | None = ...,
+    svi: numpyro.infer.SVI | None = ...,
     *,
     svi_result: numpyro.infer.svi.SVIRunResult | None = ...,
     model_args: tuple | None = ...,

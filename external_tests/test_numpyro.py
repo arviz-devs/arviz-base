@@ -258,11 +258,11 @@ class TestDataNumPyro:
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails
 
-    # def test_inference_data_num_chains(self, predictions_data, chains):
-    #     predictions = predictions_data
-    #     inference_data = from_numpyro(predictions=predictions, sample_shape=(chains,))
-    #     num_chains = inference_data.predictions.sizes["chain"]
-    #     assert num_chains == (chains,)
+    def test_inference_data_num_chains(self, predictions_data, chains):
+        predictions = predictions_data
+        inference_data = from_numpyro(predictions=predictions, num_chains=chains)
+        num_chains = inference_data.predictions.sizes["chain"]
+        assert num_chains == chains
 
     @pytest.mark.parametrize("nchains", [1, 2])
     @pytest.mark.parametrize("thin", [1, 2, 3, 5, 10])
