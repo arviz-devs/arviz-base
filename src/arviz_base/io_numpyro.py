@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 
 import numpy as np
+from numpy.typing import ArrayLike
 from xarray import DataTree
 
 from arviz_base.base import dict_to_dataset, requires
@@ -83,13 +84,30 @@ class NumPyroInferenceAdapter(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_samples(self):
+    def get_samples(self, seed=None, group_by_chain=False, **kwargs):
         """Get posterior samples from the inference object.
+
+        Parameters
+        ----------
+        seed : int, optional
+            Random seed for sampling. Not all inference types use this parameter.
+            For MCMC, this parameter is ignored as samples are already drawn.
+            For SVI and NestedSampler, this controls random number generation.
+        group_by_chain : bool, default False
+            Whether to group samples by chain dimension. For MCMC, this separates
+            samples into chains. For SVI and NestedSampler (single chain methods),
+            this parameter is ignored.
+        **kwargs : dict
+            Additional keyword arguments passed to the underlying inference object's
+            sampling method.
 
         Returns
         -------
         dict of {str: array-like}
             Dictionary mapping parameter names to their sampled values.
+            For MCMC with group_by_chain=True: arrays have shape (num_chains, num_draws, ...).
+            For MCMC with group_by_chain=False: arrays have shape (num_chains * num_draws, ...).
+            For SVI/NestedSampler: arrays have shape (num_samples, ...).
         """
         raise NotImplementedError
 
@@ -146,33 +164,12 @@ class SVIAdapter(NumPyroInferenceAdapter):
         self.result_obj = svi_result
 
     @property
-    def sample_dims(self):
-        """Return sample dimension names for SVI.
-
-        Returns
-        -------
-        list of str
-            Sample dimension names for SVI: ["sample"].
-        """
+    def sample_dims(self) -> list[str]:  # noqa: D102
         return ["sample"]
 
-    def get_samples(self, seed=None, group_by_chain=False, **kwargs):
-        """Generate samples from SVI guide. Note: group_by_chain is ignored.
-
-        Parameters
-        ----------
-        seed : int, optional
-            Random seed for sampling.
-        group_by_chain : bool, default False
-            Ignored for SVI (included for API compatibility).
-        **kwargs : dict
-            Additional keyword arguments.
-
-        Returns
-        -------
-        dict of {str: array-like}
-            Dictionary mapping parameter names to their sampled values.
-        """
+    def get_samples(  # noqa: D102
+        self, seed: int | None = None, group_by_chain: bool = False, **kwargs: dict
+    ) -> dict[str, ArrayLike]:
         key = self.prng_key_func(seed or 0)
         if isinstance(self.posterior.guide, self.numpyro.infer.autoguide.AutoGuide):
             return self.posterior.guide.sample_posterior(
@@ -212,48 +209,15 @@ class MCMCAdapter(NumPyroInferenceAdapter):
         )
 
     @property
-    def sample_dims(self):
-        """Return sample dimension names for MCMC.
-
-        Returns
-        -------
-        list of str
-            Sample dimension names for MCMC: ["chain", "draw"].
-        """
+    def sample_dims(self) -> list[str]:  # noqa: D102
         return ["chain", "draw"]
 
-    def get_samples(self, seed=None, group_by_chain=True, **kwargs):
-        """Get MCMC samples. Note: seed is ignored.
-
-        Parameters
-        ----------
-        seed : int, optional
-            Ignored for MCMC (included for API compatibility).
-        group_by_chain : bool, default True
-            Whether to group samples by chain.
-        **kwargs : dict
-            Additional keyword arguments passed to MCMC.get_samples().
-
-        Returns
-        -------
-        dict of {str: array-like}
-            Dictionary mapping parameter names to their sampled values.
-        """
+    def get_samples(  # noqa: D102
+        self, seed: int | None = None, group_by_chain: bool = True, **kwargs: dict
+    ) -> dict[str, ArrayLike]:
         return self.posterior.get_samples(group_by_chain=group_by_chain, **kwargs)
 
-    def get_extra_fields(self, **kwargs):
-        """Get MCMC diagnostic fields (e.g., divergences, energy).
-
-        Parameters
-        ----------
-        **kwargs : dict
-            Additional keyword arguments passed to MCMC.get_extra_fields().
-
-        Returns
-        -------
-        dict of {str: array-like}
-            Dictionary of extra diagnostic fields from MCMC sampling.
-        """
+    def get_extra_fields(self, **kwargs) -> dict[str, ArrayLike]:  # noqa: D102
         return self.posterior.get_extra_fields(group_by_chain=True, **kwargs)
 
 
@@ -294,33 +258,12 @@ class NestedSamplerAdapter(NumPyroInferenceAdapter):
         self.num_samples = num_samples
 
     @property
-    def sample_dims(self):
-        """Return sample dimension names for NestedSampler.
-
-        Returns
-        -------
-        list of str
-            Sample dimension names for NestedSampler: ["sample"].
-        """
+    def sample_dims(self) -> list[str]:  # noqa: D102
         return ["sample"]
 
-    def get_samples(self, seed=None, group_by_chain=False, **kwargs):
-        """Get posterior samples from NestedSampler. Note: group_by_chain is ignored.
-
-        Parameters
-        ----------
-        seed : int, optional
-            Random seed for sampling.
-        group_by_chain : bool, default False
-            Ignored for NestedSampler (included for API compatibility).
-        **kwargs : dict
-            Additional keyword arguments.
-
-        Returns
-        -------
-        dict of {str: array-like}
-            Dictionary mapping parameter names to their sampled values.
-        """
+    def get_samples(  # noqa: D102
+        self, seed: int | None = None, group_by_chain: bool = False, **kwargs: dict
+    ) -> dict[str, ArrayLike]:
         key = self.prng_key_func(seed or 0)
         return self.posterior.get_samples(key, self.num_samples)
 
