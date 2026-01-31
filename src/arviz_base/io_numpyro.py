@@ -235,7 +235,7 @@ class MCMCAdapter(NumPyroInferenceAdapter):
         dict of {str: array-like}
             Dictionary of extra diagnostic fields from MCMC sampling.
         """
-        return self.posterior.get_extra_fields(group_by_chain=True, **kwargs) or {}
+        return self.posterior.get_extra_fields(group_by_chain=True, **kwargs)
 
 
 def _add_dims(dims_a, dims_b):
