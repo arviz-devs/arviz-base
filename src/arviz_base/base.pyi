@@ -3,11 +3,11 @@
 import datetime
 import importlib
 import re
-import types
 import warnings
 from collections.abc import Callable, Hashable, Iterable, Mapping, Sequence
 from copy import deepcopy
 from numbers import Number
+from types import ModuleType
 from typing import TYPE_CHECKING, Any, TypeVar
 
 import numpy as np
@@ -49,7 +49,7 @@ def dict_to_dataset(
     data: Mapping[Any, ArrayLike],
     *,
     attrs: Mapping[Any, Any] | None = ...,
-    inference_library: types.ModuleType | None = ...,
+    inference_library: ModuleType | None = ...,
     coords: dict[Any, ArrayLike] | None = ...,
     dims: dict[Hashable, Sequence[Hashable]] | None = ...,
     sample_dims: Sequence[Hashable] | None = ...,
@@ -58,8 +58,7 @@ def dict_to_dataset(
     check_conventions: bool = ...,
 ) -> Dataset: ...
 def make_attrs(
-    attrs: Mapping[Any, Any] | None = ...,
-    inference_library: types.ModuleType | None = ...,
+    attrs: Mapping[Any, Any] | None = ..., inference_library: ModuleType | None = ...
 ) -> dict: ...
 
 class requires:
@@ -68,4 +67,4 @@ class requires:
         self, func: Callable[[RequiresArgTypeT], RequiresReturnTypeT]
     ) -> Callable[[RequiresArgTypeT], RequiresReturnTypeT | None]: ...
 
-def infer_stan_dtypes(stan_code) -> None: ...
+def infer_stan_dtypes(stan_code: Incomplete) -> None: ...
