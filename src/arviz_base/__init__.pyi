@@ -46,7 +46,6 @@ if TYPE_CHECKING:
         NumPyroInferenceAdapter,
         SVIAdapter,
         from_numpyro,
-        from_numpyro_adapter,
         from_numpyro_svi,
     )
 

@@ -114,7 +114,7 @@ class NumPyroConverter:
     def infer_pred_dims(self) -> dict[str, list[str]]: ...
 
 def from_numpyro(
-    posterior: numpyro.infer.MCMC | None = ...,
+    posterior: numpyro.infer.MCMC | NumPyroInferenceAdapter | None = ...,
     *,
     prior: dict | None = ...,
     posterior_predictive: dict | None = ...,
@@ -127,7 +127,8 @@ def from_numpyro(
     dims: dict[str, list[str]] | None = ...,
     pred_dims: dict | None = ...,
     extra_event_dims: dict | None = ...,
-    num_chains: int = ...,
+    sample_dims: list[str] | None = ...,
+    num_chains: int | None = ...,
 ) -> DataTree: ...
 def from_numpyro_svi(
     svi: numpyro.infer.SVI | None = ...,
@@ -147,20 +148,4 @@ def from_numpyro_svi(
     pred_dims: dict | None = ...,
     extra_event_dims: dict | None = ...,
     num_samples: int = ...,
-) -> DataTree: ...
-def from_numpyro_adapter(
-    posterior: NumPyroInferenceAdapter | None = ...,
-    *,
-    prior: dict | None = ...,
-    posterior_predictive: dict | None = ...,
-    predictions: dict | None = ...,
-    constant_data: dict | None = ...,
-    predictions_constant_data: dict | None = ...,
-    log_likelihood: bool = ...,
-    index_origin: int | None = ...,
-    coords: dict | None = ...,
-    dims: dict[str, list[str]] | None = ...,
-    pred_dims: dict | None = ...,
-    extra_event_dims: dict | None = ...,
-    sample_dims: list[str] | None = ...,
 ) -> DataTree: ...

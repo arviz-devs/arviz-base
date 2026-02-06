@@ -8,7 +8,6 @@ from arviz_base.io_numpyro import (
     MCMCAdapter,
     SVIAdapter,
     from_numpyro,
-    from_numpyro_adapter,
     from_numpyro_svi,
 )
 from arviz_base.testing import check_multiple_attrs
@@ -34,8 +33,8 @@ FROM_NUMPYRO_FUNC = {
     "numpyro": from_numpyro,
     "numpyro_svi": from_numpyro_svi,
     "numpyro_svi_custom_guide": from_numpyro_svi,
-    "numpyro_adapter_mcmc": from_numpyro_adapter,
-    "numpyro_adapter_svi": from_numpyro_adapter,
+    "numpyro_adapter_mcmc": from_numpyro,
+    "numpyro_adapter_svi": from_numpyro,
 }
 
 
@@ -178,7 +177,7 @@ class TestDataNumPyro:
         # from_numpyro_adapter requires sample_dims when posterior is None
         extra_kwargs = (
             {"sample_dims": data.adapter.sample_dims}
-            if data.param_name.startswith("numpyro_adapter_")
+            if not data.param_name.startswith("numpyro_svi")
             else {}
         )
         inference_data = data.from_numpyro_func(prior=prior, **extra_kwargs)
@@ -300,7 +299,9 @@ class TestDataNumPyro:
 
     def test_inference_data_num_chains(self, predictions_data, chains):
         predictions = predictions_data
-        inference_data = from_numpyro(predictions=predictions, num_chains=chains)
+        inference_data = from_numpyro(
+            predictions=predictions, num_chains=chains, sample_dims=["chain", "draw"]
+        )
         num_chains = inference_data.predictions.sizes["chain"]
         assert num_chains == chains
 

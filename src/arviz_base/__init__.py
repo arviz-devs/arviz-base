@@ -33,7 +33,6 @@ import lazy_loader as _lazy
 if TYPE_CHECKING:
     from .io_numpyro import (  # noqa: TID252
         from_numpyro,
-        from_numpyro_adapter,
         from_numpyro_svi,
         NumPyroInferenceAdapter,
         SVIAdapter,
