@@ -68,7 +68,9 @@ doc = [
     "sphinx>=5",
     "sphinx-design",
     "jupyter-sphinx",
-    "h5netcdf"
+    "h5netcdf",
+    "jax",
+    "numpyro",
 ]
 netcdf4 = [
   "netcdf4"
