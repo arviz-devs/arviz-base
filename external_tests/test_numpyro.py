@@ -6,11 +6,9 @@ import pytest
 
 from arviz_base.io_numpyro import (
     MCMCAdapter,
-    NestedSamplerAdapter,
     SVIAdapter,
     from_numpyro,
     from_numpyro_adapter,
-    from_numpyro_nested_sampler,
     from_numpyro_svi,
 )
 from arviz_base.testing import check_multiple_attrs
@@ -29,7 +27,6 @@ ADAPTER_TYPES = {
     "numpyro": MCMCAdapter,
     "numpyro_svi": SVIAdapter,
     "numpyro_svi_custom_guide": SVIAdapter,
-    "numpyro_nested_sampler": NestedSamplerAdapter,
     "numpyro_adapter_mcmc": MCMCAdapter,
     "numpyro_adapter_svi": SVIAdapter,
 }
@@ -37,7 +34,6 @@ FROM_NUMPYRO_FUNC = {
     "numpyro": from_numpyro,
     "numpyro_svi": from_numpyro_svi,
     "numpyro_svi_custom_guide": from_numpyro_svi,
-    "numpyro_nested_sampler": from_numpyro_nested_sampler,
     "numpyro_adapter_mcmc": from_numpyro_adapter,
     "numpyro_adapter_svi": from_numpyro_adapter,
 }
@@ -627,9 +623,8 @@ class TestNumPyroAdapters:
             ("numpyro", {"sample_dims": ["chain", "draw"]}),
             ("numpyro_svi", {"sample_dims": ["sample"]}),
             ("numpyro_svi_custom_guide", {"sample_dims": ["sample"]}),
-            ("numpyro_nested_sampler", {"sample_dims": ["sample"]}),
         ],
-        ids=["mcmc", "svi", "svi_custom_guide", "nested_sampler"],
+        ids=["mcmc", "svi", "svi_custom_guide"],
     )
     def data(self, request, eight_schools_params, draws, chains):
         """Fixture that provides adapter instances for all inference types."""

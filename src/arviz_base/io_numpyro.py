@@ -3,7 +3,6 @@
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from importlib import import_module
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -13,24 +12,13 @@ from arviz_base.base import dict_to_dataset, requires
 from arviz_base.rcparams import rc_context, rcParams
 from arviz_base.utils import expand_dims
 
-# Module-level cache for lazy imports of optional dependencies
-_IMPORT_CACHE = {}
-
-
-def _lazy_import(module_name: str):
-    """Lazy import a module with caching."""
-    if module_name not in _IMPORT_CACHE:
-        _IMPORT_CACHE[module_name] = import_module(module_name)
-    return _IMPORT_CACHE[module_name]
-
-
-# Convenience accessors for optional dependencies
-def _get_jax():
-    return _lazy_import("jax")
-
-
-def _get_numpyro():
-    return _lazy_import("numpyro")
+try:
+    import jax
+    import numpyro
+except ImportError as e:
+    raise ImportError(
+        "The NumPyro I/O backend requires optional dependencies, jax and numpyro.\n\n"
+    ) from e
 
 
 class NumPyroInferenceAdapter(ABC):
@@ -66,8 +54,6 @@ class NumPyroInferenceAdapter(ABC):
         self._kwargs = model_kwargs or dict()
         self.sample_shape = sample_shape
 
-        jax = _get_jax()
-        self.numpyro = _get_numpyro()
         self.prng_key_func = jax.random.PRNGKey
 
     @property
@@ -91,11 +77,10 @@ class NumPyroInferenceAdapter(ABC):
         seed : int, optional
             Random seed for sampling. Not all inference types use this parameter.
             For MCMC, this parameter is ignored as samples are already drawn.
-            For SVI and NestedSampler, this controls random number generation.
+            For SVI, this controls random number generation.
         group_by_chain : bool, default False
             Whether to group samples by chain dimension. For MCMC, this separates
-            samples into chains. For SVI and NestedSampler (single chain methods),
-            this parameter is ignored.
+            samples into chains. For SVI this parameter is ignored.
         **kwargs : dict
             Additional keyword arguments passed to the underlying inference object's
             sampling method.
@@ -106,7 +91,7 @@ class NumPyroInferenceAdapter(ABC):
             Dictionary mapping parameter names to their sampled values.
             For MCMC with group_by_chain=True: arrays have shape (num_chains, num_draws, ...).
             For MCMC with group_by_chain=False: arrays have shape (num_chains * num_draws, ...).
-            For SVI/NestedSampler: arrays have shape (num_samples, ...).
+            For SVI: arrays have shape (num_samples, ...).
         """
         raise NotImplementedError
 
@@ -170,7 +155,7 @@ class SVIAdapter(NumPyroInferenceAdapter):
         self, seed: int | None = None, group_by_chain: bool = False, **kwargs: dict
     ) -> dict[str, ArrayLike]:
         key = self.prng_key_func(seed or 0)
-        if isinstance(self.posterior.guide, self.numpyro.infer.autoguide.AutoGuide):
+        if isinstance(self.posterior.guide, numpyro.infer.autoguide.AutoGuide):
             return self.posterior.guide.sample_posterior(
                 key,
                 self.result_obj.params,
@@ -179,7 +164,7 @@ class SVIAdapter(NumPyroInferenceAdapter):
                 **self._kwargs,
             )
         # if a custom guide is provided, sample by hand
-        predictive = self.numpyro.infer.Predictive(
+        predictive = numpyro.infer.Predictive(
             self.posterior.guide, params=self.result_obj.params, num_samples=self.sample_shape[0]
         )
         samples = predictive(key, *self._args, **self._kwargs)
@@ -218,53 +203,6 @@ class MCMCAdapter(NumPyroInferenceAdapter):
 
     def get_extra_fields(self, **kwargs) -> dict[str, ArrayLike]:  # noqa: D102
         return self.posterior.get_extra_fields(group_by_chain=True, **kwargs)
-
-
-class NestedSamplerAdapter(NumPyroInferenceAdapter):
-    """Adapter for NestedSampler to standardize attributes and methods."""
-
-    def __init__(
-        self,
-        nested_sampler,
-        *,
-        model_args=None,
-        model_kwargs=None,
-        num_samples=1000,
-    ):
-        """Initialize NestedSampler adapter from fitted NestedSampler object.
-
-        Parameters
-        ----------
-        nested_sampler : numpyro.contrib.nested_sampling.NestedSampler
-            Fitted NestedSampler instance. Must have already called run() to generate results.
-        model_args : tuple, optional
-            Positional arguments for the model.
-        model_kwargs : dict, optional
-            Keyword arguments for the model.
-        num_samples : int, default 1000
-            Number of posterior samples to draw from the nested sampler results.
-        """
-        if nested_sampler is None:
-            raise ValueError("nested_sampler parameter is required for NestedSamplerAdapter")
-
-        super().__init__(
-            nested_sampler,
-            model=nested_sampler.model,
-            model_args=model_args,
-            model_kwargs=model_kwargs,
-            sample_shape=(num_samples,),
-        )
-        self.num_samples = num_samples
-
-    @property
-    def sample_dims(self) -> list[str]:  # noqa: D102
-        return ["sample"]
-
-    def get_samples(  # noqa: D102
-        self, seed: int | None = None, group_by_chain: bool = False, **kwargs: dict
-    ) -> dict[str, ArrayLike]:
-        key = self.prng_key_func(seed or 0)
-        return self.posterior.get_samples(key, self.num_samples)
 
 
 def _add_dims(dims_a, dims_b):
@@ -316,8 +254,6 @@ def infer_dims(
     dict of {str: list of str(s)}
         Mapping from model site name to list of dimension labels.
     """
-    jax = _get_jax()
-    numpyro = _get_numpyro()
     dist = numpyro.distributions
     handlers = numpyro.handlers
     init_to_sample = numpyro.infer.initialization.init_to_sample
@@ -421,9 +357,6 @@ class NumPyroConverter:
             Number of chains used for sampling MCMC. Ignored if posterior is present, or if
             inference method is not MCMC.
         """
-        jax = _get_jax()
-        numpyro = _get_numpyro()
-
         self.posterior = posterior
         self.prior = jax.device_get(prior)
         self.posterior_predictive = jax.device_get(posterior_predictive)
@@ -436,7 +369,6 @@ class NumPyroConverter:
         self.dims = dims
         self.pred_dims = pred_dims
         self.extra_event_dims = extra_event_dims
-        self.numpyro = numpyro
 
         # use nchains to help infer shape when posterior isnt present for MCMC
         self.nchains = (num_chains or 1) if rcParams["data.sample_dims"][0] == "chain" else None
@@ -489,11 +421,11 @@ class NumPyroConverter:
         model_kwargs = model_kwargs or dict()
 
         # we need to use an init strategy to generate random samples for ImproperUniform sites
-        seeded_model = self.numpyro.handlers.substitute(
-            self.numpyro.handlers.seed(model, key),
-            substitute_fn=self.numpyro.infer.init_to_sample,
+        seeded_model = numpyro.handlers.substitute(
+            numpyro.handlers.seed(model, key),
+            substitute_fn=numpyro.infer.init_to_sample,
         )
-        trace = self.numpyro.handlers.trace(seeded_model).get_trace(*model_args, **model_kwargs)
+        trace = numpyro.handlers.trace(seeded_model).get_trace(*model_args, **model_kwargs)
         return trace
 
     def _infer_sample_shape(self):
@@ -531,7 +463,7 @@ class NumPyroConverter:
         data = self._samples
         return dict_to_dataset(
             data,
-            inference_library=self.numpyro,
+            inference_library=numpyro,
             coords=self.coords,
             dims=self.dims,
             index_origin=self.index_origin,
@@ -558,7 +490,7 @@ class NumPyroConverter:
 
         return dict_to_dataset(
             data,
-            inference_library=self.numpyro,
+            inference_library=numpyro,
             dims=None,
             coords=self.coords,
             index_origin=self.index_origin,
@@ -575,7 +507,7 @@ class NumPyroConverter:
             samples = self.posterior.get_samples(group_by_chain=False)
             if hasattr(samples, "_asdict"):
                 samples = samples._asdict()
-            log_likelihood_dict = self.numpyro.infer.log_likelihood(
+            log_likelihood_dict = numpyro.infer.log_likelihood(
                 self.model, samples, *self._args, **self._kwargs
             )
             for obs_name, log_like in log_likelihood_dict.items():
@@ -583,7 +515,7 @@ class NumPyroConverter:
                 data[obs_name] = np.reshape(np.asarray(log_like), shape)
         return dict_to_dataset(
             data,
-            inference_library=self.numpyro,
+            inference_library=numpyro,
             dims=self.dims,
             coords=self.coords,
             index_origin=self.index_origin,
@@ -607,7 +539,7 @@ class NumPyroConverter:
                 )
         return dict_to_dataset(
             data,
-            inference_library=self.numpyro,
+            inference_library=numpyro,
             coords=self.coords,
             dims=dims,
             index_origin=self.index_origin,
@@ -644,7 +576,7 @@ class NumPyroConverter:
                 if var_names is None
                 else dict_to_dataset(
                     {k: expand_dims_func(self.prior[k]) for k in var_names},
-                    inference_library=self.numpyro,
+                    inference_library=numpyro,
                     coords=self.coords,
                     dims=self.dims,
                     index_origin=self.index_origin,
@@ -662,7 +594,7 @@ class NumPyroConverter:
         """Convert observed data to xarray."""
         return dict_to_dataset(
             self.observations,
-            inference_library=self.numpyro,
+            inference_library=numpyro,
             dims=self.dims,
             coords=self.coords,
             sample_dims=[],
@@ -674,7 +606,7 @@ class NumPyroConverter:
         """Convert constant_data to xarray."""
         return dict_to_dataset(
             self.constant_data,
-            inference_library=self.numpyro,
+            inference_library=numpyro,
             dims=self.dims,
             coords=self.coords,
             sample_dims=[],
@@ -686,7 +618,7 @@ class NumPyroConverter:
         """Convert predictions_constant_data to xarray."""
         return dict_to_dataset(
             self.predictions_constant_data,
-            inference_library=self.numpyro,
+            inference_library=numpyro,
             dims=self.pred_dims,
             coords=self.coords,
             sample_dims=[],
@@ -928,107 +860,6 @@ def from_numpyro_svi(
         ).to_datatree()
 
 
-def from_numpyro_nested_sampler(
-    nested_sampler=None,
-    *,
-    model_args=None,
-    model_kwargs=None,
-    prior=None,
-    posterior_predictive=None,
-    predictions=None,
-    constant_data=None,
-    predictions_constant_data=None,
-    log_likelihood=False,
-    index_origin=None,
-    coords=None,
-    dims=None,
-    pred_dims=None,
-    extra_event_dims=None,
-    num_samples=1000,
-):
-    """Convert NumPyro NestedSampler results into a DataTree object.
-
-    If no dims are provided, this will infer batch dim names from NumPyro model plates.
-    For event dim names, such as with the ZeroSumNormal, `infer={"event_dims":dim_names}`
-    can be provided in numpyro.sample, i.e.::
-
-        # equivalent to dims entry, {"gamma": ["groups"]}
-        gamma = numpyro.sample(
-            "gamma",
-            dist.ZeroSumNormal(1, event_shape=(n_groups,)),
-            infer={"event_dims":["groups"]}
-        )
-
-    There is also an additional `extra_event_dims` input to cover any edge cases, for instance
-    deterministic sites with event dims (which dont have an `infer` argument to provide metadata).
-
-    Parameters
-    ----------
-    nested_sampler : numpyro.contrib.nested_sampling.NestedSampler, optional
-        Fitted NestedSampler instance. Must have already called run() to generate results.
-        If not provided, no posterior will be included in the output, and at least one of
-        prior, posterior_predictive, or predictions must be provided.
-    model_args : tuple, optional
-        Model arguments, should match those used for fitting the model.
-    model_kwargs : dict, optional
-        Model keyword arguments, should match those used for fitting the model.
-    prior : dict, optional
-        Prior samples from a NumPyro model
-    posterior_predictive : dict, optional
-        Posterior predictive samples for the posterior
-    predictions : dict, optional
-        Out of sample predictions
-    constant_data : dict, optional
-        Dictionary containing constant data variables mapped to their values.
-    predictions_constant_data : dict, optional
-        Constant data used for out-of-sample predictions.
-    log_likelihood : bool, default False
-        Whether to compute and include log likelihood in the output.
-    index_origin : int, optional
-    coords : dict, optional
-        Map of dimensions to coordinates
-    dims : dict of {str : list of str}, optional
-        Map variable names to their coordinates. Will be inferred if they are not provided.
-    pred_dims : dict, optional
-        Dims for predictions data. Map variable names to their coordinates. Default behavior is to
-        infer dims if this is not provided
-    extra_event_dims : dict, optional
-        Extra event dims for deterministic sites. Maps event dims that couldnt be inferred to
-        their coordinates.
-    num_samples : int, default 1000
-        Number of posterior samples to generate from nested sampler results
-
-    Returns
-    -------
-    DataTree
-    """
-    with rc_context(rc={"data.sample_dims": ["sample"]}):
-        posterior = (
-            NestedSamplerAdapter(
-                nested_sampler,
-                model_args=model_args,
-                model_kwargs=model_kwargs,
-                num_samples=num_samples,
-            )
-            if nested_sampler is not None
-            else None
-        )
-        return NumPyroConverter(
-            posterior=posterior,
-            prior=prior,
-            posterior_predictive=posterior_predictive,
-            predictions=predictions,
-            constant_data=constant_data,
-            predictions_constant_data=predictions_constant_data,
-            log_likelihood=log_likelihood,
-            index_origin=index_origin,
-            coords=coords,
-            dims=dims,
-            pred_dims=pred_dims,
-            extra_event_dims=extra_event_dims,
-        ).to_datatree()
-
-
 def from_numpyro_adapter(
     posterior=None,
     *,
@@ -1066,7 +897,7 @@ def from_numpyro_adapter(
     Parameters
     ----------
     posterior : NumPyroInferenceAdapter, optional
-        Fitted NestedSampler instance. Must have already called run() to generate results.
+        Fitted NumPyroInferenceAdapter instance.
         If not provided, no posterior will be included in the output, and at least one of
         prior, posterior_predictive, or predictions must be provided.
     model_args : tuple, optional

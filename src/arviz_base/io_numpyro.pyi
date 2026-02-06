@@ -4,7 +4,6 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable
-from importlib import import_module
 from typing import Any
 
 import numpy as np
@@ -17,11 +16,13 @@ from arviz_base.base import dict_to_dataset, requires
 from arviz_base.rcparams import rc_context, rcParams
 from arviz_base.utils import expand_dims
 
-_IMPORT_CACHE: Incomplete
-
-def _lazy_import(module_name: str) -> None: ...
-def _get_jax() -> None: ...
-def _get_numpyro() -> None: ...
+try:
+    import jax
+    import numpyro
+except ImportError as e:
+    raise ImportError(
+        "The NumPyro I/O backend requires optional dependencies, jax and numpyro.\n\n"
+    ) from e
 
 class NumPyroInferenceAdapter(ABC):
     def __init__(
@@ -65,21 +66,6 @@ class MCMCAdapter(NumPyroInferenceAdapter):
         self, seed: int | None = ..., group_by_chain: bool = ..., **kwargs: dict
     ) -> dict[str, ArrayLike]: ...
     def get_extra_fields(self, **kwargs: Incomplete) -> dict[str, ArrayLike]: ...
-
-class NestedSamplerAdapter(NumPyroInferenceAdapter):
-    def __init__(
-        self,
-        nested_sampler: numpyro.contrib.nested_sampling.NestedSampler,
-        *,
-        model_args: tuple | None = ...,
-        model_kwargs: dict | None = ...,
-        num_samples: int = ...,
-    ) -> None: ...
-    @property
-    def sample_dims(self) -> list[str]: ...
-    def get_samples(
-        self, seed: int | None = ..., group_by_chain: bool = ..., **kwargs: dict
-    ) -> dict[str, ArrayLike]: ...
 
 def _add_dims(
     dims_a: dict[str, list[str]], dims_b: dict[str, list[str]]
@@ -147,24 +133,6 @@ def from_numpyro_svi(
     svi: numpyro.infer.SVI | None = ...,
     *,
     svi_result: numpyro.infer.svi.SVIRunResult | None = ...,
-    model_args: tuple | None = ...,
-    model_kwargs: dict | None = ...,
-    prior: dict | None = ...,
-    posterior_predictive: dict | None = ...,
-    predictions: dict | None = ...,
-    constant_data: dict | None = ...,
-    predictions_constant_data: dict | None = ...,
-    log_likelihood: bool = ...,
-    index_origin: int | None = ...,
-    coords: dict | None = ...,
-    dims: dict[str, list[str]] | None = ...,
-    pred_dims: dict | None = ...,
-    extra_event_dims: dict | None = ...,
-    num_samples: int = ...,
-) -> DataTree: ...
-def from_numpyro_nested_sampler(
-    nested_sampler: numpyro.contrib.nested_sampling.NestedSampler | None = ...,
-    *,
     model_args: tuple | None = ...,
     model_kwargs: dict | None = ...,
     prior: dict | None = ...,
