@@ -534,8 +534,8 @@ class NumPyroConverter:
             else:
                 data[k] = expand_dims(ary)
                 warnings.warn(
-                    "posterior predictive shape not compatible with number of chains and draws. "
-                    "This can mean that some draws or even whole chains are not represented."
+                    "posterior predictive shape not compatible with sample shape. "
+                    "This can mean that some sample dims are not represented."
                 )
         return dict_to_dataset(
             data,
@@ -743,7 +743,10 @@ def from_numpyro(
     """
     if posterior is None:
         if sample_dims is None:
-            raise ValueError("sample_dims must be provided if posterior is None")
+            raise ValueError(
+                "sample_dims must be provided if posterior is None. "
+                "For MCMC use ['chain', 'draw'], for SVI use ['sample']."
+            )
     elif isinstance(posterior, numpyro.infer.MCMC):
         sample_dims = ["chain", "draw"]
         posterior = MCMCAdapter(posterior)
