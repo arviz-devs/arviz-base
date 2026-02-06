@@ -79,6 +79,13 @@ api/index
 :::
 
 :::{toctree}
+:caption: Contributing
+:hidden:
+
+contributing/updating_example_data
+:::
+
+:::{toctree}
 :caption: About
 :hidden:
 

@@ -222,6 +222,15 @@ which sometimes requires updating default values, for example to use new algorit
     The default probability of computed credible intervals. Its default value here
     is also a friendly reminder of the arbitrary nature of commonly values like 95%
 
+.. py:data:: stats.envelope_prob
+    :type: float
+    :value: 0.99
+
+    The default probability of envelopes used in diagnostic plots. The relatively high
+    default value reflects their role in highlighting systematic departures
+    from the model while reducing false positives due to random variation.
+
+
 .. py:data:: stats.round_to
     :type: int or str
     :value: "2g"

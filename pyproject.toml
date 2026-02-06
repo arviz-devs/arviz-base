@@ -68,15 +68,15 @@ doc = [
     "sphinx>=5",
     "sphinx-design",
     "jupyter-sphinx",
-    "h5netcdf",
     "jax",
     "numpyro",
+    "h5netcdf[h5py]"
 ]
 netcdf4 = [
   "netcdf4"
 ]
 h5netcdf = [
-  "h5netcdf"
+  "h5netcdf[h5py]"
 ]
 zarr = [
   "zarr"
