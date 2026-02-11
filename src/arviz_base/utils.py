@@ -2,6 +2,7 @@
 
 import re
 import warnings
+from collections.abc import Hashable, Sequence
 
 import numpy as np
 
@@ -68,7 +69,13 @@ def _var_names(var_names, data, filter_vars=None, check_if_present=True):
     return var_names
 
 
-def _subset_list(subset, whole_list, filter_items=None, warn=True, check_if_present=True):
+def _subset_list(
+    subset: Hashable | Sequence[Hashable] | None,
+    whole_list: Sequence[Hashable],
+    filter_items: str | None = None,
+    warn: bool = True,
+    check_if_present: bool = True,
+) -> list[Hashable] | None:
     """Handle list subsetting (var_names, groups...) across arviz.
 
     Parameters
@@ -94,7 +101,7 @@ def _subset_list(subset, whole_list, filter_items=None, warn=True, check_if_pres
             subset = [subset]
         elif isinstance(subset, tuple) and subset in whole_list:
             subset = [subset]
-        elif isinstance(subset, tuple):
+        elif isinstance(subset, Sequence) and not isinstance(subset, str | bytes):
             subset = list(subset)
 
         whole_list_tilde = [item for item in whole_list if _check_tilde_start(item)]

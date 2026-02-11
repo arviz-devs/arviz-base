@@ -18,12 +18,12 @@ def _var_names(
     check_if_present: bool = ...,
 ) -> list | None: ...
 def _subset_list(
-    subset: str,
-    whole_list: list,
+    subset: Hashable | Sequence[Hashable] | None,
+    whole_list: Sequence[Hashable],
     filter_items: Literal[None, "like", "regex"] | None = ...,
-    warn=...,
-    check_if_present=...,
-) -> list | None: ...
+    warn: bool = ...,
+    check_if_present: bool = ...,
+) -> list[Hashable] | None: ...
 def _get_coords(
     data: DataArray, coords: dict[Hashable, ArrayLike]
 ) -> Dataset | DataArray: ...
