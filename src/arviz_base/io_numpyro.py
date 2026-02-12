@@ -444,7 +444,12 @@ class NumPyroConverter:
             # For MCMC from numpyro, we need to reshape the sample shape
             # based on the number of chains provided
             if self.nchains is not None:
-                ndraws = aelem.shape[0] // self.nchains
+                ndraws, remainder = divmod(aelem.shape[0], self.nchains)
+                if remainder != 0:
+                    raise ValueError(
+                        f"Sample Shape in shape provided {aelem.shape} is "
+                        "not divisible by the number of chains {self.nchains}."
+                    )
                 return (self.nchains, ndraws)
             else:
                 return aelem.shape[: len(rcParams["data.sample_dims"])]
