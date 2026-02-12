@@ -68,7 +68,7 @@ doc = [
     "sphinx>=5",
     "sphinx-design",
     "jupyter-sphinx",
-    "jax < 0.8",
+    "jax < 0.8.2", # numpyro still uses deprecated xla_pmap_p
     "numpyro",
     "h5netcdf[h5py]"
 ]
