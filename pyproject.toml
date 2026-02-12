@@ -68,7 +68,7 @@ doc = [
     "sphinx>=5",
     "sphinx-design",
     "jupyter-sphinx",
-    "jax",
+    "jax < 0.8",
     "numpyro",
     "h5netcdf[h5py]"
 ]
@@ -160,6 +160,7 @@ disallow_untyped_calls = false
 # ignore_missing_imports = true
 
 [tool.pytest.ini_options]
+filterwarnings = ["error"]
 testpaths = [
     "tests",
 ]
