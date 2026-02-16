@@ -129,14 +129,14 @@ def _subset_list(subset, whole_list, filter_items=None, warn=True, check_if_pres
                         real_items = [
                             real_item
                             for real_item in whole_list
-                            if isinstance(real_item, str) and pattern in real_item
+                            if any(pattern in s for s in _string_parts(real_item))
                         ]
                     else:
                         # i.e filter_items == "regex"
                         real_items = [
                             real_item
                             for real_item in whole_list
-                            if isinstance(real_item, str) and re.search(pattern, real_item)
+                            if any(re.search(pattern, s) for s in _string_parts(real_item))
                         ]
                     if not real_items:
                         not_found.append(pattern)
