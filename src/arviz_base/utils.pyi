@@ -1,11 +1,8 @@
 # File generated with docstub
 
-import re
-import warnings
 from collections.abc import Hashable, Sequence
 from typing import Literal
 
-import numpy as np
 from _typeshed import Incomplete
 from numpy.typing import ArrayLike
 from xarray import DataArray, Dataset

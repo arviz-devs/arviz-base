@@ -2,7 +2,7 @@
 
 import re
 import warnings
-from collections.abc import Hashable, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -69,13 +69,7 @@ def _var_names(var_names, data, filter_vars=None, check_if_present=True):
     return var_names
 
 
-def _subset_list(
-    subset: Hashable | Sequence[Hashable] | None,
-    whole_list: Sequence[Hashable],
-    filter_items: str | None = None,
-    warn: bool = True,
-    check_if_present: bool = True,
-) -> list[Hashable] | None:
+def _subset_list(subset, whole_list, filter_items=None, warn=True, check_if_present=True):
     """Handle list subsetting (var_names, groups...) across arviz.
 
     Parameters
@@ -97,12 +91,21 @@ def _subset_list(
         and ``filter_items``.
     """
     if subset is not None:
-        if isinstance(subset, str):
+        if subset in whole_list:
             subset = [subset]
-        elif isinstance(subset, tuple) and subset in whole_list:
+        elif isinstance(subset, str):
             subset = [subset]
         elif isinstance(subset, Sequence) and not isinstance(subset, str | bytes):
             subset = list(subset)
+        else:
+            subset = [subset]
+
+        def _string_parts(obj):
+            if isinstance(obj, str):
+                return [obj]
+            if isinstance(obj, Sequence) and not isinstance(obj, str | bytes):
+                return [x for x in obj if isinstance(x, str)]
+            return []
 
         whole_list_tilde = [item for item in whole_list if _check_tilde_start(item)]
         if whole_list_tilde and warn:
@@ -150,14 +153,14 @@ def _subset_list(
                 item
                 for item in whole_list
                 for name in subset
-                if isinstance(item, str) and isinstance(name, str) and name in item
+                if isinstance(name, str) and any(name in s for s in _string_parts(item))
             ]
         elif filter_items == "regex":
             subset = [
                 item
                 for item in whole_list
                 for name in subset
-                if isinstance(item, str) and isinstance(name, str) and re.search(name, item)
+                if isinstance(name, str) and any(re.search(name, s) for s in _string_parts(item))
             ]
         existing_items = [item in whole_list for item in subset]
         if check_if_present and not all(existing_items):

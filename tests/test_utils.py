@@ -1,4 +1,6 @@
 # pylint: disable=redefined-outer-name
+from collections.abc import Hashable
+
 import numpy as np
 import pytest
 
@@ -176,3 +178,10 @@ def test_subset_list_regex_ignores_tuple_patterns():
     whole_list = [("tuple", "name"), "alpha", "beta"]
     out = _subset_list([("tuple", "name"), "alp.*"], whole_list, filter_items="regex")
     assert out == ["alpha"]
+
+
+def test_subset_list_frozenset_name_scalar():
+    v = frozenset({"a", "b"})
+    whole_list: list[Hashable] = [v, "x"]
+    out = _subset_list(v, whole_list)
+    assert out == [v]
