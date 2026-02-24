@@ -17,3 +17,8 @@ parameters {
 model {
     mu ~ normal(0, 1);
 }
+
+generated quantities {
+    vector[N] x_sq_out;
+    x_sq_out = x_sq;
+}

@@ -21,8 +21,8 @@ def run_model():
     # Sample
     fit = model.sample(data=data, chains=1, iter_sampling=10, iter_warmup=5)
 
-    # Basic check (instead of print statements)
-    assert "mu" in fit.stan_variables()
+    # Check generated quantities variable exists
+    assert "x_sq_out" in fit.stan_variables()
 
 
 if __name__ == "__main__":
