@@ -1,6 +1,7 @@
 # CmdStanPy Conversion Guide
 
-ArviZ can convert CmdStanPy sampling results into the ArviZ data structure using `from_cmdstanpy`.
+ArviZ offers the {func}`~arviz_base.from_cmdstanpy` function to convert CmdStanPy results into
+`DataTree`, the data structure used by ArviZ.
 
 ```python
 import arviz_base as az
@@ -10,4 +11,5 @@ model = CmdStanModel(stan_file="bernoulli.stan")
 fit = model.sample({"N": 10, "y": [0, 1, 0, 0, 0, 0, 0, 0, 0, 1]})
 
 idata = az.from_cmdstanpy(posterior=fit)
-az.plot_trace_dist(idata)
+idata
+```
