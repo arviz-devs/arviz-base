@@ -185,6 +185,7 @@ class MCMCAdapter(NumPyroInferenceAdapter):
         """
         self.nchains = mcmc.num_chains
         self.ndraws = mcmc.num_samples // mcmc.thinning
+        self._max_tree_depth = getattr(mcmc.sampler, "_max_tree_depth")
         super().__init__(
             mcmc,
             model=mcmc.sampler.model,
@@ -493,6 +494,10 @@ class NumPyroConverter:
             data[name] = value_cp
             if stat == "num_steps":
                 data["tree_depth"] = np.log2(value_cp).astype(int) + 1
+                if self.posterior._max_tree_depth is not None:
+                    data["reached_max_tree_depth"] = (
+                        data["tree_depth"] >= self.posterior._max_tree_depth
+                    )
 
         return dict_to_dataset(
             data,

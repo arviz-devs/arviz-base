@@ -614,6 +614,36 @@ class TestDataNumPyro:
             mcmc.run(PRNGKey(0))
             return {"posterior": mcmc}
 
+    def test_tree_depth(self):
+        import numpyro
+        import numpyro.distributions as dist
+        from numpyro.infer import MCMC, NUTS
+
+        rng = np.random.default_rng()
+        x = rng.normal(10, 3, size=100)
+
+        def model(x):
+            numpyro.sample(
+                "x",
+                dist.Normal(
+                    numpyro.sample("loc", dist.Uniform(0, 20)),
+                    numpyro.sample("scale", dist.Uniform(0, 20)),
+                ),
+                obs=x,
+            )
+
+        nuts_kernel = NUTS(model)
+        mcmc = MCMC(
+            nuts_kernel,
+            num_warmup=100,
+            num_samples=40,
+        )
+        mcmc.run(PRNGKey(0), x=x, extra_fields=("num_steps",))
+
+        inference_data = from_numpyro(mcmc)
+        assert "reached_max_tree_depth" in inference_data
+        assert "tree_depth" in inference_data
+
 
 class TestNumPyroAdapters:
     """Test all NumPyro adapters to ensure they follow the same interface conventions."""
