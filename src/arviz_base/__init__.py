@@ -2,7 +2,6 @@
 """Base ArviZ features and converters."""
 
 import logging
-from typing import TYPE_CHECKING
 
 _log = logging.getLogger(__name__)
 
@@ -14,6 +13,13 @@ from arviz_base.datasets import clear_data_home, get_data_home, list_datasets, l
 from arviz_base.io_cmdstanpy import from_cmdstanpy
 from arviz_base.io_dict import from_dict
 from arviz_base.io_emcee import from_emcee
+from arviz_base.io_numpyro import (
+    from_numpyro,
+    from_numpyro_svi,
+    NumPyroInferenceAdapter,
+    SVIAdapter,
+    MCMCAdapter,
+)
 from arviz_base.io_pystan import from_pystan
 from arviz_base.rcparams import rc_context, rcParams
 from arviz_base.reorg import (
@@ -26,34 +32,6 @@ from arviz_base.reorg import (
 from arviz_base.sel_utils import xarray_sel_iter, xarray_var_iter, xarray_to_ndarray
 from arviz_base.transform import get_unconstrained_samples
 from arviz_base import testing, labels
-
-import lazy_loader as _lazy
-
-
-if TYPE_CHECKING:
-    from .io_numpyro import (  # noqa: TID252
-        from_numpyro,
-        from_numpyro_svi,
-        NumPyroInferenceAdapter,
-        SVIAdapter,
-        MCMCAdapter,
-    )
-
-
-__getattr__, __dir__, _ = _lazy.attach(
-    __name__,
-    submodules=[],
-    submod_attrs={
-        "io_numpyro": [
-            "from_numpyro",
-            "from_numpyro_adapter",
-            "from_numpyro_svi",
-            "NumPyroInferenceAdapter",
-            "SVIAdapter",
-            "MCMCAdapter",
-        ]
-    },
-)
 
 
 __all__ = [
@@ -76,6 +54,11 @@ __all__ = [
     "from_cmdstanpy",
     "from_dict",
     "from_emcee",
+    "from_numpyro",
+    "from_numpyro_svi",
+    "NumPyroInferenceAdapter",
+    "SVIAdapter",
+    "MCMCAdapter",
     # labels submodule
     "labels",
     # rcparams

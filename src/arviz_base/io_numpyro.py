@@ -3,7 +3,9 @@
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from typing import TYPE_CHECKING
 
+import lazy_loader as _lazy
 import numpy as np
 from numpy.typing import ArrayLike
 from xarray import DataTree
@@ -12,13 +14,12 @@ from arviz_base.base import dict_to_dataset, requires
 from arviz_base.rcparams import rc_context, rcParams
 from arviz_base.utils import expand_dims
 
-try:
+if TYPE_CHECKING:
     import jax
     import numpyro
-except ImportError as e:
-    raise ImportError(
-        "The NumPyro I/O backend requires optional dependencies, jax and numpyro.\n\n"
-    ) from e
+else:
+    jax = _lazy.load("jax")
+    numpyro = _lazy.load("numpyro")
 
 
 class NumPyroInferenceAdapter(ABC):

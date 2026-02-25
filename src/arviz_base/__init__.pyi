@@ -7,8 +7,6 @@ from _typeshed import Incomplete
 
 _log: Incomplete
 
-import lazy_loader as _lazy
-
 from arviz_base import labels, testing
 from arviz_base._version import __version__
 from arviz_base.base import (
@@ -28,6 +26,13 @@ from arviz_base.datasets import (
 from arviz_base.io_cmdstanpy import from_cmdstanpy
 from arviz_base.io_dict import from_dict
 from arviz_base.io_emcee import from_emcee
+from arviz_base.io_numpyro import (
+    MCMCAdapter,
+    NumPyroInferenceAdapter,
+    SVIAdapter,
+    from_numpyro,
+    from_numpyro_svi,
+)
 from arviz_base.io_pystan import from_pystan
 from arviz_base.rcparams import rc_context, rcParams
 from arviz_base.reorg import (
@@ -39,19 +44,6 @@ from arviz_base.reorg import (
 )
 from arviz_base.sel_utils import xarray_sel_iter, xarray_to_ndarray, xarray_var_iter
 from arviz_base.transform import get_unconstrained_samples
-
-if TYPE_CHECKING:
-    from .io_numpyro import (
-        MCMCAdapter,
-        NumPyroInferenceAdapter,
-        SVIAdapter,
-        from_numpyro,
-        from_numpyro_svi,
-    )
-
-__getattr__: Incomplete
-__dir__: Incomplete
-_: Incomplete
 
 __all__ = [
     "__version__",
@@ -69,6 +61,11 @@ __all__ = [
     "from_cmdstanpy",
     "from_dict",
     "from_emcee",
+    "from_numpyro",
+    "from_numpyro_svi",
+    "NumPyroInferenceAdapter",
+    "SVIAdapter",
+    "MCMCAdapter",
     "labels",
     "rc_context",
     "rcParams",

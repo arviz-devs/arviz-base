@@ -4,8 +4,9 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
+import lazy_loader as _lazy
 import numpy as np
 import numpyro
 from _typeshed import Incomplete
@@ -16,13 +17,12 @@ from arviz_base.base import dict_to_dataset, requires
 from arviz_base.rcparams import rc_context, rcParams
 from arviz_base.utils import expand_dims
 
-try:
+if TYPE_CHECKING:
     import jax
     import numpyro
-except ImportError as e:
-    raise ImportError(
-        "The NumPyro I/O backend requires optional dependencies, jax and numpyro.\n\n"
-    ) from e
+else:
+    jax: Incomplete
+    numpyro: Incomplete
 
 class NumPyroInferenceAdapter(ABC):
     def __init__(
