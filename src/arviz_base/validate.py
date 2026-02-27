@@ -102,12 +102,12 @@ def validate_dict_argument(dict_arg, func_arg=None, *, valid_keys=None):
     msg = ""
     if func_arg is not None:
         func, arg_name = func_arg
-        msg = f"In argument {arg_name} of {func.__name__}"
+        msg = f"In argument {arg_name} of {func.__name__}\n"
         valid_keys = typing.get_args(typing.get_args(typing.get_type_hints(func)[arg_name])[0])
     extra_keys = [key for key in dict_arg if key not in valid_keys]
     if extra_keys:
         msg += f"Found keys {extra_keys} but valid keys are {valid_keys}"
-        raise ValueError()
+        raise ValueError(msg)
     return dict_arg
 
 
