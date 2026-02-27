@@ -132,20 +132,21 @@ def validate_prob(prob, allow_0=False):
     return prob
 
 
-def validate_kind(kind):
-    """Validate `kind` argument of plotting functions.
+def validate_or_use_rcparam(arg_in, rckey):
+    """Validate an arbitrary argument that defaults to an rcParam.
 
     Parameters
     ----------
-    kind : {"auto", "dot", "ecdf", "hist", "kde", None}
-        Input value for `kind`. It can be ``None`` to indicate the default
-        from rcParams should be used.
+    arg_in : any
+        Input value for argument that defaults to `rckey`
+    rckey : str
+        The rcParams key from which to take the default value when `arg_in`
+        is ``None`` and the validation function otherwise.
 
     Returns
     -------
-    kind : {"auto", "dot", "ecdf", "hist", "kde"}
-        Validated value for `kind`.
+    arg_out
     """
-    if kind is None:
-        return rcParams["plot.density_kind"]
-    return defaultParams["plot.density_kind"][1](kind)
+    if arg_in is None:
+        return rcParams[rckey]
+    return defaultParams[rckey][1](arg_in)
