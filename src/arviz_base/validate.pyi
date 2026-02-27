@@ -3,8 +3,9 @@
 import typing
 import warnings
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any, Literal
+from typing import Any
 
+from _typeshed import Incomplete as arg_out
 from xarray import Dataset, DataTree
 
 from arviz_base.rcparams import defaultParams, rcParams
@@ -21,6 +22,4 @@ def validate_dict_argument(
 ) -> dict[str, Any]: ...
 def validate_ci_prob(prob) -> float: ...
 def validate_prob(prob, allow_0=...) -> None: ...
-def validate_kind(
-    kind: Literal["auto", "dot", "ecdf", "hist", "kde", None],
-) -> Literal["auto", "dot", "ecdf", "hist", "kde"]: ...
+def validate_or_use_rcparam(arg_in: Any, rckey: str) -> arg_out: ...
