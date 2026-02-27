@@ -330,27 +330,27 @@ defaultParams = {  # pylint: disable=invalid-name
     "data.index_origin": (0, _make_validate_choice({0, 1}, typeof=int)),
     "data.sample_dims": (("chain", "draw"), _validate_dims),
     "data.save_warmup": (False, _validate_boolean),
-    "plot.backend": ("auto", _validate_backend),
-    "plot.density_kind": ("kde", _make_validate_choice({"kde", "hist"})),
-    "plot.max_subplots": (40, _validate_positive_int_or_none),
     "stats.module": ("base", _validate_stats_module),
     "stats.ci_kind": ("eti", _make_validate_choice({"eti", "hdi"})),
     "stats.ci_prob": (0.89, _validate_probability),
     "stats.envelope_prob": (0.99, _validate_probability),
     "stats.round_to": ("2g", _validate_rounding),
+    "stats.ic_compare_method": (
+        "stacking",
+        _make_validate_choice({"stacking", "bb-pseudo-bma", "pseudo-bma"}),
+    ),
     "stats.ic_pointwise": (True, _validate_boolean),
     "stats.ic_scale": (
         "log",
         _make_validate_choice(set(get_args(ScaleKeyword))),
     ),
-    "stats.ic_compare_method": (
-        "stacking",
-        _make_validate_choice({"stacking", "bb-pseudo-bma", "pseudo-bma"}),
-    ),
     "stats.point_estimate": (
         "mean",
-        _make_validate_choice({"mean", "median", "mode"}, allow_none=True),
+        _make_validate_choice({"mean", "median", "mode"}),
     ),
+    "plot.backend": ("auto", _validate_backend),
+    "plot.density_kind": ("auto", _make_validate_choice({"auto", "dot", "ecdf", "hist", "kde"})),
+    "plot.max_subplots": (40, _validate_positive_int_or_none),
 }
 
 
