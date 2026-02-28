@@ -1,4 +1,5 @@
-# CmdStanPy Conversion Guide
+(cmdstanpy_conversion)=
+# Converting CmdStanPy objects to DataTree
 
 ArviZ offers the {func}`~arviz_base.from_cmdstanpy` function to convert CmdStanPy results into
 `DataTree`, the data structure used by ArviZ.
