@@ -1,7 +1,6 @@
 # File generated with docstub
 
 import logging
-from typing import TYPE_CHECKING
 
 from _typeshed import Incomplete
 

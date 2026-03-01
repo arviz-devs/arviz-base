@@ -70,7 +70,7 @@ class NumPyroInferenceAdapter(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_samples(self, seed=None, group_by_chain=False, **kwargs):
+    def get_samples(self, seed=None, **kwargs):
         """Get posterior samples from the inference object.
 
         Parameters
@@ -79,9 +79,6 @@ class NumPyroInferenceAdapter(ABC):
             Random seed for sampling. Not all inference types use this parameter.
             For MCMC, this parameter is ignored as samples are already drawn.
             For SVI, this controls random number generation.
-        group_by_chain : bool, default False
-            Whether to group samples by chain dimension. For MCMC, this separates
-            samples into chains. For SVI this parameter is ignored.
         **kwargs : dict
             Additional keyword arguments passed to the underlying inference object's
             sampling method.
@@ -90,19 +87,18 @@ class NumPyroInferenceAdapter(ABC):
         -------
         dict of {str: array-like}
             Dictionary mapping parameter names to their sampled values.
-            For MCMC with group_by_chain=True: arrays have shape (num_chains, num_draws, ...).
-            For MCMC with group_by_chain=False: arrays have shape (num_chains * num_draws, ...).
+            For MCMC: arrays have shape (num_chains, num_draws, ...).
             For SVI: arrays have shape (num_samples, ...).
         """
         raise NotImplementedError
 
-    def get_extra_fields(self, **kwargs):
-        """Get extra fields from the inference object (e.g., divergences for MCMC).
+    def get_sample_stats(self, **kwargs):
+        """Get sample stats from the inference object (e.g., divergences for MCMC).
 
         Returns
         -------
         dict of {str: array-like}
-            Dictionary of extra diagnostic fields. Empty dict by default.
+            Dictionary of sample stats. Empty dict by default.
         """
         return dict()
 
@@ -153,7 +149,7 @@ class SVIAdapter(NumPyroInferenceAdapter):
         return ["sample"]
 
     def get_samples(  # noqa: D102
-        self, seed: int | None = None, group_by_chain: bool = False, **kwargs: dict
+        self, seed: int | None = None, **kwargs: dict
     ) -> dict[str, ArrayLike]:
         key = self.prng_key_func(seed or 0)
         if isinstance(self.posterior.guide, numpyro.infer.autoguide.AutoGuide):
@@ -199,11 +195,11 @@ class MCMCAdapter(NumPyroInferenceAdapter):
         return ["chain", "draw"]
 
     def get_samples(  # noqa: D102
-        self, seed: int | None = None, group_by_chain: bool = True, **kwargs: dict
+        self, seed: int | None = None, **kwargs: dict
     ) -> dict[str, ArrayLike]:
-        return self.posterior.get_samples(group_by_chain=group_by_chain, **kwargs)
+        return self.posterior.get_samples(group_by_chain=True, **kwargs)
 
-    def get_extra_fields(self, **kwargs) -> dict[str, ArrayLike]:  # noqa: D102
+    def get_sample_stats(self, **kwargs) -> dict[str, ArrayLike]:  # noqa: D102
         return self.posterior.get_extra_fields(group_by_chain=True, **kwargs)
 
 
@@ -373,7 +369,7 @@ class NumPyroConverter:
         self.extra_event_dims = extra_event_dims
 
         # use nchains to help infer shape when posterior isnt present for MCMC
-        self.nchains = (num_chains or 1) if rcParams["data.sample_dims"][0] == "chain" else None
+        self.nchains = num_chains if rcParams["data.sample_dims"][0] == "chain" else None
 
         if posterior is not None:
             samples = jax.device_get(self.posterior.get_samples())
@@ -441,20 +437,37 @@ class NumPyroConverter:
         get_from = next((src for src in sources if src is not None), None)
         no_constant_data = self.constant_data is None and self.predictions_constant_data is None
         if get_from is not None:
-            aelem = next(iter(get_from.values()))  # pick an arbitrary element
+            aelem = next(iter(get_from.values()))
+            batch_ndim = aelem.ndim - len(rcParams["data.sample_dims"])
+            if batch_ndim == 0:
+                if self.nchains is None:
+                    warnings.warn(
+                        f"Input has no extra dims beyond sample_dims "
+                        f"{rcParams['data.sample_dims']}, but nchains=None. "
+                        f"\nPlease check your `nchains` and `sample_dims` inputs."
+                        f"\nFalling back to treating the first axis as the only sample dim, "
+                        f"giving sample_shape={aelem.shape[:1]}."
+                    )
+                    return aelem.shape[:1]
 
-            # For MCMC from numpyro, we need to reshape the sample shape
-            # based on the number of chains provided
-            if self.nchains is not None:
+                # nchains is known: split flat array into (nchains, ndraws)
                 ndraws, remainder = divmod(aelem.shape[0], self.nchains)
                 if remainder != 0:
                     raise ValueError(
-                        f"Sample Shape in shape provided {aelem.shape} is "
-                        "not divisible by the number of chains {self.nchains}."
+                        f"Sample shape {aelem.shape} is not divisible "
+                        f"by the number of chains {self.nchains}."
                     )
                 return (self.nchains, ndraws)
             else:
-                return aelem.shape[: len(rcParams["data.sample_dims"])]
+                # Array already has chain/draw dims; optionally validate against nchains
+                sample_shape = aelem.shape[: len(rcParams["data.sample_dims"])]
+                if self.nchains is not None and sample_shape[0] != self.nchains:
+                    raise ValueError(
+                        f"Array shape {aelem.shape} implies {sample_shape[0]} chains, "
+                        f"but nchains={self.nchains}."
+                    )
+                return sample_shape
+
         elif no_constant_data:
             raise ValueError(
                 "When constructing InferenceData, must have at least one of "
@@ -486,7 +499,7 @@ class NumPyroConverter:
             "accept_prob": "acceptance_rate",
         }
         data = {}
-        for stat, value in self.posterior.get_extra_fields().items():
+        for stat, value in self.posterior.get_sample_stats().items():
             if isinstance(value, dict | tuple):
                 continue
             name = rename_key.get(stat, stat)
@@ -513,17 +526,11 @@ class NumPyroConverter:
         """Extract log likelihood from NumPyro posterior."""
         if not self.log_likelihood:
             return None
-        data = {}
         if self.observations is not None:
-            samples = self.posterior.get_samples(group_by_chain=False)
-            if hasattr(samples, "_asdict"):
-                samples = samples._asdict()
-            log_likelihood_dict = numpyro.infer.log_likelihood(
-                self.model, samples, *self._args, **self._kwargs
+            samples = self.posterior.get_samples()
+            data = numpyro.infer.log_likelihood(
+                self.model, samples, *self._args, **self._kwargs, batch_ndims=len(self.sample_dims)
             )
-            for obs_name, log_like in log_likelihood_dict.items():
-                shape = self.sample_shape + log_like.shape[1:]
-                data[obs_name] = np.reshape(np.asarray(log_like), shape)
         return dict_to_dataset(
             data,
             inference_library=numpyro,
@@ -538,9 +545,9 @@ class NumPyroConverter:
         data = {}
         for k, ary in dct.items():
             shape = ary.shape
-            if (shape[: len(self.sample_shape)] == self.sample_shape) or shape[0] == np.prod(
-                self.sample_shape
-            ):
+            if shape[: len(self.sample_shape)] == self.sample_shape:
+                data[k] = ary
+            elif shape[0] == np.prod(self.sample_shape):
                 data[k] = ary.reshape(self.sample_shape + shape[1:])
             else:
                 data[k] = expand_dims(ary)
@@ -579,14 +586,25 @@ class NumPyroConverter:
             prior_vars = self.prior.keys()
             prior_predictive_vars = None
 
-        # dont expand dims for SVI
-        expand_dims_func = expand_dims if len(rcParams["data.sample_dims"]) > 1 else lambda x: x
+        # priors input should have same ndims as sample_dims + batch_dims
+        data = {}
+        for k, ary in self.prior.items():
+            ndims = len(ary.shape)
+            batch_dims = 0
+            if self.dims:
+                batch_dims += len(self.dims.get(k, []))
+            expected_ndims = len(rcParams["data.sample_dims"]) + batch_dims
+            if ndims < expected_ndims:
+                data[k] = expand_dims(ary)
+            else:
+                data[k] = ary
+
         priors_dict = {
             group: (
                 None
                 if var_names is None
                 else dict_to_dataset(
-                    {k: expand_dims_func(self.prior[k]) for k in var_names},
+                    data,
                     inference_library=numpyro,
                     coords=self.coords,
                     dims=self.dims,
