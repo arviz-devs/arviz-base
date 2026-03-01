@@ -53,15 +53,15 @@ class TestDataNumPyro:
         class Data:
             # For numpyro_adapter_*, use the underlying model but pass through adapter
             param_name = request.param
-            if request.param == "numpyro_adapter_mcmc":
+            if param_name == "numpyro_adapter_mcmc":
                 model_key = "numpyro"
-            elif request.param == "numpyro_adapter_svi":
+            elif param_name == "numpyro_adapter_svi":
                 model_key = "numpyro_svi"
             else:
-                model_key = request.param
+                model_key = param_name
             obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[model_key]
-            from_numpyro_func = FROM_NUMPYRO_FUNC[request.param]
-            adapter = ADAPTER_TYPES[model_key](**obj)
+            from_numpyro_func = FROM_NUMPYRO_FUNC[param_name]
+            adapter = ADAPTER_TYPES[param_name](**obj)
 
         return Data
 
