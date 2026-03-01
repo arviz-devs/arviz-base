@@ -86,8 +86,9 @@ class TestDataNumPyro:
     def predictions_data(self, data, predictions_params):
         """Generate predictions for predictions_params"""
         # call internal posterior to avoid group_by_chain in MCMC
-        posterior_samples = data.adapter.get_samples(group_by_chain=False)
-        predictions = Predictive(data.adapter.model, posterior_samples)(
+        posterior_samples = data.adapter.get_samples()
+        sample_ndims = len(data.adapter.sample_dims)
+        predictions = Predictive(data.adapter.model, posterior_samples, batch_ndims=sample_ndims)(
             PRNGKey(2), predictions_params["J"], predictions_params["sigma"]
         )
         return predictions
@@ -95,11 +96,12 @@ class TestDataNumPyro:
     def get_inference_data(
         self, data, eight_schools_params, predictions_data, predictions_params, infer_dims=False
     ):
-        posterior_samples = data.adapter.get_samples(group_by_chain=False)
-        posterior_predictive = Predictive(data.adapter.model, posterior_samples)(
-            PRNGKey(1), eight_schools_params["J"], eight_schools_params["sigma"]
-        )
-        prior = Predictive(data.adapter.model, num_samples=500)(
+        posterior_samples = data.adapter.get_samples()
+        sample_ndims = len(data.adapter.sample_dims)
+        posterior_predictive = Predictive(
+            data.adapter.model, posterior_samples, batch_ndims=sample_ndims
+        )(PRNGKey(1), eight_schools_params["J"], eight_schools_params["sigma"])
+        prior = Predictive(data.adapter.model, num_samples=500, batch_ndims=sample_ndims)(
             PRNGKey(2), eight_schools_params["J"], eight_schools_params["sigma"]
         )
         dims = {"theta": ["school"], "eta": ["school"], "obs": ["school"]}
@@ -163,11 +165,12 @@ class TestDataNumPyro:
     def test_inference_data_no_posterior(
         self, data, eight_schools_params, predictions_data, predictions_params
     ):
-        posterior_samples = data.adapter.get_samples(group_by_chain=False)
-        posterior_predictive = Predictive(data.adapter.model, posterior_samples)(
-            PRNGKey(1), eight_schools_params["J"], eight_schools_params["sigma"]
-        )
-        prior = Predictive(data.adapter.model, num_samples=500)(
+        posterior_samples = data.adapter.get_samples()
+        sample_ndims = len(data.adapter.sample_dims)
+        posterior_predictive = Predictive(
+            data.adapter.model, posterior_samples, batch_ndims=sample_ndims
+        )(PRNGKey(1), eight_schools_params["J"], eight_schools_params["sigma"])
+        prior = Predictive(data.adapter.model, num_samples=500, batch_ndims=sample_ndims)(
             PRNGKey(2), eight_schools_params["J"], eight_schools_params["sigma"]
         )
         predictions = predictions_data
@@ -224,7 +227,7 @@ class TestDataNumPyro:
         idata = data.from_numpyro_func(**kwargs)
         test_dict = {
             "posterior": ["mu", "tau", "eta"],
-            "sample_stats": ["diverging"],
+            "sample_stats": ["diverging", "tree_depth", "reached_max_tree_depth"],
         }
         if not isinstance(data.adapter, MCMCAdapter):
             test_dict.pop("sample_stats")
@@ -613,36 +616,6 @@ class TestDataNumPyro:
             mcmc = MCMC(NUTS(model), num_warmup=10, num_samples=10)
             mcmc.run(PRNGKey(0))
             return {"posterior": mcmc}
-
-    def test_tree_depth(self):
-        import numpyro
-        import numpyro.distributions as dist
-        from numpyro.infer import MCMC, NUTS
-
-        rng = np.random.default_rng()
-        x = rng.normal(10, 3, size=100)
-
-        def model(x):
-            numpyro.sample(
-                "x",
-                dist.Normal(
-                    numpyro.sample("loc", dist.Uniform(0, 20)),
-                    numpyro.sample("scale", dist.Uniform(0, 20)),
-                ),
-                obs=x,
-            )
-
-        nuts_kernel = NUTS(model)
-        mcmc = MCMC(
-            nuts_kernel,
-            num_warmup=100,
-            num_samples=40,
-        )
-        mcmc.run(PRNGKey(0), x=x, extra_fields=("num_steps",))
-
-        inference_data = from_numpyro(mcmc)
-        assert "reached_max_tree_depth" in inference_data
-        assert "tree_depth" in inference_data
 
 
 class TestNumPyroAdapters:
