@@ -96,8 +96,9 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable/", None),
     "python": ("https://docs.python.org/3/", None),
     "xarray": ("https://docs.xarray.dev/en/latest/", None),
-    "arviz_plots": ("https://arviz-plots.readthedocs.io/en/latest", None),
-    "arviz_stats": ("https://arviz-stats.readthedocs.io/en/latest", None),
+    "arviz_meta": ("https://python.arviz.org/en/latest", None),
+    "arviz_plots": ("https://python.arviz.org/projects/plots/en/latest", None),
+    "arviz_stats": ("https://python.arviz.org/projects/stats/en/latest", None),
 }
 
 # -- Options for HTML output
