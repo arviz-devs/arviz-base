@@ -40,7 +40,7 @@ def extract(  # noqa: PLR0915
 
     Parameters
     ----------
-    idata : DataTree-like
+    data : DataTree-like
         DataTree from which to extract the data.
     group : str, optional
         Which group to extract data from.
@@ -268,14 +268,25 @@ def dataset_to_dataarray(
 
 def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False, new_dim="label"):
     """Convert a Dataset to a DataFrame via a stacked DataArray, using a labeller.
-
+    
     Parameters
     ----------
     ds : Dataset
+        Input dataset to convert to a DataFrame.
     sample_dims : sequence of hashable, optional
+        Dimensions that are present in all variables of `ds` and should be kept
+        as the index of the returned DataFrame. Defaults to
+        ``rcParams["data.sample_dims"]``.
     labeller : labeller, optional
+        Labeller instance with a `make_label_flat` or `make_label_vert` method
+        used to generate coordinate values along `new_dim`.
     multiindex : {"row", "column"} or bool, default False
+        If ``"row"`` or ``True``, use a MultiIndex for the rows of the DataFrame.
+        If ``"column"`` or ``True``, use a MultiIndex for the columns.
+        If ``False`` (default), use a single index.
     new_dim : hashable, default "label"
+        Name of the new dimension created from stacking variables and dimensions
+        not in `sample_dims`.
 
     Returns
     -------
