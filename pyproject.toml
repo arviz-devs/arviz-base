@@ -28,6 +28,7 @@ dependencies = [
   "numpy>=2",
   "xarray>=2024.11.0",
   "typing-extensions>=3.10",
+  "lazy_loader>=0.4",
 ]
 
 [tool.flit.module]

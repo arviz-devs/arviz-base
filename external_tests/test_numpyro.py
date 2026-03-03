@@ -4,7 +4,12 @@ from collections import namedtuple
 import numpy as np
 import pytest
 
-from arviz_base.io_numpyro import SVIWrapper, from_numpyro, from_numpyro_svi
+from arviz_base.io_numpyro import (
+    MCMCAdapter,
+    SVIAdapter,
+    from_numpyro,
+    from_numpyro_svi,
+)
 from arviz_base.testing import check_multiple_attrs
 
 from .helpers import importorskip, load_cached_models
@@ -17,14 +22,57 @@ Predictive = numpyro.infer.Predictive
 autoguide = numpyro.infer.autoguide
 numpyro.set_host_device_count(2)
 
+ADAPTER_TYPES = {
+    "numpyro": MCMCAdapter,
+    "numpyro_svi": SVIAdapter,
+    "numpyro_svi_custom_guide": SVIAdapter,
+    "numpyro_adapter_mcmc": MCMCAdapter,
+    "numpyro_adapter_svi": SVIAdapter,
+}
+FROM_NUMPYRO_FUNC = {
+    "numpyro": from_numpyro,
+    "numpyro_svi": from_numpyro_svi,
+    "numpyro_svi_custom_guide": from_numpyro_svi,
+    "numpyro_adapter_mcmc": from_numpyro,
+    "numpyro_adapter_svi": from_numpyro,
+}
+
 
 class TestDataNumPyro:
-    @pytest.fixture(scope="class", params=["numpyro", "numpyro_svi", "numpyro_svi_custom_guide"])
+    @pytest.fixture(
+        scope="class",
+        params=[
+            "numpyro",
+            "numpyro_svi",
+            "numpyro_svi_custom_guide",
+            "numpyro_adapter_mcmc",
+            "numpyro_adapter_svi",
+        ],
+    )
     def data(self, request, eight_schools_params, draws, chains):
         class Data:
-            obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[request.param]
+            # For numpyro_adapter_*, use the underlying model but pass through adapter
+            param_name = request.param
+            if request.param == "numpyro_adapter_mcmc":
+                model_key = "numpyro"
+            elif request.param == "numpyro_adapter_svi":
+                model_key = "numpyro_svi"
+            else:
+                model_key = request.param
+            obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[model_key]
+            from_numpyro_func = FROM_NUMPYRO_FUNC[request.param]
+            adapter = ADAPTER_TYPES[model_key](**obj)
 
         return Data
+
+    def _prepare_posterior_kwargs(self, data):
+        """Prepare kwargs for from_numpyro functions, handling MCMC objects."""
+        # For numpyro_adapter_*, pass the adapter instead of the raw object
+        if data.param_name.startswith("numpyro_adapter_"):
+            return {"posterior": data.adapter}
+        if "mcmc" in data.obj:
+            return {"posterior": data.obj["mcmc"]}
+        return data.obj
 
     @pytest.fixture(scope="class")
     def predictions_params(self):
@@ -37,10 +85,9 @@ class TestDataNumPyro:
     @pytest.fixture(scope="class")
     def predictions_data(self, data, predictions_params):
         """Generate predictions for predictions_params"""
-        posterior = SVIWrapper(**data.obj) if isinstance(data.obj, dict) else data.obj
-        posterior_samples = posterior.get_samples()
-        model = posterior.sampler.model
-        predictions = Predictive(model, posterior_samples)(
+        # call internal posterior to avoid group_by_chain in MCMC
+        posterior_samples = data.adapter.get_samples(group_by_chain=False)
+        predictions = Predictive(data.adapter.model, posterior_samples)(
             PRNGKey(2), predictions_params["J"], predictions_params["sigma"]
         )
         return predictions
@@ -48,21 +95,11 @@ class TestDataNumPyro:
     def get_inference_data(
         self, data, eight_schools_params, predictions_data, predictions_params, infer_dims=False
     ):
-        if isinstance(data.obj, dict):  # SVI cached data obj is a tuple
-            posterior = SVIWrapper(**data.obj)
-            from_numpyro_func = from_numpyro_svi
-            posterior_kwarg = data.obj
-        else:  # regular MCMC
-            posterior = data.obj
-            from_numpyro_func = from_numpyro
-            posterior_kwarg = {"posterior": posterior}
-
-        posterior_samples = posterior.get_samples()
-        model = posterior.sampler.model
-        posterior_predictive = Predictive(model, posterior_samples)(
+        posterior_samples = data.adapter.get_samples(group_by_chain=False)
+        posterior_predictive = Predictive(data.adapter.model, posterior_samples)(
             PRNGKey(1), eight_schools_params["J"], eight_schools_params["sigma"]
         )
-        prior = Predictive(model, num_samples=500)(
+        prior = Predictive(data.adapter.model, num_samples=500)(
             PRNGKey(2), eight_schools_params["J"], eight_schools_params["sigma"]
         )
         dims = {"theta": ["school"], "eta": ["school"], "obs": ["school"]}
@@ -71,9 +108,8 @@ class TestDataNumPyro:
             dims = pred_dims = None
 
         predictions = predictions_data
-
-        return from_numpyro_func(
-            **posterior_kwarg,
+        return data.from_numpyro_func(
+            **self._prepare_posterior_kwargs(data),
             prior=prior,
             posterior_predictive=posterior_predictive,
             predictions=predictions,
@@ -86,18 +122,17 @@ class TestDataNumPyro:
         )
 
     def test_inference_data_namedtuple(self, data):
-        posterior = SVIWrapper(**data.obj) if isinstance(data.obj, dict) else data.obj
-        samples = posterior.get_samples()
+        samples = data.adapter.get_samples()
         Samples = namedtuple("Samples", samples)
         data_namedtuple = Samples(**samples)
-        _old_fn = posterior.get_samples
-        posterior.get_samples = lambda *args, **kwargs: data_namedtuple
-        inference_data = from_numpyro(
-            posterior=posterior,
+        _old_fn = data.adapter.get_samples
+        data.adapter.get_samples = lambda *args, **kwargs: data_namedtuple
+        inference_data = data.from_numpyro_func(
+            **self._prepare_posterior_kwargs(data),
             dims={},  # This mock test needs to turn off autodims like so or mock group_by_chain
         )
-        assert isinstance(posterior.get_samples(), Samples)
-        posterior.get_samples = _old_fn
+        assert isinstance(data.adapter.get_samples(), Samples)
+        data.adapter.get_samples = _old_fn
         for key in samples:
             assert key in inference_data.posterior
 
@@ -114,7 +149,7 @@ class TestDataNumPyro:
             "prior_predictive": ["obs"],
             "observed_data": ["obs"],
         }
-        if isinstance(data.obj, dict):  # if its SVI, drop sample_stats check
+        if not isinstance(data.adapter, MCMCAdapter):  # if its not MCMC, drop sample_stats check
             test_dict.pop("sample_stats")
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails
@@ -128,63 +163,70 @@ class TestDataNumPyro:
     def test_inference_data_no_posterior(
         self, data, eight_schools_params, predictions_data, predictions_params
     ):
-        posterior = SVIWrapper(**data.obj) if isinstance(data.obj, dict) else data.obj
-        posterior_samples = posterior.get_samples()
-        model = posterior.sampler.model
-        posterior_predictive = Predictive(model, posterior_samples)(
+        posterior_samples = data.adapter.get_samples(group_by_chain=False)
+        posterior_predictive = Predictive(data.adapter.model, posterior_samples)(
             PRNGKey(1), eight_schools_params["J"], eight_schools_params["sigma"]
         )
-        prior = Predictive(model, num_samples=500)(
+        prior = Predictive(data.adapter.model, num_samples=500)(
             PRNGKey(2), eight_schools_params["J"], eight_schools_params["sigma"]
         )
         predictions = predictions_data
         constant_data = {"J": 8, "sigma": eight_schools_params["sigma"]}
         predictions_constant_data = predictions_params
         ##  only prior
-        inference_data = from_numpyro(prior=prior)
+        # from_numpyro_adapter requires sample_dims when posterior is None
+        extra_kwargs = (
+            {"sample_dims": data.adapter.sample_dims}
+            if not data.param_name.startswith("numpyro_svi")
+            else {}
+        )
+        inference_data = data.from_numpyro_func(prior=prior, **extra_kwargs)
         test_dict = {"prior": ["mu", "tau", "eta"]}
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails, f"only prior: {fails}"
         ## only posterior_predictive
-        inference_data = from_numpyro(posterior_predictive=posterior_predictive)
+        inference_data = data.from_numpyro_func(
+            posterior_predictive=posterior_predictive, **extra_kwargs
+        )
         test_dict = {"posterior_predictive": ["obs"]}
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails, f"only posterior_predictive: {fails}"
         ## only predictions
-        inference_data = from_numpyro(predictions=predictions)
+        inference_data = data.from_numpyro_func(predictions=predictions, **extra_kwargs)
         test_dict = {"predictions": ["obs"]}
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails, f"only predictions: {fails}"
         ## only constant_data
-        inference_data = from_numpyro(constant_data=constant_data)
+        inference_data = data.from_numpyro_func(constant_data=constant_data, **extra_kwargs)
         test_dict = {"constant_data": ["J", "sigma"]}
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails, f"only constant_data: {fails}"
         ## only predictions_constant_data
-        inference_data = from_numpyro(predictions_constant_data=predictions_constant_data)
+        inference_data = data.from_numpyro_func(
+            predictions_constant_data=predictions_constant_data, **extra_kwargs
+        )
         test_dict = {"predictions_constant_data": ["J", "sigma"]}
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails, f"only predictions_constant_data: {fails}"
-        prior and posterior_predictive
-        idata = from_numpyro(
+        idata = data.from_numpyro_func(
             prior=prior,
             posterior_predictive=posterior_predictive,
             coords={"school": np.arange(eight_schools_params["J"])},
             dims={"theta": ["school"], "eta": ["school"]},
+            **extra_kwargs,
         )
         test_dict = {"posterior_predictive": ["obs"], "prior": ["mu", "tau", "eta", "obs"]}
         fails = check_multiple_attrs(test_dict, idata)
         assert not fails, f"prior and posterior_predictive: {fails}"
 
     def test_inference_data_only_posterior(self, data):
-        kwargs = data.obj if isinstance(data.obj, dict) else {"posterior": data.obj}
-        from_numpyro_func = from_numpyro_svi if isinstance(data.obj, dict) else from_numpyro
-        idata = from_numpyro_func(**kwargs)
+        kwargs = self._prepare_posterior_kwargs(data)
+        idata = data.from_numpyro_func(**kwargs)
         test_dict = {
             "posterior": ["mu", "tau", "eta"],
             "sample_stats": ["diverging"],
         }
-        if isinstance(data.obj, dict):
+        if not isinstance(data.adapter, MCMCAdapter):
             test_dict.pop("sample_stats")
         fails = check_multiple_attrs(test_dict, idata)
         assert not fails
@@ -257,9 +299,11 @@ class TestDataNumPyro:
 
     def test_inference_data_num_chains(self, predictions_data, chains):
         predictions = predictions_data
-        inference_data = from_numpyro(predictions=predictions, num_chains=chains)
-        nchains = inference_data.predictions.sizes["chain"]
-        assert nchains == chains
+        inference_data = from_numpyro(
+            predictions=predictions, num_chains=chains, sample_dims=["chain", "draw"]
+        )
+        num_chains = inference_data.predictions.sizes["chain"]
+        assert num_chains == chains
 
     @pytest.mark.parametrize("nchains", [1, 2])
     @pytest.mark.parametrize("thin", [1, 2, 3, 5, 10])
@@ -381,7 +425,6 @@ class TestDataNumPyro:
         result = self._run_inference(model, svi=svi, guide_fn=guide_fn)
         from_numpyro_func = from_numpyro_svi if svi else from_numpyro
         sample_dims = ("sample",) if svi else ("chain", "draw")
-
         inference_data = from_numpyro_func(
             **result, coords={"group1": np.arange(10), "group2": np.arange(5)}
         )
@@ -548,7 +591,7 @@ class TestDataNumPyro:
         inference_data = self.get_inference_data(
             data, eight_schools_params, predictions_data, predictions_params, infer_dims=True
         )
-        sample_dims = ("sample",) if isinstance(data.obj, dict) else ("chain", "draw")
+        sample_dims = tuple(data.adapter.sample_dims)
         assert inference_data.predictions.obs.dims == (sample_dims + ("J",))
         assert "J" in inference_data.predictions.obs.coords
 
@@ -564,7 +607,6 @@ class TestDataNumPyro:
             return {
                 "svi": svi,
                 "svi_result": svi_result,
-                "model": None if is_autoguide else model,
             }
 
         else:
@@ -572,40 +614,81 @@ class TestDataNumPyro:
             mcmc.run(PRNGKey(0))
             return {"posterior": mcmc}
 
+    def test_tree_depth(self):
+        import numpyro
+        import numpyro.distributions as dist
+        from numpyro.infer import MCMC, NUTS
 
-class TestSVIWrapper:
-    @pytest.fixture(scope="class", params=["numpyro_svi", "numpyro_svi_custom_guide"])
+        rng = np.random.default_rng()
+        x = rng.normal(10, 3, size=100)
+
+        def model(x):
+            numpyro.sample(
+                "x",
+                dist.Normal(
+                    numpyro.sample("loc", dist.Uniform(0, 20)),
+                    numpyro.sample("scale", dist.Uniform(0, 20)),
+                ),
+                obs=x,
+            )
+
+        nuts_kernel = NUTS(model)
+        mcmc = MCMC(
+            nuts_kernel,
+            num_warmup=100,
+            num_samples=40,
+        )
+        mcmc.run(PRNGKey(0), x=x, extra_fields=("num_steps",))
+
+        inference_data = from_numpyro(mcmc)
+        assert "reached_max_tree_depth" in inference_data
+        assert "tree_depth" in inference_data
+
+
+class TestNumPyroAdapters:
+    """Test all NumPyro adapters to ensure they follow the same interface conventions."""
+
+    @pytest.fixture(
+        scope="class",
+        params=[
+            ("numpyro", {"sample_dims": ["chain", "draw"]}),
+            ("numpyro_svi", {"sample_dims": ["sample"]}),
+            ("numpyro_svi_custom_guide", {"sample_dims": ["sample"]}),
+        ],
+        ids=["mcmc", "svi", "svi_custom_guide"],
+    )
     def data(self, request, eight_schools_params, draws, chains):
+        """Fixture that provides adapter instances for all inference types."""
+        model_key, expected_attrs = request.param
+
         class Data:
-            obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[request.param]
+            obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[model_key]
+            from_numpyro_func = FROM_NUMPYRO_FUNC[model_key]
+            adapter = ADAPTER_TYPES[model_key](**obj)
+            expected = expected_attrs
+            model_key_name = model_key
 
         return Data
 
-    def test_init_without_args_kwargs(self):
-        from numpyro.infer import Trace_ELBO
-        from numpyro.infer.svi import SVI, SVIRunResult
-        from numpyro.optim import Adam
+    def test_sample_dims(self, data):
+        """All adapters must have a sample_dims property."""
+        assert data.adapter.sample_dims == data.expected["sample_dims"]
 
-        model = guide = lambda x: x
-        svi = SVI(model, guide, optim=Adam(0.05), loss=Trace_ELBO())
-        svi_result = SVIRunResult(params=jax.numpy.ones(5), state=None, losses=jax.numpy.zeros(10))
+    def test_sample_shape(self, data):
+        """All adapters must have a sample_shape attribute."""
+        assert len(data.adapter.sample_shape) == len(data.expected["sample_dims"])
 
-        posterior = SVIWrapper(svi, svi_result=svi_result)
-        assert isinstance(posterior._args, tuple)
-        assert isinstance(posterior._kwargs, dict)
+    def test_has_model_attribute(self, data):
+        """All adapters must have a model attribute that is callable."""
+        assert hasattr(data.adapter, "model")
+        assert data.adapter.model is not None
+        assert callable(data.adapter.model)
 
     def test_get_samples(self, data, eight_schools_params):
-        svi_posterior = SVIWrapper(
-            data.obj["svi"], svi_result=data.obj["svi_result"], model_kwargs=eight_schools_params
-        )
-        out = svi_posterior.get_samples(seed=0)
-        assert isinstance(out, dict)
-        for v in out.values():  # values are array-like
+        """All adapters must implement get_samples()."""
+        samples = data.adapter.get_samples(seed=0)
+        assert isinstance(samples, dict)
+        assert len(samples) > 0
+        # All values should be array-like
+        for v in samples.values():
             assert isinstance(v, (jax.numpy.ndarray | np.ndarray))
-
-    def test_sampler_attr(self, data, eight_schools_params):
-        svi_posterior = SVIWrapper(
-            data.obj["svi"], svi_result=data.obj["svi_result"], model_kwargs=eight_schools_params
-        )
-        assert hasattr(svi_posterior, "sampler")
-        assert hasattr(svi_posterior.sampler, "model")
