@@ -268,7 +268,7 @@ def dataset_to_dataarray(
 
 def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False, new_dim="label"):
     """Convert a Dataset to a DataFrame via a stacked DataArray, using a labeller.
-    
+
     Parameters
     ----------
     ds : Dataset
@@ -278,8 +278,8 @@ def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False, 
         as the index of the returned DataFrame. Defaults to
         ``rcParams["data.sample_dims"]``.
     labeller : labeller, optional
-        Labeller instance with a `make_label_flat` or `make_label_vert` method
-        used to generate coordinate values along `new_dim`.
+        Labeller instance passed to :func:`dataset_to_dataarray` to generate
+        coordinate values along `new_dim`.
     multiindex : {"row", "column"} or bool, default False
         If ``"row"`` or ``True``, use a MultiIndex for the rows of the DataFrame.
         If ``"column"`` or ``True``, use a MultiIndex for the columns.
