@@ -16,7 +16,10 @@ def _var_names(var_names, data, filter_vars=None, check_if_present=True):
     Parameters
     ----------
     var_names : str or list or None
+        Names of variables to be processed. If None, all variables in
+        data are returned.
     data : xarray.Dataset or sequence of xarray.Dataset
+        Dataset or list of datasets containing the variables.
     filter_vars : {None, "like", "regex"}, optional, default=None
         If `None` (default), interpret var_names as the real variables names. If "like",
         interpret var_names as substrings of the real variables names. If "regex",
@@ -74,6 +77,8 @@ def _subset_list(subset, whole_list, filter_items=None, warn=True, check_if_pres
     Parameters
     ----------
     subset : str, list, or None
+        Elements to select from whole_list. If None, the whole list
+        is returned unchanged.
     whole_list : list
         List from which to select a subset according to subset elements and
         filter_items value.
@@ -82,6 +87,12 @@ def _subset_list(subset, whole_list, filter_items=None, warn=True, check_if_pres
         names. If "like", interpret `subset` as substrings of the elements in
         `whole_list`. If "regex", interpret `subset` as regular expressions to match
         elements in `whole_list`. A la `pandas.filter`.
+    warn : bool, optional
+        If True (default), warn when elements starting with '~' are
+        found in whole_list.
+    check_if_present : bool, optional
+        If True (default), raise an error if any element of subset
+        is not present in whole_list.
 
     Returns
     -------
@@ -147,7 +158,7 @@ def _get_coords(data, coords):
     ----------
     data : DataArray, Dataset or list of DataArray or Dataset
         Xarray objects to be subsetted. It can be a list or tuple, in which
-        case all xarray objects whithin the iterable will be subsetted.
+        case all xarray objects within the iterable will be subsetted.
     coords : dict of {hashable: array_like}
         Dictionary specifying the subset to select. Passed to
         :meth:`xarray.Dataset.sel` or :meth:`xarray.DataArray.sel`
