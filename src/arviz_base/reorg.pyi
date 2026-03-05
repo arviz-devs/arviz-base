@@ -9,7 +9,7 @@ import pandas
 import pandas as pd
 import xarray as xr
 from numpy.typing import ArrayLike
-from xarray import DataArray, Dataset , DataTree
+from xarray import DataArray, Dataset, DataTree
 
 from arviz_base.converters import convert_to_dataset
 from arviz_base.labels import BaseLabeller
