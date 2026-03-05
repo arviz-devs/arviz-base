@@ -175,7 +175,32 @@ class CmdStanPyConverter:
     @requires("posterior_predictive")
     def posterior_predictive_to_xarray(self):
         """Convert posterior_predictive samples to xarray."""
-        data, data_warmup = self.predictive_to_xarray(self.posterior_predictive, self.posterior)
+        posterior_predictive = self.posterior_predictive
+        if isinstance(posterior_predictive, str):
+            posterior_predictive = [posterior_predictive]
+
+        if isinstance(posterior_predictive, list | tuple):
+            posterior_predictive = {name: name for name in posterior_predictive}
+
+        data, data_warmup = _unpack_fit(
+            self.posterior,
+            list(posterior_predictive.values()),
+            self.save_warmup,
+            self.dtypes,
+        )
+
+        data = {
+            obs_var_name: data[var_name]
+            for obs_var_name, var_name in posterior_predictive.items()
+            if var_name in data
+        }
+
+        if data_warmup:
+            data_warmup = {
+                obs_var_name: data_warmup[var_name]
+                for obs_var_name, var_name in posterior_predictive.items()
+                if var_name in data_warmup
+            }
         return self._warmup_return_to_dict(data, data_warmup, "posterior_predictive")
 
     @requires("prior")
@@ -233,6 +258,13 @@ class CmdStanPyConverter:
                     obs_name: data_warmup[lik_name]
                     for obs_name, lik_name in self.log_likelihood.items()
                 }
+        elif self.observed_data and len(self.observed_data) == 1:
+            obs_name = next(iter(self.observed_data))
+            old_name = next(iter(data))
+            data[obs_name] = data.pop(old_name)
+            if data_warmup:
+                data_warmup[obs_name] = data_warmup.pop(old_name)
+
         return self._warmup_return_to_dict(data, data_warmup, "log_likelihood")
 
     @requires("prior")
