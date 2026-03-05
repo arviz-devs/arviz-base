@@ -258,13 +258,6 @@ class CmdStanPyConverter:
                     obs_name: data_warmup[lik_name]
                     for obs_name, lik_name in self.log_likelihood.items()
                 }
-        elif self.observed_data and len(self.observed_data) == 1:
-            obs_name = next(iter(self.observed_data))
-            old_name = next(iter(data))
-            data[obs_name] = data.pop(old_name)
-            if data_warmup:
-                data_warmup[obs_name] = data_warmup.pop(old_name)
-
         return self._warmup_return_to_dict(data, data_warmup, "log_likelihood")
 
     @requires("prior")
