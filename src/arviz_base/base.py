@@ -241,6 +241,10 @@ def dict_to_dataset(
     ----------
     data : mapping of {hashable_key : array_like}
         Data to convert. Keys are variable names.
+
+        If values in `data` are :class:`xarray.DataArray` objects, they are
+        preserved as-is and their dimensions and coordinates are not modified.
+
     attrs : mapping of {hashable_key : any}, optional
         JSON-like arbitrary metadata to attach to the dataset, in addition to default
         attributes added by :func:`make_attrs`.

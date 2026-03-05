@@ -36,6 +36,10 @@ def from_dict(
         variables that should be stored in that group. These inner dictionaries
         are passed to :func:`dict_to_dataset`.
 
+        If values in these inner dictionaries are :class:`xarray.DataArray`
+        objects, they are preserved as-is and their dimensions and
+        coordinates are not modified.
+
         Depending on the group name, the arguments used when calling `dict_to_dataset`
         can take different arguments from their defaults:
 
