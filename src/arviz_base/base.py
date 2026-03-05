@@ -159,6 +159,9 @@ def ndarray_to_dataarray(
     attributes, so it is similar to initializing an :class:`xarray.DataArray`
     but not equivalent.
 
+    If an :class:`xarray.DataArray` is passed, it is returned unchanged and
+    its dimensions and coordinates are preserved.
+
     Parameters
     ----------
     ary : scalar or array_like
@@ -190,6 +193,9 @@ def ndarray_to_dataarray(
     --------
     dict_to_dataset
     """
+    if isinstance(ary, xr.DataArray):
+        return ary
+
     if dims is None:
         dims = []
 
