@@ -21,8 +21,8 @@ def _subset_list(
     subset: str,
     whole_list: list,
     filter_items: Literal[None, "like", "regex"] | None = ...,
-    warn=...,
-    check_if_present=...,
+    warn: bool = ...,
+    check_if_present: bool = ...,
 ) -> list | None: ...
 def _get_coords(
     data: DataArray, coords: dict[Hashable, ArrayLike]
