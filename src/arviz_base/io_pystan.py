@@ -186,13 +186,32 @@ class PyStanConverter:
         posterior = self.posterior
         posterior_model = self.posterior_model
         posterior_predictive = self.posterior_predictive
+        if isinstance(posterior_predictive, str):
+            posterior_predictive = [posterior_predictive]
+
+        if isinstance(posterior_predictive, list | tuple):
+            posterior_predictive = {name: name for name in posterior_predictive}
+
         data, data_warmup = get_draws(
             posterior,
             model=posterior_model,
-            variables=posterior_predictive,
+            variables=list(posterior_predictive.values()),
             warmup=self.save_warmup,
             dtypes=self.dtypes,
         )
+
+        data = {
+            obs_var_name: data[var_name]
+            for obs_var_name, var_name in posterior_predictive.items()
+            if var_name in data
+        }
+
+        if data_warmup:
+            data_warmup = {
+                obs_var_name: data_warmup[var_name]
+                for obs_var_name, var_name in posterior_predictive.items()
+                if var_name in data_warmup
+            }
         return self._warmup_return_to_dict(data, data_warmup, "posterior_predictive")
 
     @requires("posterior")
