@@ -2,6 +2,7 @@
 
 import re
 import warnings
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -90,8 +91,21 @@ def _subset_list(subset, whole_list, filter_items=None, warn=True, check_if_pres
         and ``filter_items``.
     """
     if subset is not None:
-        if isinstance(subset, str):
+        if subset in whole_list:
             subset = [subset]
+        elif isinstance(subset, str):
+            subset = [subset]
+        elif isinstance(subset, Sequence) and not isinstance(subset, str | bytes):
+            subset = list(subset)
+        else:
+            subset = [subset]
+
+        def _string_parts(obj):
+            if isinstance(obj, str):
+                return [obj]
+            if isinstance(obj, Sequence) and not isinstance(obj, str | bytes):
+                return [x for x in obj if isinstance(x, str)]
+            return []
 
         whole_list_tilde = [item for item in whole_list if _check_tilde_start(item)]
         if whole_list_tilde and warn:
@@ -112,11 +126,17 @@ def _subset_list(subset, whole_list, filter_items=None, warn=True, check_if_pres
                 for pattern in excluded_items[:]:
                     excluded_items.remove(pattern)
                     if filter_items == "like":
-                        real_items = [real_item for real_item in whole_list if pattern in real_item]
+                        real_items = [
+                            real_item
+                            for real_item in whole_list
+                            if any(pattern in s for s in _string_parts(real_item))
+                        ]
                     else:
                         # i.e filter_items == "regex"
                         real_items = [
-                            real_item for real_item in whole_list if re.search(pattern, real_item)
+                            real_item
+                            for real_item in whole_list
+                            if any(re.search(pattern, s) for s in _string_parts(real_item))
                         ]
                     if not real_items:
                         not_found.append(pattern)
@@ -129,14 +149,23 @@ def _subset_list(subset, whole_list, filter_items=None, warn=True, check_if_pres
             subset = [item for item in whole_list if item not in excluded_items]
 
         elif filter_items == "like":
-            subset = [item for item in whole_list for name in subset if name in item]
+            subset = [
+                item
+                for item in whole_list
+                for name in subset
+                if isinstance(name, str) and any(name in s for s in _string_parts(item))
+            ]
         elif filter_items == "regex":
-            subset = [item for item in whole_list for name in subset if re.search(name, item)]
-
-        existing_items = np.isin(subset, whole_list)
-        if check_if_present and not np.all(existing_items):
-            raise KeyError(f"{np.array(subset)[~existing_items]} are not present")
-
+            subset = [
+                item
+                for item in whole_list
+                for name in subset
+                if isinstance(name, str) and any(re.search(name, s) for s in _string_parts(item))
+            ]
+        existing_items = [item in whole_list for item in subset]
+        if check_if_present and not all(existing_items):
+            missing = [item for item, ok in zip(subset, existing_items) if not ok]
+            raise KeyError(f"{missing} are not present")
     return subset
 
 

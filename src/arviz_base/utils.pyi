@@ -1,11 +1,8 @@
 # File generated with docstub
 
-import re
-import warnings
 from collections.abc import Hashable, Sequence
 from typing import Literal
 
-import numpy as np
 from _typeshed import Incomplete
 from numpy.typing import ArrayLike
 from xarray import DataArray, Dataset
@@ -18,12 +15,12 @@ def _var_names(
     check_if_present: bool = ...,
 ) -> list | None: ...
 def _subset_list(
-    subset: str,
-    whole_list: list,
+    subset: Hashable | Sequence[Hashable] | None,
+    whole_list: Sequence[Hashable],
     filter_items: Literal[None, "like", "regex"] | None = ...,
-    warn=...,
-    check_if_present=...,
-) -> list | None: ...
+    warn: bool = ...,
+    check_if_present: bool = ...,
+) -> list[Hashable] | None: ...
 def _get_coords(
     data: DataArray, coords: dict[Hashable, ArrayLike]
 ) -> Dataset | DataArray: ...
