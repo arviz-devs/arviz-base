@@ -7,6 +7,18 @@ import numpy as np
 
 
 def _check_tilde_start(x):
+    """Check whether an item starts with the negation prefix.
+
+    Parameters
+    ----------
+    x : any
+        Object to inspect.
+
+    Returns
+    -------
+    bool
+        True when ``x`` is a string that starts with ``"~"``.
+    """
     return bool(isinstance(x, str) and x.startswith("~"))
 
 
@@ -15,7 +27,7 @@ def _var_names(var_names, data, filter_vars=None, check_if_present=True):
 
     Parameters
     ----------
-    var_names : str or list or None
+    var_names : hashable or sequence of hashable or None
         Names of variables to be processed. If None, all variables in
         data are returned.
     data : xarray.Dataset or sequence of xarray.Dataset
@@ -31,7 +43,7 @@ def _var_names(var_names, data, filter_vars=None, check_if_present=True):
 
     Returns
     -------
-    var_name : list or None
+    var_name : list of hashable or None
     """
     if filter_vars not in {None, "like", "regex"}:
         raise ValueError(
@@ -76,10 +88,10 @@ def _subset_list(subset, whole_list, filter_items=None, warn=True, check_if_pres
 
     Parameters
     ----------
-    subset : str, list, or None
+    subset : hashable or sequence of hashable or None
         Elements to select from whole_list. If None, the whole list
         is returned unchanged.
-    whole_list : list
+    whole_list : sequence of hashable
         List from which to select a subset according to subset elements and
         filter_items value.
     filter_items : {None, "like", "regex"}, optional
@@ -96,7 +108,7 @@ def _subset_list(subset, whole_list, filter_items=None, warn=True, check_if_pres
 
     Returns
     -------
-    list or None
+    list of hashable or None
         A subset of ``whole_list`` fulfilling the requests imposed by ``subset``
         and ``filter_items``.
     """
@@ -156,10 +168,9 @@ def _get_coords(data, coords):
 
     Parameters
     ----------
-    data : DataArray, Dataset or list of DataArray or Dataset
-        Xarray objects to be subsetted. It can be a list or tuple, in which
-        case all xarray objects within the iterable will be subsetted.
-    coords : dict of {hashable: array_like}
+    data : DataArray, Dataset, or sequence of (DataArray or Dataset)
+        Xarray object(s) to be subsetted.
+    coords : dict of {hashable: array_like} or sequence of (dict of {hashable: array_like})
         Dictionary specifying the subset to select. Passed to
         :meth:`xarray.Dataset.sel` or :meth:`xarray.DataArray.sel`
         depending on the input.
@@ -174,8 +185,8 @@ def _get_coords(data, coords):
 
     Returns
     -------
-    data : Dataset or DataArray
-        Return type is of the same type as the input
+    data : DataArray or Dataset or list of (DataArray or Dataset)
+        Subsetted object(s). Return type follows the input kind.
     """
     if not isinstance(data, list | tuple):
         try:
@@ -205,7 +216,18 @@ def _get_coords(data, coords):
 
 
 def expand_dims(x):
-    """Jitting numpy expand_dims."""
+    """Jitting numpy expand_dims.
+
+    Parameters
+    ----------
+    x : array_like
+        Input values.
+
+    Returns
+    -------
+    ndarray
+        Input converted to an array with an added leading dimension.
+    """
     if not isinstance(x, np.ndarray):
         return np.expand_dims(x, 0)
     shape = x.shape
