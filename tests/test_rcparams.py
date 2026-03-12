@@ -288,6 +288,11 @@ def test_validate_stats_module(args):
         assert value is validated
 
 
+def test_validate_stats_module_auto():
+    validated = _validate_stats_module("auto")
+    assert validated in {"base", "numba"}
+
+
 ## Some simple integration checks with rcparams
 def test_sample_dims():
     rng = np.random.default_rng(3)
