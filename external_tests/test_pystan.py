@@ -21,10 +21,6 @@ from .helpers import (  # pylint: disable=unused-import
 pystan_installed = importlib.util.find_spec("stan") is not None
 
 
-@pytest.mark.skipif(
-    True,
-    reason="Temporarily disable pytest tests.",
-)
 class TestDataPyStan:
     @pytest.fixture(scope="class")
     def data(self, eight_schools_params, draws, chains):
