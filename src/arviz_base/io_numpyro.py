@@ -528,7 +528,11 @@ class NumPyroConverter:
         if self.observations is not None:
             samples = self.posterior.get_samples()
             data = numpyro.infer.log_likelihood(
-                self.model, samples, *self._args, **self._kwargs, batch_ndims=len(self.sample_dims)
+                self.model,
+                samples,
+                *self._args,
+                **self._kwargs,
+                batch_ndims=len(rcParams["data.sample_dims"]),
             )
         return dict_to_dataset(
             data,

@@ -212,6 +212,15 @@ class TestDataNumPyro:
         fails = check_multiple_attrs(test_dict, idata)
         assert not fails
 
+        # log_likelihood only supported for MCMC via from_numpyro
+        if data.from_numpyro_func is from_numpyro:
+            idata_ll = data.from_numpyro_func(**kwargs, log_likelihood=True)
+            assert "log_likelihood" in idata_ll
+            assert idata_ll.log_likelihood["obs"].shape == (
+                *data.adapter.sample_shape,
+                8,  # J schools
+            )
+
     def test_multiple_observed_rv(self):
         import numpyro
         import numpyro.distributions as dist
