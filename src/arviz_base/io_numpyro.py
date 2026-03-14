@@ -180,7 +180,7 @@ class MCMCAdapter(NumPyroInferenceAdapter):
         """
         self.nchains = mcmc.num_chains
         self.ndraws = mcmc.num_samples // mcmc.thinning
-        self._max_tree_depth = getattr(mcmc.sampler, "_max_tree_depth")
+        self._max_tree_depth = getattr(mcmc.sampler, "_max_tree_depth", None)
         super().__init__(
             mcmc,
             model=mcmc.sampler.model,
@@ -525,6 +525,7 @@ class NumPyroConverter:
         """Extract log likelihood from NumPyro posterior."""
         if not self.log_likelihood:
             return None
+        data = {}
         if self.observations is not None:
             samples = self.posterior.get_samples()
             data = numpyro.infer.log_likelihood(
