@@ -26,53 +26,31 @@ ADAPTER_TYPES = {
     "numpyro": MCMCAdapter,
     "numpyro_svi": SVIAdapter,
     "numpyro_svi_custom_guide": SVIAdapter,
-    "numpyro_adapter_mcmc": MCMCAdapter,
-    "numpyro_adapter_svi": SVIAdapter,
 }
 FROM_NUMPYRO_FUNC = {
     "numpyro": from_numpyro,
     "numpyro_svi": from_numpyro_svi,
     "numpyro_svi_custom_guide": from_numpyro_svi,
-    "numpyro_adapter_mcmc": from_numpyro,
-    "numpyro_adapter_svi": from_numpyro,
 }
 
 
 class TestDataNumPyro:
     @pytest.fixture(
         scope="class",
-        params=[
-            "numpyro",
-            "numpyro_svi",
-            "numpyro_svi_custom_guide",
-            "numpyro_adapter_mcmc",
-            "numpyro_adapter_svi",
-        ],
+        params=["numpyro", "numpyro_svi", "numpyro_svi_custom_guide"],
     )
     def data(self, request, eight_schools_params, draws, chains):
         class Data:
-            # For numpyro_adapter_*, use the underlying model but pass through adapter
-            param_name = request.param
-            if param_name == "numpyro_adapter_mcmc":
-                model_key = "numpyro"
-            elif param_name == "numpyro_adapter_svi":
-                model_key = "numpyro_svi"
-            else:
-                model_key = param_name
+            model_key = request.param
             obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[model_key]
-            from_numpyro_func = FROM_NUMPYRO_FUNC[param_name]
-            adapter = ADAPTER_TYPES[param_name](**obj)
+            from_numpyro_func = FROM_NUMPYRO_FUNC[model_key]
+            adapter = ADAPTER_TYPES[model_key](**obj)
 
         return Data
 
-    def _prepare_posterior_kwargs(self, data):
+    def _posterior_kwargs(self, data):
         """Prepare kwargs for from_numpyro functions, handling MCMC objects."""
-        # For numpyro_adapter_*, pass the adapter instead of the raw object
-        if data.param_name.startswith("numpyro_adapter_"):
-            return {"posterior": data.adapter}
-        if "mcmc" in data.obj:
-            return {"posterior": data.obj["mcmc"]}
-        return data.obj
+        return {"posterior": data.obj["mcmc"]} if "mcmc" in data.obj else data.obj
 
     @pytest.fixture(scope="class")
     def predictions_params(self):
@@ -111,7 +89,7 @@ class TestDataNumPyro:
 
         predictions = predictions_data
         return data.from_numpyro_func(
-            **self._prepare_posterior_kwargs(data),
+            **self._posterior_kwargs(data),
             prior=prior,
             posterior_predictive=posterior_predictive,
             predictions=predictions,
@@ -130,7 +108,7 @@ class TestDataNumPyro:
         _old_fn = data.adapter.get_samples
         data.adapter.get_samples = lambda *args, **kwargs: data_namedtuple
         inference_data = data.from_numpyro_func(
-            **self._prepare_posterior_kwargs(data),
+            **self._posterior_kwargs(data),
             dims={},  # This mock test needs to turn off autodims like so or mock group_by_chain
         )
         assert isinstance(data.adapter.get_samples(), Samples)
@@ -176,13 +154,13 @@ class TestDataNumPyro:
         predictions = predictions_data
         constant_data = {"J": 8, "sigma": eight_schools_params["sigma"]}
         predictions_constant_data = predictions_params
-        ##  only prior
-        # from_numpyro_adapter requires sample_dims when posterior is None
         extra_kwargs = (
-            {"sample_dims": data.adapter.sample_dims}
-            if not data.param_name.startswith("numpyro_svi")
-            else {}
+            {}
+            if data.from_numpyro_func is from_numpyro_svi
+            else {"sample_dims": data.adapter.sample_dims}
         )
+
+        ##  only prior
         inference_data = data.from_numpyro_func(prior=prior, **extra_kwargs)
         test_dict = {"prior": ["mu", "tau", "eta"]}
         fails = check_multiple_attrs(test_dict, inference_data)
@@ -223,7 +201,7 @@ class TestDataNumPyro:
         assert not fails, f"prior and posterior_predictive: {fails}"
 
     def test_inference_data_only_posterior(self, data):
-        kwargs = self._prepare_posterior_kwargs(data)
+        kwargs = self._posterior_kwargs(data)
         idata = data.from_numpyro_func(**kwargs)
         test_dict = {
             "posterior": ["mu", "tau", "eta"],
