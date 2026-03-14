@@ -87,8 +87,7 @@ class NumPyroInferenceAdapter(ABC):
         -------
         dict of {str: array-like}
             Dictionary mapping parameter names to their sampled values.
-            For MCMC: arrays have shape (num_chains, num_draws, ...).
-            For SVI: arrays have shape (num_samples, ...).
+            Arrays should have shape (*sample_dims, ...)
         """
         raise NotImplementedError
 
