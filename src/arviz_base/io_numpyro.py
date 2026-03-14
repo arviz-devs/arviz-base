@@ -473,8 +473,18 @@ class NumPyroConverter:
                 "posterior, prior, posterior_predictive, or predictions."
             )
         else:
-            # fallback shape when theres no inference, but there is constant data
-            return (1,) * len(rcParams["data.sample_dims"])
+            # fallback shape when there's no inference, but there is constant data
+            fallback_shape = (
+                (self.nchains, 1)
+                if self.nchains is not None
+                else (1,) * len(rcParams["data.sample_dims"])
+            )
+            warnings.warn(
+                f"No posterior, prior, or predictive samples provided. "
+                f"Defaulting to sample_shape={fallback_shape}. "
+                f"This may cause unexpected behavior in downstream operations."
+            )
+            return fallback_shape
 
     @requires("posterior")
     def posterior_to_xarray(self):
@@ -603,22 +613,21 @@ class NumPyroConverter:
             else:
                 data[k] = ary
 
-        priors_dict = {
-            group: (
-                None
-                if var_names is None
-                else dict_to_dataset(
-                    data,
+        priors_dict = {}
+        for group, var_names in zip(
+            ("prior", "prior_predictive"), (prior_vars, prior_predictive_vars)
+        ):
+            if var_names is None:
+                priors_dict[group] = None
+            else:
+                filtered = {k: v for k, v in data.items() if k in var_names}
+                priors_dict[group] = dict_to_dataset(
+                    filtered,
                     inference_library=numpyro,
                     coords=self.coords,
                     dims=self.dims,
                     index_origin=self.index_origin,
                 )
-            )
-            for group, var_names in zip(
-                ("prior", "prior_predictive"), (prior_vars, prior_predictive_vars)
-            )
-        }
         return priors_dict
 
     @requires("observations")
@@ -690,7 +699,6 @@ class NumPyroConverter:
 
     @requires("posterior")
     @requires("model")
-    @requires("predictions")
     def infer_pred_dims(self) -> dict[str, list[str]]:
         """Infers dims for predictions data."""
         dims = infer_dims(self.model, self._args, self._kwargs)

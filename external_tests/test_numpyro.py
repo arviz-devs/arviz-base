@@ -178,17 +178,18 @@ class TestDataNumPyro:
         fails = check_multiple_attrs(test_dict, inference_data)
         assert not fails, f"only predictions: {fails}"
         ## only constant_data
-        inference_data = data.from_numpyro_func(constant_data=constant_data, **extra_kwargs)
-        test_dict = {"constant_data": ["J", "sigma"]}
-        fails = check_multiple_attrs(test_dict, inference_data)
-        assert not fails, f"only constant_data: {fails}"
-        ## only predictions_constant_data
-        inference_data = data.from_numpyro_func(
-            predictions_constant_data=predictions_constant_data, **extra_kwargs
-        )
-        test_dict = {"predictions_constant_data": ["J", "sigma"]}
-        fails = check_multiple_attrs(test_dict, inference_data)
-        assert not fails, f"only predictions_constant_data: {fails}"
+        with pytest.warns(UserWarning):  # warning is expected
+            inference_data = data.from_numpyro_func(constant_data=constant_data, **extra_kwargs)
+            test_dict = {"constant_data": ["J", "sigma"]}
+            fails = check_multiple_attrs(test_dict, inference_data)
+            assert not fails, f"only constant_data: {fails}"
+            ## only predictions_constant_data
+            inference_data = data.from_numpyro_func(
+                predictions_constant_data=predictions_constant_data, **extra_kwargs
+            )
+            test_dict = {"predictions_constant_data": ["J", "sigma"]}
+            fails = check_multiple_attrs(test_dict, inference_data)
+            assert not fails, f"only predictions_constant_data: {fails}"
         idata = data.from_numpyro_func(
             prior=prior,
             posterior_predictive=posterior_predictive,
