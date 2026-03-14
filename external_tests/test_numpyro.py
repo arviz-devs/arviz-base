@@ -595,6 +595,11 @@ class TestDataNumPyro:
             mcmc.run(PRNGKey(0))
             return {"posterior": mcmc}
 
+    def test_from_numpyro_with_adapter(self, data):
+        """Adapter can be passed directly to from_numpyro as a posterior."""
+        idata = from_numpyro(posterior=data.adapter)
+        assert "posterior" in idata
+
 
 class TestNumPyroAdapters:
     """Test all NumPyro adapters to ensure they follow the same interface conventions."""
@@ -617,7 +622,6 @@ class TestNumPyroAdapters:
             from_numpyro_func = FROM_NUMPYRO_FUNC[model_key]
             adapter = ADAPTER_TYPES[model_key](**obj)
             expected = expected_attrs
-            model_key_name = model_key
 
         return Data
 
