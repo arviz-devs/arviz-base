@@ -21,10 +21,10 @@ def _subset_list(
     subset: str,
     whole_list: list,
     filter_items: Literal[None, "like", "regex"] | None = ...,
-    warn=...,
-    check_if_present=...,
+    warn: Incomplete = ...,
+    check_if_present: Incomplete = ...,
 ) -> list | None: ...
 def _get_coords(
     data: DataArray, coords: dict[Hashable, ArrayLike]
 ) -> Dataset | DataArray: ...
-def expand_dims(x) -> None: ...
+def expand_dims(x: Incomplete) -> None: ...
