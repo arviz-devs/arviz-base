@@ -1,5 +1,6 @@
 """ArviZ rcparams. Based on matplotlib's implementation."""
 
+import importlib.util
 import locale
 import logging
 import os
@@ -211,7 +212,11 @@ def _validate_stats_module(value):
     ValueError
     """
     if isinstance(value, str):
-        return value
+        if value == "auto":
+            return "numba" if importlib.util.find_spec("numba") else "base"
+        if value in {"base", "numba"}:
+            return value
+        raise ValueError("stats.module must be 'auto', 'base', or 'numba'")
     eti_method = getattr(value, "eti", None)
     rhat_method = getattr(value, "rhat", None)
     if all(callable(meth) for meth in (eti_method, rhat_method)):
@@ -333,7 +338,7 @@ defaultParams = {  # pylint: disable=invalid-name
     "plot.backend": ("auto", _validate_backend),
     "plot.density_kind": ("kde", _make_validate_choice({"kde", "hist"})),
     "plot.max_subplots": (40, _validate_positive_int_or_none),
-    "stats.module": ("base", _validate_stats_module),
+    "stats.module": ("auto", _validate_stats_module),
     "stats.ci_kind": ("eti", _make_validate_choice({"eti", "hdi"})),
     "stats.ci_prob": (0.89, _validate_probability),
     "stats.envelope_prob": (0.99, _validate_probability),
