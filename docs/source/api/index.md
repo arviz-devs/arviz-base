@@ -87,6 +87,9 @@ Otherwise, datasets are stored at `~/arviz_data/`
    arviz_base.generate_dims_coords
    arviz_base.make_attrs
    arviz_base.ndarray_to_dataarray
+   arviz_base.NumPyroInferenceAdapter
+   arviz_base.MCMCAdapter
+   arviz_base.SVIAdapter
 ```
 
 (labeller_api)=
