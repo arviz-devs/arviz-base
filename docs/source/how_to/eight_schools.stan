@@ -1,8 +1,8 @@
 
 data {
   int<lower=0> J;
-  vector[J] y;
-  vector<lower=0>[J] sigma;
+  array[J] real y;
+  array[J] real sigma;
 }
 
 parameters {
