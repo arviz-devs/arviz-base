@@ -504,13 +504,12 @@ class TestDataCmdStanPy:
         assert not fails
 
 
-def test_cmdstanpy_posterior_predictive_variable_mapping(chains, draws, eight_schools_params):
+def test_cmdstanpy_posterior_predictive_variable_mapping(fit):
     """Test mapping {"y": "y_hat"} in posterior_predictive."""
 
     converter = CmdStanPyConverter(
-        posterior=chains,
+        posterior=fit,
         posterior_predictive={"y": "y_hat"},
-        observed_data=eight_schools_params,
     )
 
     data = converter.posterior_predictive_to_xarray()
