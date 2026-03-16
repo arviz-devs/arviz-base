@@ -175,7 +175,7 @@ class CmdStanPyConverter:
     @requires("posterior_predictive")
     def posterior_predictive_to_xarray(self):
         """Convert posterior_predictive samples to xarray."""
-        data, data_warmup = self.predictive_to_xarray(self.prior_predictive, self.prior)
+        data, data_warmup = self.predictive_to_xarray(self.posterior_predictive, self.posterior)
         return self._warmup_return_to_dict(data, data_warmup, "posterior_predictive")
 
     @requires("prior")
@@ -194,11 +194,11 @@ class CmdStanPyConverter:
         if isinstance(names, list | tuple):
             names = {name: name for name in names}
 
-        predictive = list(names.values())
+        variables = list(names.values())
 
         data, data_warmup = _unpack_fit(
             fit,
-            predictive,
+            variables,
             self.save_warmup,
             self.dtypes,
         )
