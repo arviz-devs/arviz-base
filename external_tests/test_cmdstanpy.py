@@ -514,4 +514,5 @@ class TestDataCmdStanPy:
 
         data_dict = converter.posterior_predictive_to_xarray()
 
-        assert "y" in data_dict
+        assert "posterior_predictive" in data_dict
+        assert "y" in data_dict["posterior_predictive"]
