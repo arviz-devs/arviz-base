@@ -503,16 +503,15 @@ class TestDataCmdStanPy:
         fails = check_multiple_attrs(test_dict, inference_data_false_is_false)
         assert not fails
 
+    def test_cmdstanpy_posterior_predictive_variable_mapping(self, data, eight_schools_params):
+        """Test mapping {"y": "y_hat"} in posterior_predictive."""
 
-def test_cmdstanpy_posterior_predictive_variable_mapping(data, eight_schools_params):
-    """Test mapping {"y": "y_hat"} in posterior_predictive."""
+        converter = CmdStanPyConverter(
+            posterior=data.obj,
+            posterior_predictive={"y": "y_hat"},
+            observed_data={"y": eight_schools_params["y"]},
+        )
 
-    converter = CmdStanPyConverter(
-        posterior=data.obj,
-        posterior_predictive={"y": "y_hat"},
-        observed_data={"y": eight_schools_params["y"]},
-    )
+        data_dict = converter.posterior_predictive_to_xarray()
 
-    data_dict = converter.posterior_predictive_to_xarray()
-
-    assert "y" in data_dict
+        assert "y" in data_dict
