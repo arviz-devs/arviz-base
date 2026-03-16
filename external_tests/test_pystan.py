@@ -245,14 +245,15 @@ class TestDataPyStan:
         draws, _ = get_draws(fit, variables=["theta", "theta"])
         assert draws.get("theta") is not None
 
-    def test_pystan_posterior_predictive_variable_mapping(fit):
+    def test_pystan_posterior_predictive_variable_mapping(data, eight_schools_params):
         """Test mapping {"y": "y_hat"} in posterior_predictive."""
 
         converter = PyStanConverter(
-            posterior=fit,
+            posterior=data.obj,
             posterior_predictive={"y": "y_hat"},
+            observed_data={"y": eight_schools_params["y"]},
         )
 
-        data = converter.posterior_predictive_to_xarray()
+        data_dict = converter.posterior_predictive_to_xarray()
 
-        assert "y" in data
+        assert "y" in data_dict
