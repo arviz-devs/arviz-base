@@ -16,6 +16,7 @@ from arviz_base.labels import BaseLabeller
 from arviz_base.rcparams import rcParams
 from arviz_base.sel_utils import xarray_sel_iter
 from arviz_base.utils import _var_names
+from arviz_base.validate import validate_sample_dims
 
 from .labels import Labeller
 

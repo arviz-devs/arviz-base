@@ -36,7 +36,7 @@ def validate_sample_dims(sample_dims, data=None):
         if isinstance(sample_dims, str):
             return [sample_dims]
         return list(sample_dims)
-    if "sample_dims" in data.attrs:
+    if sample_dims is None and "sample_dims" in data.attrs:
         return data.attrs["sample_dims"]
     sample_dims = validate_sample_dims(sample_dims)
     missing_sample_dims = [dim for dim in sample_dims if dim not in data.dims]
