@@ -145,7 +145,7 @@ def validate_or_use_rcparam(arg_in, rckey):
 
     Returns
     -------
-    arg_out
+    arg_out : any
     """
     if arg_in is None:
         return rcParams[rckey]
