@@ -7,7 +7,7 @@ convert it via its specific function.
 import numpy as np
 import pandas as pd
 import xarray as xr
-from xarray import DataTree, open_datatree
+from xarray import Dataset, DataTree, open_datatree
 
 from arviz_base.base import dict_to_dataset
 
@@ -186,6 +186,8 @@ def convert_to_dataset(obj, *, group="posterior", **kwargs):
     >>> convert_to_dataset({"mu": np.random.randn(500)})
     <xarray.Dataset> ...  # Posterior group with 'mu' variable
     """
+    if isinstance(obj, Dataset):
+        return obj
     if isinstance(obj, DataTree) and obj.name == group:
         return obj.to_dataset()
     inference_data = convert_to_datatree(obj, group=group, **kwargs)
