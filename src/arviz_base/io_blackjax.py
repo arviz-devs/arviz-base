@@ -97,11 +97,13 @@ class BlackJAXConverter:
         dims: dict[Hashable, Sequence[Hashable]] | None = None,
         index_origin: int | None = None,
         num_chains: int | None = None,
+        max_tree_depth: int | None = None,
     ) -> None:
         self.index_origin = rcParams["data.index_origin"] if index_origin is None else index_origin
         self.coords = coords
         self.dims = dims
         self.num_chains = num_chains
+        self.max_tree_depth = max_tree_depth
 
         if posterior is not None:
             raw = _position_to_dict(posterior)
@@ -128,9 +130,8 @@ class BlackJAXConverter:
     @requires("_samples")
     def posterior_to_xarray(self):
         """Convert posterior samples to an xarray Dataset."""
-        assert self._samples is not None
         return dict_to_dataset(
-            self._samples,
+            self._samples,  # type: ignore[arg-type]
             coords=self.coords,
             dims=self.dims,
             index_origin=self.index_origin,
@@ -139,10 +140,11 @@ class BlackJAXConverter:
     @requires("_stats")
     def sample_stats_to_xarray(self):
         """Convert BlackJAX info fields to a sample_stats xarray Dataset."""
-        assert self._stats is not None
-        data: dict[str, np.ndarray] = dict(self._stats)
+        data: dict[str, np.ndarray] = dict(self._stats)  # type: ignore[arg-type]
         if "n_steps" in data:
             data["tree_depth"] = np.log2(data["n_steps"]).astype(int) + 1
+            if self.max_tree_depth is not None:
+                data["reached_max_tree_depth"] = data["tree_depth"] >= self.max_tree_depth
         return dict_to_dataset(
             data,
             coords=self.coords,
@@ -153,9 +155,8 @@ class BlackJAXConverter:
     @requires("posterior_predictive")
     def posterior_predictive_to_xarray(self):
         """Convert posterior predictive samples to an xarray Dataset."""
-        assert self.posterior_predictive is not None
         return dict_to_dataset(
-            self.posterior_predictive,
+            self.posterior_predictive,  # type: ignore[arg-type]
             coords=self.coords,
             dims=self.dims,
             index_origin=self.index_origin,
@@ -205,9 +206,8 @@ class BlackJAXConverter:
     @requires("observed_data")
     def observed_data_to_xarray(self):
         """Convert observed data to an xarray Dataset."""
-        assert self.observed_data is not None
         return dict_to_dataset(
-            self.observed_data,
+            self.observed_data,  # type: ignore[arg-type]
             coords=self.coords,
             dims=self.dims,
             sample_dims=[],
@@ -217,9 +217,8 @@ class BlackJAXConverter:
     @requires("constant_data")
     def constant_data_to_xarray(self):
         """Convert constant data to an xarray Dataset."""
-        assert self.constant_data is not None
         return dict_to_dataset(
-            self.constant_data,
+            self.constant_data,  # type: ignore[arg-type]
             coords=self.coords,
             dims=self.dims,
             sample_dims=[],
@@ -251,6 +250,7 @@ def from_blackjax(
     dims: dict[Hashable, Sequence[Hashable]] | None = None,
     index_origin: int | None = None,
     num_chains: int | None = None,
+    max_tree_depth: int | None = None,
 ) -> DataTree:
     """Convert BlackJAX sampling output into a DataTree object.
 
@@ -288,6 +288,9 @@ def from_blackjax(
         Number of chains.  Required when the position arrays do not already
         have a leading chain dimension (i.e. single-chain runs where you want
         explicit chain tracking, or when arrays are flattened).
+    max_tree_depth : int, optional
+        Maximum tree depth used during NUTS sampling.  When provided,
+        ``reached_max_tree_depth`` is added to ``sample_stats``.
 
     Returns
     -------
@@ -336,6 +339,7 @@ def from_blackjax(
             posterior=states.position,
             info=infos,
             num_chains=n_chains,
+            max_tree_depth=10,
         )
     """
     with rc_context(rc={"data.sample_dims": ["chain", "draw"]}):
@@ -350,4 +354,5 @@ def from_blackjax(
             dims=dims,
             index_origin=index_origin,
             num_chains=num_chains,
+            max_tree_depth=max_tree_depth,
         ).to_datatree()
