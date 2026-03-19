@@ -14,6 +14,7 @@ class TestExtract:
         assert isinstance(post, xr.Dataset)
         assert "sample" in post.sizes
         assert post.theta.size == (chains * draws * 8)
+        assert post.attrs["sample_dims"] == ["sample"]
 
     def test_seed(self, centered_eight):
         post = extract(centered_eight, random_seed=7)
@@ -29,29 +30,39 @@ class TestExtract:
     def test_single_sample_dims(self, centered_eight):
         post = extract(centered_eight, sample_dims="draw")
         xr.testing.assert_equal(post, centered_eight.posterior.to_dataset())
+        assert post.attrs["sample_dims"] == ["draw"]
 
     def test_var_name_group(self, centered_eight):
         prior = extract(centered_eight, group="prior", var_names="the", filter_vars="like")
-        assert {} == prior.attrs
+        assert {"sample_dims": ["sample"]} == prior.attrs
         assert "theta" == prior.name
 
     def test_keep_dataset(self, centered_eight):
         prior = extract(
             centered_eight, group="prior", var_names="the", filter_vars="like", keep_dataset=True
         )
-        assert prior.attrs == centered_eight.prior.attrs
+        prior_attrs = prior.attrs.copy()
+        assert prior_attrs["sample_dims"] == ["sample"]
+        prior_attrs["sample_dims"] = ["chain", "draw"]
+        assert prior_attrs == centered_eight.prior.attrs
         assert "theta" in prior.data_vars
         assert "mu" not in prior.data_vars
 
     def test_subset_samples(self, centered_eight):
         post = extract(centered_eight, num_samples=10)
         assert post.sizes["sample"] == 10
-        assert post.attrs == centered_eight.posterior.attrs
+        post_attrs = post.attrs.copy()
+        assert post_attrs["sample_dims"] == ["sample"]
+        post_attrs["sample_dims"] = ["chain", "draw"]
+        assert post_attrs == centered_eight.posterior.attrs
 
     def test_subset_single_sample_dims(self, centered_eight):
         post = extract(centered_eight, sample_dims="draw", num_samples=4)
         assert post.sizes["draw"] == 4
-        assert post.attrs == centered_eight.posterior.attrs
+        post_attrs = post.attrs.copy()
+        assert post_attrs["sample_dims"] == ["draw"]
+        post_attrs["sample_dims"] = ["chain", "draw"]
+        assert post_attrs == centered_eight.posterior.attrs
 
     def test_dataarray_return(self, centered_eight):
         post = extract(centered_eight.posterior["theta"])
@@ -72,7 +83,10 @@ class TestExtract:
         post = extract(centered_eight, num_samples=len(weights), weights=weights)
         assert post.sizes["sample"] == len(weights)
         assert not any(idx in list(post.sample.to_numpy()) for idx in weight_0_idxs)
-        assert post.attrs == centered_eight.posterior.attrs
+        post_attrs = post.attrs.copy()
+        assert post_attrs["sample_dims"] == ["sample"]
+        post_attrs["sample_dims"] = ["chain", "draw"]
+        assert post_attrs == centered_eight.posterior.attrs
 
 
 class TestDsToDa:
