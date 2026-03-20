@@ -216,3 +216,16 @@ class TestDataConvert:
         assert dataset.chain.shape == (chains,)
         assert dataset.school.shape == (8,)
         assert dataset.theta.shape == (chains, draws, 8)
+
+
+def test_convert_object_with_array_protocol():
+    class ArrayLike:
+        def __array__(self, dtype=None):
+            return np.ones((1, 5))
+
+    obj = ArrayLike()
+
+    dataset = convert_to_dataset(obj)
+
+    assert dataset.sizes["chain"] == 1
+    assert dataset.sizes["draw"] == 5

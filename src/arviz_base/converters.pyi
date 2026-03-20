@@ -3,6 +3,7 @@
 from typing import Any
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 from _typeshed import Incomplete
 from xarray import Dataset, DataTree, open_datatree

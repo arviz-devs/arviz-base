@@ -1,3 +1,27 @@
+<a id="v1.0.0"></a>
+# [v1.0.0](https://github.com/arviz-devs/arviz-base/releases/tag/v1.0.0) - 2026-03-02
+
+## What's Changed
+
+### New Features
+* Add envelope_prob entry to rcParams by [@NeerjaKasture](https://github.com/NeerjaKasture) in [#138](https://github.com/arviz-devs/arviz-base/pull/138)
+
+### Documentation
+* Update example data to use consistent urls for remote data by [@OriolAbril](https://github.com/OriolAbril) in [#137](https://github.com/arviz-devs/arviz-base/pull/137)
+* Dev version update and better docstub hook default by [@OriolAbril](https://github.com/OriolAbril) in [#141](https://github.com/arviz-devs/arviz-base/pull/141)
+* Contributing docs and workflow improvements by [@OriolAbril](https://github.com/OriolAbril) in [#144](https://github.com/arviz-devs/arviz-base/pull/144)
+* Add CmdStanPy getting-started example by [@patelshivani2283-lab](https://github.com/patelshivani2283-lab) in [#143](https://github.com/arviz-devs/arviz-base/pull/143)
+
+
+## New Contributors
+* [@NeerjaKasture](https://github.com/NeerjaKasture) made their first contribution in [#138](https://github.com/arviz-devs/arviz-base/pull/138)
+* [@patelshivani2283-lab](https://github.com/patelshivani2283-lab) made their first contribution in [#143](https://github.com/arviz-devs/arviz-base/pull/143)
+
+**Full Changelog**: https://github.com/arviz-devs/arviz-base/compare/v0.8.2...v1.0.0
+
+[Changes][v1.0.0]
+
+
 <a id="v0.8.2"></a>
 # [v0.8.2](https://github.com/arviz-devs/arviz-base/releases/tag/v0.8.2) - 2026-01-16
 
@@ -184,6 +208,7 @@
 [Changes][v0.4.0]
 
 
+[v1.0.0]: https://github.com/arviz-devs/arviz-base/compare/v0.8.2...v1.0.0
 [v0.8.2]: https://github.com/arviz-devs/arviz-base/compare/v0.8.1...v0.8.2
 [v0.8.1]: https://github.com/arviz-devs/arviz-base/compare/v0.8.0...v0.8.1
 [v0.8.0]: https://github.com/arviz-devs/arviz-base/compare/v0.7.0...v0.8.0

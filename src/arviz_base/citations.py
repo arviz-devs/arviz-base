@@ -26,7 +26,7 @@ def citations(methods=None, filepath=None, format_type="bibtex"):
     >>> citations(methods=[rhat])  # Returns how to cite ArviZ and rhat
     >>> citations()  # Returns how to cite ArviZ
     """
-    method_citations = [{"doi": "10.21105/joss.XXXXX"}]
+    method_citations = [{"doi": "10.21105/joss.09889"}]
     if methods is not None:
         if isinstance(methods, str):
             raise TypeError("you should pass an ArviZ function or list of functions.")
