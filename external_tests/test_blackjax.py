@@ -128,12 +128,8 @@ def test_from_blackjax_nuts_info_multi_chain(multi_chain_position, nuts_info_mul
 
 
 def test_from_blackjax_reached_max_tree_depth(single_chain_position, nuts_info_single):
-    idata = from_blackjax(
-        posterior=single_chain_position, info=nuts_info_single, max_tree_depth=10
-    )
-    fails = check_multiple_attrs(
-        {"sample_stats": ["tree_depth", "reached_max_tree_depth"]}, idata
-    )
+    idata = from_blackjax(posterior=single_chain_position, info=nuts_info_single, max_tree_depth=10)
+    fails = check_multiple_attrs({"sample_stats": ["tree_depth", "reached_max_tree_depth"]}, idata)
     assert not fails
 
 
@@ -180,8 +176,14 @@ def test_from_blackjax_constant_data(single_chain_position):
 
 def test_from_blackjax_coords_and_dims(single_chain_position):
     school = [
-        "Choate", "Deerfield", "Phillips Andover", "Phillips Exeter",
-        "Hotchkiss", "Lawrenceville", "St. Paul's", "Mt. Hermon",
+        "Choate",
+        "Deerfield",
+        "Phillips Andover",
+        "Phillips Exeter",
+        "Hotchkiss",
+        "Lawrenceville",
+        "St. Paul's",
+        "Mt. Hermon",
     ]
     idata = from_blackjax(
         posterior=single_chain_position,
@@ -215,9 +217,7 @@ def test_from_blackjax_prior_splits_with_posterior(draws):
         "y_hat": rng.normal(size=(1, draws, 8)),
     }
     idata = from_blackjax(posterior=position, prior=prior)
-    fails = check_multiple_attrs(
-        {"prior": ["mu", "tau"], "prior_predictive": ["y_hat"]}, idata
-    )
+    fails = check_multiple_attrs({"prior": ["mu", "tau"], "prior_predictive": ["y_hat"]}, idata)
     assert not fails
 
 
