@@ -55,8 +55,6 @@ check = [
     "pre-commit",
     "docstub==0.4",
     "mypy",
-    "isort",
-    "black",
 ]
 doc = [
     "sphinx-book-theme",
