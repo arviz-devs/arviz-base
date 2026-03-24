@@ -338,7 +338,7 @@ defaultParams = {  # pylint: disable=invalid-name
     "plot.backend": ("auto", _validate_backend),
     "plot.density_kind": ("kde", _make_validate_choice({"kde", "hist"})),
     "plot.max_subplots": (40, _validate_positive_int_or_none),
-    "stats.module": ("auto", _validate_stats_module),
+    "stats.module": ("base", _validate_stats_module),
     "stats.ci_kind": ("eti", _make_validate_choice({"eti", "hdi"})),
     "stats.ci_prob": (0.89, _validate_probability),
     "stats.envelope_prob": (0.99, _validate_probability),
