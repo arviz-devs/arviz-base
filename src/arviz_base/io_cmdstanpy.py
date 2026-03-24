@@ -185,31 +185,29 @@ class CmdStanPyConverter:
         data, data_warmup = self.predictive_to_xarray(self.prior_predictive, self.prior)
         return self._warmup_return_to_dict(data, data_warmup, "prior_predictive")
 
-    def predictive_to_xarray(self, predictive, fit):
+    def predictive_to_xarray(self, names, fit):
         """Convert predictive samples to xarray."""
-        if predictive is None:
+        if names is None:
             return {}, {}
 
-        predictive_set = _as_set(predictive)
+        names_set = _as_set(names)
 
         data, data_warmup = _unpack_fit(
             fit,
-            predictive_set,
+            names_set,
             self.save_warmup,
             self.dtypes,
         )
 
-        if isinstance(predictive, dict):
+        if isinstance(names, dict):
             data = {
-                obs_name: data[var_name]
-                for obs_name, var_name in predictive.items()
-                if var_name in data
+                obs_name: data[var_name] for obs_name, var_name in names.items() if var_name in data
             }
 
             if data_warmup:
                 data_warmup = {
                     obs_name: data_warmup[var_name]
-                    for obs_name, var_name in predictive.items()
+                    for obs_name, var_name in names.items()
                     if var_name in data_warmup
                 }
 
