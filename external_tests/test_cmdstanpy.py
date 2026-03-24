@@ -15,10 +15,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-pytest.importorskip("cmdstanpy")  # Skip tests if cmdstanpy is not installed
-
 from arviz_base import from_cmdstanpy
-from arviz_base.io_cmdstanpy import CmdStanPyConverter
 from arviz_base.testing import check_multiple_attrs
 
 from .helpers import importorskip  # pylint: disable=unused-import
@@ -506,13 +503,17 @@ class TestDataCmdStanPy:
     def test_cmdstanpy_posterior_predictive_variable_mapping(self, data, eight_schools_params):
         """Test mapping {"y": "y_hat"} in posterior_predictive."""
 
-        converter = CmdStanPyConverter(
+        inference_data = from_cmdstanpy(
             posterior=data.obj,
             posterior_predictive={"y": "y_hat"},
             observed_data={"y": eight_schools_params["y"]},
         )
 
-        data_dict = converter.posterior_predictive_to_xarray()
+        test_dict = {
+            "posterior": ["theta", "~y_hat"],
+            "posterior_predictive": ["y", "~y_hat"],
+            "observed_data": ["y", "~y_hat"],
+        }
 
-        assert "posterior_predictive" in data_dict
-        assert "y" in data_dict["posterior_predictive"]
+        fails = check_multiple_attrs(test_dict, inference_data)
+        assert not fails
