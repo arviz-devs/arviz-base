@@ -78,7 +78,7 @@ def validate_dict_argument(dict_arg, func_arg=None, *, valid_keys=None):
 
     Parameters
     ----------
-    dict_arg : mapping or None
+    dict_arg : mapping of {str : any} or None
         Dictionary argument of plotting functions: "visuals", "aes_by_visuals" or "stats"
     func_arg : tuple of (callable, str) or None
         Tuple with the function and the argument name for which to perform the validation.
@@ -114,6 +114,12 @@ def validate_dict_argument(dict_arg, func_arg=None, *, valid_keys=None):
 def validate_ci_prob(prob):
     """Validate `prob`/`ci_prob` argument.
 
+    Parameters
+    ----------
+    prob : float or None
+        The probability to validate. It can also be None in which case
+        the rcParam value for "stats.ci_prob" is used.
+
     Returns
     -------
     float
@@ -124,7 +130,19 @@ def validate_ci_prob(prob):
 
 
 def validate_prob(prob, allow_0=False):
-    """Validate required `prob` argument."""
+    r"""Validate required `prob` argument.
+
+    Parameters
+    ----------
+    prob : float
+    allow_0 : bool, default False
+        Whether to restrict to :math:`(0, 1]` for probability values
+        or, when True, include 0 to allow :math:`[0, 1]` as valid probabilities.
+
+    Returns
+    -------
+    float
+    """
     if allow_0 and not 1 >= prob >= 0:
         raise ValueError(f"The value of prob should be in the interval [0, 1] but got {prob}")
     if not allow_0 and not 1 >= prob > 0:
