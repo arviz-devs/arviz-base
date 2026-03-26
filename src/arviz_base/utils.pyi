@@ -24,7 +24,7 @@ def _subset_list(
     check_if_present: bool = ...,
 ) -> list[Hashable] | None: ...
 def _get_coords(
-    data: DataArray,
-    coords: dict[Hashable, ArrayLike] | Sequence[dict[Hashable, ArrayLike]],
+    data: DataArray | Dataset | Sequence[DataArray | Dataset],
+    coords: dict[Any, ArrayLike] | Sequence[dict[Any, ArrayLike]],
 ) -> DataArray | Dataset | list[DataArray | Dataset]: ...
 def expand_dims(x: ArrayLike) -> NDArray: ...

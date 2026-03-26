@@ -168,9 +168,9 @@ def _get_coords(data, coords):
 
     Parameters
     ----------
-    data : DataArray, Dataset, or sequence of (DataArray or Dataset)
+    data : DataArray or Dataset or sequence of (DataArray or Dataset)
         Xarray object(s) to be subsetted.
-    coords : dict of {hashable: array_like} or sequence of (dict of {hashable: array_like})
+    coords : dict of {hashable_key: array_like} or sequence of (dict of {hashable_key: array_like})
         Dictionary specifying the subset to select. Passed to
         :meth:`xarray.Dataset.sel` or :meth:`xarray.DataArray.sel`
         depending on the input.
@@ -216,7 +216,7 @@ def _get_coords(data, coords):
 
 
 def expand_dims(x):
-    """Jitting numpy expand_dims.
+    """Wrap numpy expand dims to add a leading dimension.
 
     Parameters
     ----------
