@@ -4,10 +4,8 @@ import importlib
 import numpy as np
 import pytest
 
-pytest.importorskip("stan")  # Skip tests if neither pystan nor pystan3 is installed
-
 from arviz_base import from_pystan
-from arviz_base.io_pystan import PyStanConverter, get_draws
+from arviz_base.io_pystan import get_draws
 from arviz_base.testing import check_multiple_attrs
 
 from .helpers import (  # pylint: disable=unused-import
@@ -248,13 +246,17 @@ class TestDataPyStan:
     def test_pystan_posterior_predictive_variable_mapping(self, data, eight_schools_params):
         """Test mapping {"y": "y_hat"} in posterior_predictive."""
 
-        converter = PyStanConverter(
+        inference_data = from_pystan(
             posterior=data.obj,
             posterior_predictive={"y": "y_hat"},
             observed_data={"y": eight_schools_params["y"]},
         )
 
-        data_dict = converter.posterior_predictive_to_xarray()
+        test_dict = {
+            "posterior": ["theta", "~y_hat"],
+            "posterior_predictive": ["y", "~y_hat"],
+            "observed_data": ["y", "~y_hat"],
+        }
 
-        assert "posterior_predictive" in data_dict
-        assert "y" in data_dict["posterior_predictive"]
+        fails = check_multiple_attrs(test_dict, inference_data)
+        assert not fails
