@@ -144,7 +144,6 @@ def test_var_names_filter_invalid_argument():
 
 
 def test_subset_list_negation_not_found():
-    """Check there is a warning if negation pattern is ignored"""
     names = ["mu", "theta"]
     with pytest.warns(UserWarning, match=".+not.+found.+"):
         assert _subset_list("~tau", names) == names
@@ -168,16 +167,26 @@ def test_subset_list_tuple_container():
     assert out == [("tuple", "name"), "str_name"]
 
 
-def test_subset_list_like_ignores_tuple_patterns():
+def test_subset_list_like_with_non_string_disables_filtering():
     whole_list = [("tuple", "name"), "alpha", "beta"]
-    out = _subset_list([("tuple", "name"), "alp"], whole_list, filter_items="like")
-    assert out == ["alpha"]
+
+    with pytest.warns(
+        UserWarning,
+        match="Filtering is only supported for string variable names",
+    ):
+        with pytest.raises(KeyError):
+            _subset_list([("tuple", "name"), "alp"], whole_list, filter_items="like")
 
 
-def test_subset_list_regex_ignores_tuple_patterns():
+def test_subset_list_regex_with_non_string_disables_filtering():
     whole_list = [("tuple", "name"), "alpha", "beta"]
-    out = _subset_list([("tuple", "name"), "alp.*"], whole_list, filter_items="regex")
-    assert out == ["alpha"]
+
+    with pytest.warns(
+        UserWarning,
+        match="Filtering is only supported for string variable names",
+    ):
+        with pytest.raises(KeyError):
+            _subset_list([("tuple", "name"), "alp.*"], whole_list, filter_items="regex")
 
 
 def test_subset_list_frozenset_name_scalar():
