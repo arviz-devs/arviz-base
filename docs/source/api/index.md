@@ -285,9 +285,11 @@ which sometimes requires updating default values, for example to use new algorit
 
 .. py:data:: plot.density_kind
     :type: str
-    :value: "kde"
+    :value: "auto"
 
-    Default representation for 1D marginal densities, one of "kde", "hist", "ecdf" or "dot".
+    Default representation for 1D marginal densities, one of "auto", "kde", "hist", "ecdf" or "dot".
+    "auto" means a set of heuristic rules chooses between "ecdf", "hist" and "kde"
+    on a variable-per-variable basis.
 
 .. py:data:: plot.max_subplots
     :type: int

@@ -60,6 +60,7 @@ def dict_to_dataset(
 def make_attrs(
     attrs: Mapping[Any, Any] | None = ...,
     inference_library: types.ModuleType | None = ...,
+    sample_dims: Sequence[Hashable] | None = ...,
 ) -> dict: ...
 
 class requires:

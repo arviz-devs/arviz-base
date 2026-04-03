@@ -308,6 +308,9 @@ def dict_to_dataset(
     if dims is None:
         dims = {}
 
+    if sample_dims is None:
+        sample_dims = rcParams["data.sample_dims"]
+
     data_vars = {
         var_name: ndarray_to_dataarray(
             values,
@@ -321,13 +324,12 @@ def dict_to_dataset(
         )
         for var_name, values in data.items()
     }
+    attrs = make_attrs(attrs=attrs, inference_library=inference_library, sample_dims=sample_dims)
 
-    return xr.Dataset(
-        data_vars=data_vars, attrs=make_attrs(attrs=attrs, inference_library=inference_library)
-    )
+    return xr.Dataset(data_vars=data_vars, attrs=attrs)
 
 
-def make_attrs(attrs=None, inference_library=None):
+def make_attrs(attrs=None, inference_library=None, sample_dims=None):
     """Make standard attributes to attach to xarray datasets.
 
     Parameters
@@ -336,6 +338,8 @@ def make_attrs(attrs=None, inference_library=None):
         Additional attributes to add or overwrite
     inference_library : module, optional
         Library used to perform inference.
+    sample_dims : sequence of hashable, optional
+        Sample dims of this dataset
 
     Returns
     -------
@@ -358,6 +362,8 @@ def make_attrs(attrs=None, inference_library=None):
             if hasattr(inference_library, "__version__"):
                 version = inference_library.__version__
                 default_attrs["inference_library_version"] = version
+    if sample_dims is not None:
+        default_attrs["sample_dims"] = list(sample_dims)
     if attrs is not None:
         default_attrs.update(attrs)
     return default_attrs

@@ -11,6 +11,7 @@ from arviz_base.labels import BaseLabeller
 from arviz_base.rcparams import rcParams
 from arviz_base.sel_utils import xarray_sel_iter
 from arviz_base.utils import _var_names
+from arviz_base.validate import validate_sample_dims
 
 __all__ = [
     "dataset_to_dataarray",
@@ -80,6 +81,9 @@ def extract(  # noqa: PLR0915
     Returns
     -------
     xarray.DataArray or xarray.Dataset
+        When returning a ``Dataset`` its ``sample_dims`` attribute will be updated
+        if some dimensions have been stacked or the argument `sample_dims` doesn't
+        match the attribute.
 
     Examples
     --------
@@ -105,11 +109,9 @@ def extract(  # noqa: PLR0915
         az.extract(idata, group="prior", combined=False)
 
     """
-    # TODO: use validator function
-    if sample_dims is None:
-        sample_dims = rcParams["data.sample_dims"]
-    if isinstance(sample_dims, str):
-        sample_dims = [sample_dims]
+    data = convert_to_dataset(data, group=group)
+    sample_dims = validate_sample_dims(sample_dims, data=data)
+    data.attrs["sample_dims"] = sample_dims
     if len(sample_dims) == 1:
         combined = True
     if num_samples is not None and not combined:
@@ -119,7 +121,6 @@ def extract(  # noqa: PLR0915
     if weights is not None and num_samples is None:
         raise ValueError("weights are only compatible with num_samples")
 
-    data = convert_to_dataset(data, group=group)
     var_names = _var_names(var_names, data, filter_vars)
     if var_names is not None:
         if len(var_names) == 1 and not keep_dataset:
@@ -141,6 +142,7 @@ def extract(  # noqa: PLR0915
 
     if combined and len(sample_dims) != 1:
         data = data.stack(sample=sample_dims)
+        data.attrs["sample_dims"] = ["sample"]
         combined_dim = "sample"
     elif len(sample_dims) == 1:
         combined_dim = sample_dims[0]

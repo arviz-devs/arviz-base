@@ -246,9 +246,9 @@ def test_dict_to_dataset():
     dataset = dict_to_dataset(datadict, coords={"c": np.arange(10)}, dims={"b": ["c"]})
     assert set(dataset.data_vars) == {"a", "b"}
     assert set(dataset.coords) == {"chain", "draw", "c"}
-
     assert set(dataset.a.coords) == {"chain", "draw"}
     assert set(dataset.b.coords) == {"chain", "draw", "c"}
+    assert dataset.attrs["sample_dims"] == ["chain", "draw"]
 
 
 def test_dict_to_dataset_event_dims_error():
