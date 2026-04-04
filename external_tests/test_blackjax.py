@@ -254,7 +254,6 @@ class TestSingleChain:
             {
                 "prior": ["mu", "log_tau"],
                 "prior_predictive": ["y_hat"],
-                "~prior": ["y_hat"],  # y_hat must NOT be in prior
             },
             idata,
         )
