@@ -501,8 +501,6 @@ class TestDataCmdStanPy:
         assert not fails
 
     def test_cmdstanpy_posterior_predictive_variable_mapping(self, data, eight_schools_params):
-        """Test mapping {"y": "y_hat"} in posterior_predictive."""
-
         inference_data = from_cmdstanpy(
             posterior=data.obj,
             posterior_predictive={"y": "y_hat"},

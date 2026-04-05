@@ -244,8 +244,6 @@ class TestDataPyStan:
         assert draws.get("theta") is not None
 
     def test_pystan_posterior_predictive_variable_mapping(self, data, eight_schools_params):
-        """Test mapping {"y": "y_hat"} in posterior_predictive."""
-
         inference_data = from_pystan(
             posterior=data.obj,
             posterior_predictive={"y": "y_hat"},

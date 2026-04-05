@@ -187,9 +187,6 @@ class CmdStanPyConverter:
 
     def predictive_to_xarray(self, names, fit):
         """Convert predictive samples to xarray."""
-        if names is None:
-            return {}, {}
-
         names_set = _as_set(names)
 
         data, data_warmup = _unpack_fit(
