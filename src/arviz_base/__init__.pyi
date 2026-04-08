@@ -25,6 +25,7 @@ from arviz_base.datasets import (
 from arviz_base.io_cmdstanpy import from_cmdstanpy
 from arviz_base.io_dict import from_dict
 from arviz_base.io_emcee import from_emcee
+from arviz_base.io_blackjax import from_blackjax
 from arviz_base.io_numpyro import (
     MCMCAdapter,
     NumPyroInferenceAdapter,
@@ -60,6 +61,7 @@ __all__ = [
     "from_cmdstanpy",
     "from_dict",
     "from_emcee",
+    "from_blackjax",
     "from_numpyro",
     "from_numpyro_svi",
     "NumPyroInferenceAdapter",

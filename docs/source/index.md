@@ -69,6 +69,7 @@ tutorial/label_guide
 how_to/ConversionGuideCmdStanPy
 how_to/ConversionGuideEmcee
 how_to/ConversionGuideNumPyro
+how_to/ConversionGuideBlackJAX
 ArviZ in Context <https://arviz-devs.github.io/EABM/>
 :::
 

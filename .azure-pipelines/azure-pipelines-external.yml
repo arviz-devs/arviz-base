@@ -45,7 +45,7 @@ jobs:
       fi
 
       python -m pip --no-cache-dir install emcee>=3 h5py
-      python -m pip --no-cache-dir install pystan pyro-ppl>=1 numpyro jax
+      python -m pip --no-cache-dir install pystan pyro-ppl>=1 numpyro jax blackjax
 
     displayName: 'Install external dependencies'
 
@@ -71,7 +71,7 @@ jobs:
     displayName: 'precompile models'
 
   - script: |
-      python -m pytest external_tests --cov --cov-report=xml
+      python -m pytest external_tests --cov --cov-report=xml -W "ignore:There are not enough devices to run parallel chains:UserWarning"
     displayName: 'pytest'
 
   - task: PublishTestResults@2

@@ -20,6 +20,7 @@ from arviz_base.io_numpyro import (
     SVIAdapter,
     MCMCAdapter,
 )
+from arviz_base.io_blackjax import from_blackjax
 from arviz_base.io_pystan import from_pystan
 from arviz_base.rcparams import rc_context, rcParams
 from arviz_base.reorg import (
@@ -59,6 +60,7 @@ __all__ = [
     "NumPyroInferenceAdapter",
     "SVIAdapter",
     "MCMCAdapter",
+    "from_blackjax",
     # labels submodule
     "labels",
     # rcparams
