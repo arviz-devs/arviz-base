@@ -71,7 +71,7 @@ jobs:
     displayName: 'precompile models'
 
   - script: |
-      python -m pytest external_tests --cov --cov-report=xml
+      python -m pytest external_tests --cov --cov-report=xml -W "ignore:There are not enough devices to run parallel chains:UserWarning"
     displayName: 'pytest'
 
   - task: PublishTestResults@2

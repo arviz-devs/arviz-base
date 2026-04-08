@@ -44,27 +44,6 @@ def _position_to_dict(position: Any) -> dict[str, np.ndarray]:
     return {"x": _jax_to_numpy(position)}
 
 
-def _ensure_chain_dim(
-    samples: dict[str, np.ndarray], num_chains: int | None
-) -> dict[str, np.ndarray]:
-    """Ensure every array has a leading chain dimension.
-
-    Single-chain BlackJAX output has shape ``(n_draws, *event_shape)``.
-    Multi-chain output (via ``jax.vmap`` / ``jax.pmap``) has shape
-    ``(n_chains, n_draws, *event_shape)``.  A chain dim of size 1 is inserted
-    for single-chain runs.
-    """
-    result: dict[str, np.ndarray] = {}
-    for name, arr in samples.items():
-        if arr.ndim == 0:
-            result[name] = arr.reshape(1, 1)
-        elif num_chains is not None and arr.ndim >= 2 and arr.shape[0] == num_chains:
-            result[name] = arr
-        else:
-            result[name] = np.expand_dims(arr, axis=0)
-    return result
-
-
 def _extract_info_fields(info: Any, rename_map: dict[str, str]) -> dict[str, np.ndarray]:
     """Pull known stat fields out of a BlackJAX info object.
 
@@ -96,34 +75,22 @@ class BlackJAXConverter:
         coords: dict[str, Any] | None = None,
         dims: dict[Hashable, Sequence[Hashable]] | None = None,
         index_origin: int | None = None,
-        num_chains: int | None = None,
         max_tree_depth: int | None = None,
         sample_dims: list[str] | None = None,
     ) -> None:
         self.index_origin = rcParams["data.index_origin"] if index_origin is None else index_origin
         self.coords = coords
         self.dims = dims
-        self.num_chains = num_chains
         self.max_tree_depth = max_tree_depth
         self.sample_dims = sample_dims or rcParams["data.sample_dims"]
 
-        # Whether to inject a chain dimension (only when sample_dims includes "chain")
-        self._needs_chain_dim = "chain" in self.sample_dims
-
         if posterior is not None:
-            raw = _position_to_dict(posterior)
-            self._samples: dict[str, np.ndarray] | None = (
-                _ensure_chain_dim(raw, num_chains) if self._needs_chain_dim else raw
-            )
+            self._samples: dict[str, np.ndarray] | None = _position_to_dict(posterior)
         else:
             self._samples = None
 
         stats = _extract_info_fields(info, _NUTS_STAT_RENAME) if info is not None else None
-        self._stats: dict[str, np.ndarray] | None = (
-            (_ensure_chain_dim(stats, num_chains) if self._needs_chain_dim else stats)
-            if stats
-            else None
-        )
+        self._stats: dict[str, np.ndarray] | None = stats if stats else None
 
         self.posterior_predictive: dict[str, np.ndarray] | None = (
             {k: _jax_to_numpy(v) for k, v in posterior_predictive.items()}
@@ -258,7 +225,6 @@ def from_blackjax(
     coords: dict[str, Any] | None = None,
     dims: dict[Hashable, Sequence[Hashable]] | None = None,
     index_origin: int | None = None,
-    num_chains: int | None = None,
     max_tree_depth: int | None = None,
     sample_dims: list[str] | None = None,
 ) -> DataTree:
@@ -272,15 +238,15 @@ def from_blackjax(
         The ``.position`` field of a BlackJAX state object.  Can be a dict,
         a NamedTuple, or a bare JAX array.
 
-        When ``sample_dims`` includes ``"chain"`` (the default), single-chain
-        arrays are expected to have shape ``(n_draws, *event_shape)`` and a
-        chain dimension of size 1 is inserted automatically.  Multi-chain
-        arrays from ``jax.vmap`` / ``jax.pmap`` should have shape
-        ``(n_chains, n_draws, *event_shape)`` and ``num_chains`` must be
-        provided so the leading axis is recognised as the chain dimension.
+        When ``sample_dims`` includes ``"chain"`` (the default), the first
+        axis of every array is assumed to be the chain dimension.  For
+        multi-chain runs via ``jax.vmap`` / ``jax.pmap`` the arrays will
+        have shape ``(n_chains, n_draws, *event_shape)`` which maps directly.
+        For single-chain runs use ``sample_dims=["draw"]`` so that the
+        converter does not expect a leading chain axis.
 
-        When ``sample_dims=["sample"]``, no chain dimension is inserted and
-        the arrays are stored as-is.
+        When ``sample_dims=["sample"]``, the arrays are stored as-is with a
+        single flat sample dimension.
     prior : dict, optional
         Prior samples as a dictionary mapping variable names to arrays.  If a
         variable name also appears in ``posterior``, it is placed in the
@@ -304,11 +270,6 @@ def from_blackjax(
     index_origin : int, optional
         Starting index for integer coordinates.  Defaults to
         ``rcParams["data.index_origin"]``.
-    num_chains : int, optional
-        Number of chains.  Required when ``sample_dims`` includes ``"chain"``
-        and the position arrays already carry a leading chain axis (i.e.
-        multi-chain runs via ``jax.vmap`` / ``jax.pmap``).  Ignored when
-        ``sample_dims=["sample"]``.
     max_tree_depth : int, optional
         Maximum tree depth used during NUTS sampling.  When provided,
         ``reached_max_tree_depth`` is added to ``sample_stats``.
@@ -316,12 +277,14 @@ def from_blackjax(
         Names of the sample dimensions.  Defaults to
         ``rcParams["data.sample_dims"]`` (typically ``["chain", "draw"]``).
 
-        Use ``["chain", "draw"]`` for standard multi/single-chain NUTS runs
-        where you want ArviZ to track the chain dimension explicitly.
+        Use ``["chain", "draw"]`` for multi-chain NUTS runs where the first
+        axis of the position arrays is the chain dimension.
 
-        Use ``["sample"]`` when you want a flat sample representation without
-        a chain dimension (e.g. after thinning or when compatibility with
-        LOO tools is not required).
+        Use ``["draw"]`` for single-chain runs where there is no leading
+        chain axis.
+
+        Use ``["sample"]`` for a flat sample representation without separate
+        chain and draw dimensions.
 
     Returns
     -------
@@ -341,7 +304,6 @@ def from_blackjax(
             coords=coords,
             dims=dims,
             index_origin=index_origin,
-            num_chains=num_chains,
             max_tree_depth=max_tree_depth,
             sample_dims=sample_dims,
         ).to_datatree()

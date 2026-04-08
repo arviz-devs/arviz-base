@@ -70,11 +70,10 @@ def _run_nuts_single_chain(rng_key, n_warmup: int, n_draws: int):
 
 def _run_nuts_multi_chain(rng_key, n_chains: int, n_warmup: int, n_draws: int):
     """Run multi-chain NUTS via vmap and return (states, infos)."""
-    warmup = blackjax.window_adaptation(blackjax.nuts, _log_prob)
-
     chain_keys = jax.random.split(rng_key, n_chains)
 
     def run_chain(key):
+        warmup = blackjax.window_adaptation(blackjax.nuts, _log_prob)
         (state, parameters), _ = warmup.run(key, _INIT_POSITION, num_steps=n_warmup)
         kernel = blackjax.nuts(_log_prob, **parameters)
 
@@ -110,12 +109,16 @@ def multi_chain_run():
 
 
 class TestSingleChain:
-    """Tests using a real single-chain NUTS run."""
+    """Tests using a real single-chain NUTS run.
+
+    Single-chain output has shape (n_draws, *event_shape) with no leading chain
+    axis, so all tests must pass sample_dims=["draw"] explicitly.
+    """
 
     def test_posterior_and_no_sample_stats(self, single_chain_run):
         """Posterior present; sample_stats absent when info is not passed."""
         states, _ = single_chain_run
-        idata = from_blackjax(posterior=states.position)
+        idata = from_blackjax(posterior=states.position, sample_dims=["draw"])
         fails = check_multiple_attrs(
             {
                 "posterior": ["mu", "log_tau", "theta_tilde"],
@@ -124,13 +127,13 @@ class TestSingleChain:
             idata,
         )
         assert not fails
-        assert idata.posterior.sizes["chain"] == 1
+        assert "chain" not in idata.posterior.dims
         assert idata.posterior.sizes["draw"] == N_DRAWS
 
     def test_with_sample_stats(self, single_chain_run):
         """sample_stats are populated from NUTS info object."""
         states, infos = single_chain_run
-        idata = from_blackjax(posterior=states.position, info=infos)
+        idata = from_blackjax(posterior=states.position, info=infos, sample_dims=["draw"])
         fails = check_multiple_attrs(
             {
                 "posterior": ["mu", "log_tau", "theta_tilde"],
@@ -139,13 +142,17 @@ class TestSingleChain:
             idata,
         )
         assert not fails
-        assert idata.sample_stats.sizes["chain"] == 1
         assert idata.sample_stats.sizes["draw"] == N_DRAWS
 
     def test_reached_max_tree_depth(self, single_chain_run):
         """reached_max_tree_depth is added when max_tree_depth is provided."""
         states, infos = single_chain_run
-        idata = from_blackjax(posterior=states.position, info=infos, max_tree_depth=10)
+        idata = from_blackjax(
+            posterior=states.position,
+            info=infos,
+            max_tree_depth=10,
+            sample_dims=["draw"],
+        )
         fails = check_multiple_attrs(
             {"sample_stats": ["tree_depth", "reached_max_tree_depth"]},
             idata,
@@ -156,24 +163,23 @@ class TestSingleChain:
         """NamedTuple positions are parsed correctly."""
         states, _ = single_chain_run
         pos = states.position
-        # Wrap dict in a NamedTuple
         Position = namedtuple("Position", pos.keys())
         nt_position = Position(**pos)
-        idata = from_blackjax(posterior=nt_position)
+        idata = from_blackjax(posterior=nt_position, sample_dims=["draw"])
         fails = check_multiple_attrs({"posterior": list(pos.keys())}, idata)
         assert not fails
 
     def test_bare_array_position(self):
         """Bare JAX array positions are stored under the key 'x'."""
         arr = jnp.ones((N_DRAWS,))
-        idata = from_blackjax(posterior=arr)
+        idata = from_blackjax(posterior=arr, sample_dims=["draw"])
         fails = check_multiple_attrs({"posterior": ["x"]}, idata)
         assert not fails
 
     def test_jax_arrays_converted_to_numpy(self, single_chain_run):
         """JAX arrays in position are converted to numpy in the output."""
         states, _ = single_chain_run
-        idata = from_blackjax(posterior=states.position)
+        idata = from_blackjax(posterior=states.position, sample_dims=["draw"])
         assert isinstance(idata.posterior["mu"].values, np.ndarray)
 
     def test_coords_and_dims(self, single_chain_run):
@@ -193,6 +199,7 @@ class TestSingleChain:
             posterior=states.position,
             coords={"school": school},
             dims={"theta_tilde": ["school"]},
+            sample_dims=["draw"],
         )
         assert "school" in idata.posterior.coords
         assert list(idata.posterior.coords["school"].values) == school
@@ -201,39 +208,39 @@ class TestSingleChain:
         """posterior_predictive group is created when provided."""
         states, _ = single_chain_run
         rng = np.random.default_rng(5)
-        pp = {"y_hat": rng.normal(size=(1, N_DRAWS, 8))}
-        idata = from_blackjax(posterior=states.position, posterior_predictive=pp)
+        pp = {"y_hat": rng.normal(size=(N_DRAWS, 8))}
+        idata = from_blackjax(
+            posterior=states.position, posterior_predictive=pp, sample_dims=["draw"]
+        )
         fails = check_multiple_attrs({"posterior_predictive": ["y_hat"]}, idata)
         assert not fails
 
     def test_observed_data(self, single_chain_run):
-        """observed_data has no chain/draw dims."""
+        """observed_data has no sample dims."""
         states, _ = single_chain_run
         obs = {"y": _EIGHT_SCHOOLS_Y}
-        idata = from_blackjax(posterior=states.position, observed_data=obs)
+        idata = from_blackjax(posterior=states.position, observed_data=obs, sample_dims=["draw"])
         fails = check_multiple_attrs({"observed_data": ["y"]}, idata)
         assert not fails
-        assert "chain" not in idata.observed_data.sizes
         assert "draw" not in idata.observed_data.sizes
 
     def test_constant_data(self, single_chain_run):
-        """constant_data has no chain/draw dims."""
+        """constant_data has no sample dims."""
         states, _ = single_chain_run
         cdata = {"sigma": _EIGHT_SCHOOLS_SIGMA}
-        idata = from_blackjax(posterior=states.position, constant_data=cdata)
+        idata = from_blackjax(posterior=states.position, constant_data=cdata, sample_dims=["draw"])
         fails = check_multiple_attrs({"constant_data": ["sigma"]}, idata)
         assert not fails
-        assert "chain" not in idata.constant_data.sizes
         assert "draw" not in idata.constant_data.sizes
 
     def test_prior_without_posterior(self):
         """When no posterior is given, all prior vars go into the prior group."""
         rng = np.random.default_rng(9)
         prior = {
-            "mu": rng.normal(size=(1, N_DRAWS)),
-            "log_tau": rng.normal(size=(1, N_DRAWS)),
+            "mu": rng.normal(size=(N_DRAWS,)),
+            "log_tau": rng.normal(size=(N_DRAWS,)),
         }
-        idata = from_blackjax(prior=prior)
+        idata = from_blackjax(prior=prior, sample_dims=["draw"])
         fails = check_multiple_attrs(
             {"prior": ["mu", "log_tau"], "~prior_predictive": []},
             idata,
@@ -245,11 +252,11 @@ class TestSingleChain:
         states, _ = single_chain_run
         rng = np.random.default_rng(11)
         prior = {
-            "mu": rng.normal(size=(1, N_DRAWS)),
-            "log_tau": rng.normal(size=(1, N_DRAWS)),
-            "y_hat": rng.normal(size=(1, N_DRAWS, 8)),
+            "mu": rng.normal(size=(N_DRAWS,)),
+            "log_tau": rng.normal(size=(N_DRAWS,)),
+            "y_hat": rng.normal(size=(N_DRAWS, 8)),
         }
-        idata = from_blackjax(posterior=states.position, prior=prior)
+        idata = from_blackjax(posterior=states.position, prior=prior, sample_dims=["draw"])
         fails = check_multiple_attrs(
             {
                 "prior": ["mu", "log_tau"],
@@ -262,21 +269,25 @@ class TestSingleChain:
     def test_no_prior(self, single_chain_run):
         """prior and prior_predictive groups absent when no prior is provided."""
         states, _ = single_chain_run
-        idata = from_blackjax(posterior=states.position)
+        idata = from_blackjax(posterior=states.position, sample_dims=["draw"])
         fails = check_multiple_attrs({"~prior": [], "~prior_predictive": []}, idata)
         assert not fails
 
 
 class TestMultiChain:
-    """Tests using a real multi-chain NUTS run via jax.vmap."""
+    """Tests using a real multi-chain NUTS run via jax.vmap.
+
+    Multi-chain output has shape (n_chains, n_draws, *event_shape) so the
+    default sample_dims=["chain", "draw"] works out of the box with no
+    extra arguments needed.
+    """
 
     def test_posterior_and_sample_stats(self, multi_chain_run):
-        """Multi-chain run produces correct chain/draw dimensions."""
+        """Multi-chain run works out of the box with default sample_dims."""
         states, infos = multi_chain_run
         idata = from_blackjax(
             posterior=states.position,
             info=infos,
-            num_chains=N_CHAINS,
         )
         fails = check_multiple_attrs(
             {
@@ -297,7 +308,6 @@ class TestMultiChain:
         idata = from_blackjax(
             posterior=states.position,
             info=infos,
-            num_chains=N_CHAINS,
             max_tree_depth=10,
         )
         fails = check_multiple_attrs(
@@ -310,15 +320,25 @@ class TestMultiChain:
 class TestSampleDims:
     """Tests for the sample_dims parameter."""
 
-    def test_default_sample_dims_gives_chain_draw(self, single_chain_run):
-        """Default sample_dims produces chain and draw dimensions."""
-        states, _ = single_chain_run
+    def test_default_sample_dims_gives_chain_draw(self, multi_chain_run):
+        """Default sample_dims=["chain", "draw"] works with multi-chain output."""
+        states, _ = multi_chain_run
         idata = from_blackjax(posterior=states.position)
         assert "chain" in idata.posterior.dims
         assert "draw" in idata.posterior.dims
+        assert idata.posterior.sizes["chain"] == N_CHAINS
+        assert idata.posterior.sizes["draw"] == N_DRAWS
 
-    def test_sample_dims_sample_no_chain_expansion(self, single_chain_run):
-        """sample_dims=['sample'] stores flat samples without chain dim."""
+    def test_sample_dims_draw_for_single_chain(self, single_chain_run):
+        """sample_dims=["draw"] correctly handles single-chain output."""
+        states, _ = single_chain_run
+        idata = from_blackjax(posterior=states.position, sample_dims=["draw"])
+        assert "draw" in idata.posterior.dims
+        assert "chain" not in idata.posterior.dims
+        assert idata.posterior.sizes["draw"] == N_DRAWS
+
+    def test_sample_dims_sample_no_chain(self, single_chain_run):
+        """sample_dims=['sample'] stores flat samples without chain or draw dim."""
         states, _ = single_chain_run
         idata = from_blackjax(posterior=states.position, sample_dims=["sample"])
         assert "sample" in idata.posterior.dims
