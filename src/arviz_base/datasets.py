@@ -176,7 +176,7 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
     else:
         raise ValueError(
             f"Dataset {dataset} not found! The following are available:"
-            "\n\n{', '.join(all_datasets)}\n\n"
+            f"\n\n{', '.join(all_datasets)}\n\n"
             f"{list_datasets()}"
         )
 
