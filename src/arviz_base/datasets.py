@@ -1,5 +1,6 @@
 """Base IO code for all datasets. Heavily influenced by scikit-learn's implementation."""
 
+import difflib
 import hashlib
 import itertools
 import json
@@ -157,9 +158,27 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
     if dataset is None:
         return dict(itertools.chain(LOCAL_DATASETS.items(), REMOTE_DATASETS.items()))
 
-    raise ValueError(
-        f"Dataset {dataset} not found! The following are available:\n{list_datasets()}"
-    )
+    all_datasets = list(LOCAL_DATASETS.keys()) + list(REMOTE_DATASETS.keys())
+
+    substring_matches = [d for d in all_datasets if dataset.lower() in d.lower()]
+
+    fuzzy_matches = difflib.get_close_matches(dataset, all_datasets, n=2, cutoff=0.6)
+
+    suggestions = list(dict.fromkeys(substring_matches + fuzzy_matches))
+
+    if suggestions:
+        if len(suggestions) == 1:
+            msg = f"Did you mean '{suggestions[0]}'?"
+        else:
+            msg = f"Did you mean one of these? {', '.join(suggestions)}"
+
+        raise ValueError(f"Dataset '{dataset}' not found. {msg}")
+    else:
+        raise ValueError(
+            f"Dataset {dataset} not found! The following are available:"
+            f"\n\n{', '.join(all_datasets)}\n\n"
+            f"{list_datasets()}"
+        )
 
 
 def list_datasets():
