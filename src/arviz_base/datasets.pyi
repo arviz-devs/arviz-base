@@ -1,5 +1,6 @@
 # File generated with docstub
 
+import difflib
 import hashlib
 import itertools
 import json
