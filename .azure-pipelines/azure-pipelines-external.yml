@@ -44,8 +44,8 @@ jobs:
           python -m pip --no-cache-dir install git+https://github.com/stan-dev/cmdstanpy@develop#egg=cmdstanpy
       fi
 
-      python -m pip --no-cache-dir install emcee>=3 h5py
-      python -m pip --no-cache-dir install pystan pyro-ppl>=1 numpyro jax
+      python -m pip --no-cache-dir install "emcee>=3" h5py
+      python -m pip --no-cache-dir install pystan "pyro-ppl>=1" numpyro "jax<0.10.0"
 
     displayName: 'Install external dependencies'
 
