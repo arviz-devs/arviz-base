@@ -1,10 +1,13 @@
 # File generated with docstub
 
+import functools
 import logging
 
 from _typeshed import Incomplete
 
 _log: Incomplete
+
+from xarray import DataTree, open_datatree
 
 from arviz_base import labels, testing
 from arviz_base._version import __version__
@@ -44,6 +47,9 @@ from arviz_base.reorg import (
 from arviz_base.sel_utils import xarray_sel_iter, xarray_to_ndarray, xarray_var_iter
 from arviz_base.transform import get_unconstrained_samples
 
+from_netcdf: Incomplete
+from_zarr: functools.partial[DataTree]
+
 __all__ = [
     "__version__",
     "citations",
@@ -60,8 +66,11 @@ __all__ = [
     "from_cmdstanpy",
     "from_dict",
     "from_emcee",
+    "from_netcdf",
     "from_numpyro",
     "from_numpyro_svi",
+    "from_pystan",
+    "from_zarr",
     "NumPyroInferenceAdapter",
     "SVIAdapter",
     "MCMCAdapter",

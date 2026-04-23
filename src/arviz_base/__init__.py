@@ -1,9 +1,12 @@
 # pylint: disable=wildcard-import,wrong-import-position
 """Base ArviZ features and converters."""
 
+import functools
 import logging
 
 _log = logging.getLogger(__name__)
+
+from xarray import DataTree, open_datatree
 
 from arviz_base._version import __version__
 from arviz_base.base import dict_to_dataset, generate_dims_coords, make_attrs, ndarray_to_dataarray
@@ -33,6 +36,9 @@ from arviz_base.sel_utils import xarray_sel_iter, xarray_var_iter, xarray_to_nda
 from arviz_base.transform import get_unconstrained_samples
 from arviz_base import testing, labels
 
+from_netcdf = open_datatree
+from_zarr: functools.partial[DataTree] = functools.partial(open_datatree, engine="zarr")
+
 
 __all__ = [
     "__version__",
@@ -54,8 +60,11 @@ __all__ = [
     "from_cmdstanpy",
     "from_dict",
     "from_emcee",
+    "from_netcdf",
     "from_numpyro",
     "from_numpyro_svi",
+    "from_pystan",
+    "from_zarr",
     "NumPyroInferenceAdapter",
     "SVIAdapter",
     "MCMCAdapter",
