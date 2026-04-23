@@ -1,3 +1,37 @@
+<a id="v1.1.0"></a>
+# [v1.1.0](https://github.com/arviz-devs/arviz-base/releases/tag/v1.1.0) - 2026-04-23
+
+## What's Changed
+
+### New Features
+* Handle objects with _array_ method in convert_to_datatree by [@Chirag3841](https://github.com/Chirag3841) in [#160](https://github.com/arviz-devs/arviz-base/pull/160)
+* load_data provide better suggestions by [@aloctavodia](https://github.com/aloctavodia) in [#186](https://github.com/arviz-devs/arviz-base/pull/186)
+* Numpyro Converter refactor by [@kylejcaron](https://github.com/kylejcaron) in [#142](https://github.com/arviz-devs/arviz-base/pull/142)
+
+### Documentation
+* Update readme by [@aloctavodia](https://github.com/aloctavodia) in [#167](https://github.com/arviz-devs/arviz-base/pull/167)
+* Add CITATION.CFF by [@aloctavodia](https://github.com/aloctavodia) in [#168](https://github.com/arviz-devs/arviz-base/pull/168)
+* Fix parameter name mismatch in extract and add missing parameter descriptions by [@mahidhiman12](https://github.com/mahidhiman12) in [#158](https://github.com/arviz-devs/arviz-base/pull/158)
+* Add missing parameter descriptions in utils.py and fix typo by [@mahidhiman12](https://github.com/mahidhiman12) in [#161](https://github.com/arviz-devs/arviz-base/pull/161)
+* Update reference for ArviZ by [@aloctavodia](https://github.com/aloctavodia) in [#162](https://github.com/arviz-devs/arviz-base/pull/162) and [@aloctavodia](https://github.com/aloctavodia) in [#169](https://github.com/arviz-devs/arviz-base/pull/169)
+
+### Maintenance and bug fixes
+* set kind=auto as default and add validation module by [@OriolAbril](https://github.com/OriolAbril) in [#152](https://github.com/arviz-devs/arviz-base/pull/152)
+* remove unused isort and black from check extras by [@mahidhiman12](https://github.com/mahidhiman12) in [#181](https://github.com/arviz-devs/arviz-base/pull/181)
+* add ignore for xarray related timedelta dtype deprecation by [@OriolAbril](https://github.com/OriolAbril) in [#184](https://github.com/arviz-devs/arviz-base/pull/184)
+* Improve type hints in utils module by [@Shlokpalrecha](https://github.com/Shlokpalrecha) in [#170](https://github.com/arviz-devs/arviz-base/pull/170)
+
+
+## New Contributors
+* [@Chirag3841](https://github.com/Chirag3841) made their first contribution in [#160](https://github.com/arviz-devs/arviz-base/pull/160)
+* [@mahidhiman12](https://github.com/mahidhiman12) made their first contribution in [#158](https://github.com/arviz-devs/arviz-base/pull/158)
+* [@Shlokpalrecha](https://github.com/Shlokpalrecha) made their first contribution in [#170](https://github.com/arviz-devs/arviz-base/pull/170)
+
+**Full Changelog**: https://github.com/arviz-devs/arviz-base/compare/v1.0.0...v1.1.0
+
+[Changes][v1.1.0]
+
+
 <a id="v1.0.0"></a>
 # [v1.0.0](https://github.com/arviz-devs/arviz-base/releases/tag/v1.0.0) - 2026-03-02
 
@@ -208,6 +242,7 @@
 [Changes][v0.4.0]
 
 
+[v1.1.0]: https://github.com/arviz-devs/arviz-base/compare/v1.0.0...v1.1.0
 [v1.0.0]: https://github.com/arviz-devs/arviz-base/compare/v0.8.2...v1.0.0
 [v0.8.2]: https://github.com/arviz-devs/arviz-base/compare/v0.8.1...v0.8.2
 [v0.8.1]: https://github.com/arviz-devs/arviz-base/compare/v0.8.0...v0.8.1
