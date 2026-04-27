@@ -112,7 +112,7 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
 
     Returns
     -------
-    xarray.Dataset
+    DataTree
     """
     if dataset in LOCAL_DATASETS:
         resource = LOCAL_DATASETS[dataset]
