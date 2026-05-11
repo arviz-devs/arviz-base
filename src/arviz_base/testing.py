@@ -131,8 +131,9 @@ def datatree_regression(seed=17):
             "posterior_predictive": {"y": posterior_predictive},
             "observed_data": {"y": observed_data},
             "log_likelihood": {"y": log_likelihood},
+            "constant_data": {"x": np.linspace(-1, 1, n_obs)},
         },
-        dims={"y": ["obs_dim"]},
+        dims={"y": ["obs_dim"], "mu": ["obs_dim"], "x": ["obs_dim"]},
     )
 
 
