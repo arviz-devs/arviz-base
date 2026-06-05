@@ -377,7 +377,7 @@ def dataset_to_dataframe(ds, sample_dims=None, labeller=None, multiindex=False, 
     return df
 
 
-def explode_dataset_dims(ds, dim, labeller=None):
+def explode_dataset_dims(ds, dim, labeller=None, dim_to_idx=None):
     """Explode dims of a dataset so each slice along them becomes its own variable.
 
     Parameters
@@ -413,14 +413,18 @@ def explode_dataset_dims(ds, dim, labeller=None):
         dim = [dim]
     if labeller is None:
         labeller = BaseLabeller()
-    return xr.Dataset(
-        {
-            labeller.make_label_flat(var_name, sel, isel): ds[var_name].sel(sel, drop=True)
-            for var_name, sel, isel in xarray_sel_iter(
-                ds, skip_dims={d for d in ds.dims if d not in dim}
-            )
-        }
-    )
+    out = {}
+    for var_name, sel, isel in xarray_sel_iter(
+        ds, skip_dims={d for d in ds.dims if d not in dim}, dim_to_idx=dim_to_idx
+    ):
+        new_var = labeller.make_label_flat(var_name, sel, isel)
+        new_da = ds[var_name].sel(sel, drop=True)
+        if dim_to_idx is not None:
+            new_da = new_da.rename(
+                {key: f"{key}_{labeller.sel_to_str(sel, isel)}" for key in dim_to_idx.keys()}
+            ).drop_vars(list(dim_to_idx.values()))
+        out[new_var] = new_da
+    return xr.Dataset(out)
 
 
 def references_to_dataset(references, ds, sample_dims=None, ref_dim=None):

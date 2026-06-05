@@ -1,3 +1,3 @@
 """Base ArviZ version."""
 
-__version__ = "1.1.1dev0"
+__version__ = "1.1.0.dev0"
