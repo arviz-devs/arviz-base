@@ -49,7 +49,9 @@ class TestLabellers:
             "IdxLabeller": IdxLabeller(),
             "DimIdxLabeller": DimIdxLabeller(),
             "MapLabeller": MapLabeller(
-                var_name_map={"theta": r"$\theta$"}, coord_map={"instrument": {"a": "ATHENA"}}
+                var_name_map={"theta": r"$\theta$"},
+                dim_map={"school": "School"},
+                coord_map={"instrument": {"a": "ATHENA"}},
             ),
             "NoVarLabeller": NoVarLabeller(),
         }
@@ -88,3 +90,23 @@ class TestLabellers:
         labeller_arg = labellers[name]
         label = labeller_arg.make_label_flat("theta", multidim_sels.sel, multidim_sels.isel)
         assert label == expected_label
+
+    @pytest.mark.parametrize(
+        "args",
+        [
+            ("BaseLabeller", "school", "school"),
+            ("MapLabeller", "school", "School"),
+            ("MapLabeller", "chain", "chain"),
+        ],
+    )
+    def test_dim_to_str(self, args, labellers):
+        name, dim, expected_label = args
+
+        labeller_arg = labellers[name]
+        label = labeller_arg.dim_to_str(dim)
+
+        assert label == expected_label
+
+    def test_dim_to_str_none(self, labellers):
+        assert labellers["BaseLabeller"].dim_to_str(None) is None
+        assert labellers["MapLabeller"].dim_to_str(None) is None
