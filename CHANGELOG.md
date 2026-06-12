@@ -1,3 +1,17 @@
+<a id="v1.2.0"></a>
+# [v1.2.0](https://github.com/arviz-devs/arviz-base/releases/tag/v1.2.0) - 2026-06-12
+
+## What's Changed
+* Update datatree notebook by [@symeneses](https://github.com/symeneses) in [#188](https://github.com/arviz-devs/arviz-base/pull/188)
+* Add constant data to datatree_regression by [@aloctavodia](https://github.com/aloctavodia) in [#197](https://github.com/arviz-devs/arviz-base/pull/197)
+* prepare relase and improve import times by [@OriolAbril](https://github.com/OriolAbril) in [#201](https://github.com/arviz-devs/arviz-base/pull/201)
+
+
+**Full Changelog**: https://github.com/arviz-devs/arviz-base/compare/v1.1.0...v1.2.0
+
+[Changes][v1.2.0]
+
+
 <a id="v1.1.0"></a>
 # [v1.1.0](https://github.com/arviz-devs/arviz-base/releases/tag/v1.1.0) - 2026-04-23
 
@@ -242,6 +256,7 @@
 [Changes][v0.4.0]
 
 
+[v1.2.0]: https://github.com/arviz-devs/arviz-base/compare/v1.1.0...v1.2.0
 [v1.1.0]: https://github.com/arviz-devs/arviz-base/compare/v1.0.0...v1.1.0
 [v1.0.0]: https://github.com/arviz-devs/arviz-base/compare/v0.8.2...v1.0.0
 [v0.8.2]: https://github.com/arviz-devs/arviz-base/compare/v0.8.1...v0.8.2
