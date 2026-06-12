@@ -8,6 +8,7 @@ import re
 import sys
 import types
 from collections.abc import Callable, Iterable, Iterator, MutableMapping
+from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Literal, get_args
 
