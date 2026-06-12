@@ -389,6 +389,7 @@ def explode_dataset_dims(ds, dim, labeller=None, dim_to_idx=None):
     labeller : labeller, optional
         Instance of a labeller class used to label the slices generated when exploding along `dim`.
         The method ``make_label_flat`` is used.
+    dim_to_idx : mapping of {str : str}, optional
 
     Returns
     -------
@@ -419,10 +420,16 @@ def explode_dataset_dims(ds, dim, labeller=None, dim_to_idx=None):
     ):
         new_var = labeller.make_label_flat(var_name, sel, isel)
         new_da = ds[var_name].sel(sel, drop=True)
-        if dim_to_idx is not None:
+        present_dim_to_idx = (
+            {} if dim_to_idx is None else {k: v for k, v in dim_to_idx.items() if k in new_da.dims}
+        )
+        if present_dim_to_idx:
             new_da = new_da.rename(
-                {key: f"{key}_{labeller.sel_to_str(sel, isel)}" for key in dim_to_idx.keys()}
-            ).drop_vars(list(dim_to_idx.values()))
+                {
+                    key: f"{key}_{labeller.sel_to_str(sel, isel)}"
+                    for key in present_dim_to_idx.keys()
+                }
+            ).drop_vars(list(present_dim_to_idx.values()))
         out[new_var] = new_da
     return xr.Dataset(out)
 
