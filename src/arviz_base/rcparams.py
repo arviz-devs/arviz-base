@@ -7,6 +7,7 @@ import pprint
 import re
 import sys
 from collections.abc import Iterator, MutableMapping
+from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Literal, get_args
 
@@ -269,24 +270,18 @@ def _validate_backend(value):
     if value != "auto":
         return value
     _log.info("Found 'auto' as default backend, checking available backends")
-    try:
-        import matplotlib
-    except ImportError:
-        _log.debug("Unable to import matplotlib", exc_info=True)
+    if find_spec("matplotlib") is None:
+        _log.debug("Unable to find matplotlib")
     else:
         _log.info("Matplotlib is available, defining as default backend")
         return "matplotlib"
-    try:
-        import plotly
-    except ImportError:
-        _log.debug("Unable to import plotly", exc_info=True)
+    if find_spec("plotly") is None:
+        _log.debug("Unable to find plotly")
     else:
         _log.info("Plotly is available, defining as default backend")
         return "plotly"
-    try:
-        import bokeh
-    except ImportError:
-        _log.debug("Unable to import bokeh", exc_info=True)
+    if find_spec("bokeh") is None:
+        _log.debug("Unable to import bokeh")
     else:
         _log.info("Bokeh is available, defining as default backend")
         return "bokeh"
