@@ -39,7 +39,8 @@ class TestDataNumPyro:
         scope="class",
         params=["numpyro", "numpyro_svi", "numpyro_svi_custom_guide"],
     )
-    def data(self, request, eight_schools_params, draws, chains):
+    @classmethod
+    def data(cls, request, eight_schools_params, draws, chains):
         class Data:
             model_key = request.param
             obj = load_cached_models(eight_schools_params, draws, chains, "numpyro")[model_key]
@@ -53,7 +54,8 @@ class TestDataNumPyro:
         return {"posterior": data.obj["mcmc"]} if "mcmc" in data.obj else data.obj
 
     @pytest.fixture(scope="class")
-    def predictions_params(self):
+    @classmethod
+    def predictions_params(cls):
         """Predictions data for eight schools."""
         return {
             "J": 8,
@@ -61,7 +63,8 @@ class TestDataNumPyro:
         }
 
     @pytest.fixture(scope="class")
-    def predictions_data(self, data, predictions_params):
+    @classmethod
+    def predictions_data(cls, data, predictions_params):
         """Generate predictions for predictions_params"""
         # call internal posterior to avoid group_by_chain in MCMC
         posterior_samples = data.adapter.get_samples()
@@ -623,7 +626,8 @@ class TestNumPyroAdapters:
         ],
         ids=["mcmc", "svi", "svi_custom_guide"],
     )
-    def data(self, request, eight_schools_params, draws, chains):
+    @classmethod
+    def data(cls, request, eight_schools_params, draws, chains):
         """Fixture that provides adapter instances for all inference types."""
         model_key, expected_attrs = request.param
 

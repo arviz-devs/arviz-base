@@ -108,7 +108,8 @@ def _create_test_data(target_dir):
 
 class TestDataCmdStanPy:
     @pytest.fixture(scope="session")
-    def data_directory(self):
+    @classmethod
+    def data_directory(cls):
         here = os.path.dirname(os.path.abspath(__file__))
         data_directory = os.path.join(here, "saved_models", "cmdstanpy")
         if not os.path.isdir(data_directory):
@@ -117,7 +118,8 @@ class TestDataCmdStanPy:
         return data_directory
 
     @pytest.fixture(scope="class")
-    def filepaths(self, data_directory):
+    @classmethod
+    def filepaths(cls, data_directory):
         files = {
             "nowarmup": glob(
                 os.path.join(data_directory, "cmdstanpy_eight_schools_nowarmup-*_[1-4].csv")
@@ -129,7 +131,8 @@ class TestDataCmdStanPy:
         return files
 
     @pytest.fixture(scope="class")
-    def data(self, filepaths, data_directory, tmp_path_factory):
+    @classmethod
+    def data(cls, filepaths, data_directory, tmp_path_factory):
         # Skip tests if cmdstanpy not installed
         cmdstanpy = importorskip("cmdstanpy")
         CmdStanModel = cmdstanpy.CmdStanModel  # pylint: disable=invalid-name

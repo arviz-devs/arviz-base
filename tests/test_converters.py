@@ -178,7 +178,8 @@ def test_convert_to_dataset_bad(tmpdir):
 
 class TestDataConvert:
     @pytest.fixture(scope="class")
-    def data(self, draws, chains):
+    @classmethod
+    def data(cls, draws, chains):
         rng = np.random.default_rng()
 
         class Data:
