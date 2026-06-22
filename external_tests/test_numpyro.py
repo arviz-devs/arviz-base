@@ -612,12 +612,11 @@ class TestDataNumPyro:
 
     def test_potential_energy_sign_conversion(self):
         """Potential energy is converted to log probability with the correct sign."""
+
         def simple_model():
             numpyro.sample("x", numpyro.distributions.Normal(0, 1))
 
-        mcmc = numpyro.infer.MCMC(
-            numpyro.infer.NUTS(simple_model), num_warmup=5, num_samples=10
-        )
+        mcmc = numpyro.infer.MCMC(numpyro.infer.NUTS(simple_model), num_warmup=5, num_samples=10)
         mcmc.run(PRNGKey(0), extra_fields=["potential_energy"])
 
         extra_fields = mcmc.get_extra_fields(group_by_chain=True)
