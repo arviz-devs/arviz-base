@@ -62,7 +62,8 @@ class TestDataEmcee:
     ]
 
     @pytest.fixture(scope="class")
-    def data(self, eight_schools_params, draws, chains):
+    @classmethod
+    def data(cls, eight_schools_params, draws, chains):
         class Data:
             # chains are not used
             # emcee uses lots of walkers
