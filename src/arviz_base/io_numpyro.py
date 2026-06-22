@@ -161,7 +161,9 @@ class SVIAdapter(NumPyroInferenceAdapter):
             )
         # if a custom guide is provided, sample by hand
         predictive = numpyro.infer.Predictive(
-            self.posterior.guide, params=self.result_obj.params, num_samples=self.sample_shape[0]
+            self.posterior.guide,
+            params=self.result_obj.params,
+            num_samples=self.sample_shape[0],
         )
         samples = predictive(key, *self._args, **self._kwargs)
         return samples
@@ -260,7 +262,9 @@ def infer_dims(
     model_kwargs = dict() if model_kwargs is None else model_kwargs
 
     def _get_dist_name(fn):
-        if isinstance(fn, dist.Independent | dist.ExpandedDistribution | dist.MaskedDistribution):
+        if isinstance(
+            fn, dist.Independent | dist.ExpandedDistribution | dist.MaskedDistribution
+        ):
             return _get_dist_name(fn.base_dist)
         return type(fn).__name__
 
@@ -289,7 +293,10 @@ def infer_dims(
 
     # loop through the trace and pull the batch dim and event dim names
     for name, site in trace.items():
-        batch_dims = [frame.name for frame in sorted(site["cond_indep_stack"], key=lambda x: x.dim)]
+        batch_dims = [
+            frame.name
+            for frame in sorted(site["cond_indep_stack"], key=lambda x: x.dim)
+        ]
         event_dims = list(site.get("infer", {}).get("event_dims", []))
 
         # save the dim names leading with batch dims
@@ -361,14 +368,18 @@ class NumPyroConverter:
         self.constant_data = constant_data
         self.predictions_constant_data = predictions_constant_data
         self.log_likelihood = log_likelihood
-        self.index_origin = rcParams["data.index_origin"] if index_origin is None else index_origin
+        self.index_origin = (
+            rcParams["data.index_origin"] if index_origin is None else index_origin
+        )
         self.coords = coords
         self.dims = dims
         self.pred_dims = pred_dims
         self.extra_event_dims = extra_event_dims
 
         # use nchains to help infer shape when posterior isnt present for MCMC
-        self.nchains = num_chains if rcParams["data.sample_dims"][0] == "chain" else None
+        self.nchains = (
+            num_chains if rcParams["data.sample_dims"][0] == "chain" else None
+        )
 
         if posterior is not None:
             samples = jax.device_get(self.posterior.get_samples())
@@ -381,7 +392,8 @@ class NumPyroConverter:
                 # (e.g. f(x) = x ** 2)
                 tree_flatten_samples = jax.tree_util.tree_flatten(samples)[0]
                 samples = {
-                    f"Param:{i}": jax.device_get(v) for i, v in enumerate(tree_flatten_samples)
+                    f"Param:{i}": jax.device_get(v)
+                    for i, v in enumerate(tree_flatten_samples)
                 }
             self._samples = samples
             self.model = self.posterior.model
@@ -422,7 +434,9 @@ class NumPyroConverter:
             numpyro.handlers.seed(model, key),
             substitute_fn=numpyro.infer.init_to_sample,
         )
-        trace = numpyro.handlers.trace(seeded_model).get_trace(*model_args, **model_kwargs)
+        trace = numpyro.handlers.trace(seeded_model).get_trace(
+            *model_args, **model_kwargs
+        )
         return trace
 
     def _infer_sample_shape(self):
@@ -434,7 +448,9 @@ class NumPyroConverter:
         ]
         # pick first available source
         get_from = next((src for src in sources if src is not None), None)
-        no_constant_data = self.constant_data is None and self.predictions_constant_data is None
+        no_constant_data = (
+            self.constant_data is None and self.predictions_constant_data is None
+        )
         if get_from is not None:
             aelem = next(iter(get_from.values()))
             batch_ndim = aelem.ndim - len(rcParams["data.sample_dims"])
@@ -590,7 +606,9 @@ class NumPyroConverter:
     @requires("predictions")
     def predictions_to_xarray(self):
         """Convert predictions to xarray."""
-        return self.translate_posterior_predictive_dict_to_xarray(self.predictions, self.pred_dims)
+        return self.translate_posterior_predictive_dict_to_xarray(
+            self.predictions, self.pred_dims
+        )
 
     def priors_to_xarray(self):
         """Convert prior samples (and if possible prior predictive too) to xarray."""
@@ -598,7 +616,9 @@ class NumPyroConverter:
             return {"prior": None, "prior_predictive": None}
         if self.posterior is not None:
             prior_vars = list(self._samples.keys())
-            prior_predictive_vars = [key for key in self.prior.keys() if key not in prior_vars]
+            prior_predictive_vars = [
+                key for key in self.prior.keys() if key not in prior_vars
+            ]
         else:
             prior_vars = self.prior.keys()
             prior_predictive_vars = None
@@ -689,7 +709,9 @@ class NumPyroConverter:
             "predictions_constant_data": self.predictions_constant_data_to_xarray(),
         }
 
-        return DataTree.from_dict({group: ds for group, ds in dicto.items() if ds is not None})
+        return DataTree.from_dict(
+            {group: ds for group, ds in dicto.items() if ds is not None}
+        )
 
     @requires("posterior")
     @requires("model")
