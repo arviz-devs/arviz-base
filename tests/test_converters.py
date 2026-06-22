@@ -81,7 +81,8 @@ def test_more_chains_than_draws():
 
 class TestConvertToDataset:
     @pytest.fixture(scope="class")
-    def data(self):
+    @classmethod
+    def data(cls):
         rng = np.random.default_rng()
 
         # pylint: disable=attribute-defined-outside-init
@@ -152,6 +153,9 @@ def test_convert_to_datatree_idempotent():
 
 
 @netcdf_nightlies_skip
+@pytest.mark.filterwarnings(
+    "ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2.5:DeprecationWarning"
+)
 def test_convert_to_datatree_from_file(tmpdir):
     rng = np.random.default_rng()
     first = convert_to_datatree(rng.normal(size=(1, 100)), group="prior")
@@ -167,6 +171,9 @@ def test_convert_to_datatree_bad():
 
 
 @netcdf_nightlies_skip
+@pytest.mark.filterwarnings(
+    "ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2.5:DeprecationWarning"
+)
 def test_convert_to_dataset_bad(tmpdir):
     rng = np.random.default_rng()
     first = convert_to_datatree(rng.normal(size=(1, 100)), group="prior")
@@ -178,7 +185,8 @@ def test_convert_to_dataset_bad(tmpdir):
 
 class TestDataConvert:
     @pytest.fixture(scope="class")
-    def data(self, draws, chains):
+    @classmethod
+    def data(cls, draws, chains):
         rng = np.random.default_rng()
 
         class Data:

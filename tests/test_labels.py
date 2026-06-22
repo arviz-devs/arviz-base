@@ -42,7 +42,8 @@ def test_mix_labellers():
 
 class TestLabellers:
     @pytest.fixture(scope="class")
-    def labellers(self):
+    @classmethod
+    def labellers(cls):
         return {
             "BaseLabeller": BaseLabeller(),
             "DimCoordLabeller": DimCoordLabeller(),
