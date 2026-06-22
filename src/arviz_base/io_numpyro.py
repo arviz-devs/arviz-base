@@ -513,6 +513,8 @@ class NumPyroConverter:
                 continue
             name = rename_key.get(stat, stat)
             value_cp = value.copy()
+            if stat == "potential_energy":
+                value_cp = -value_cp
             data[name] = value_cp
             if stat == "num_steps":
                 data["tree_depth"] = np.log2(value_cp).astype(int) + 1

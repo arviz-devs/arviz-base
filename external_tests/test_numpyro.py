@@ -610,6 +610,23 @@ class TestDataNumPyro:
         idata = from_numpyro(posterior=data.adapter)
         assert "posterior" in idata
 
+    def test_potential_energy_sign_conversion(self):
+        """Potential energy is converted to log probability with the correct sign."""
+        def simple_model():
+            numpyro.sample("x", numpyro.distributions.Normal(0, 1))
+
+        mcmc = numpyro.infer.MCMC(
+            numpyro.infer.NUTS(simple_model), num_warmup=5, num_samples=10
+        )
+        mcmc.run(PRNGKey(0), extra_fields=["potential_energy"])
+
+        extra_fields = mcmc.get_extra_fields(group_by_chain=True)
+        inference_data = from_numpyro(mcmc)
+
+        np.testing.assert_array_equal(
+            inference_data.sample_stats["lp"].values, -extra_fields["potential_energy"]
+        )
+
 
 class TestNumPyroAdapters:
     """Test all NumPyro adapters to ensure they follow the same interface conventions."""
