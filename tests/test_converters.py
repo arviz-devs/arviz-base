@@ -81,7 +81,8 @@ def test_more_chains_than_draws():
 
 class TestConvertToDataset:
     @pytest.fixture(scope="class")
-    def data(self):
+    @classmethod
+    def data(cls):
         rng = np.random.default_rng()
 
         # pylint: disable=attribute-defined-outside-init
