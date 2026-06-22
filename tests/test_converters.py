@@ -153,6 +153,9 @@ def test_convert_to_datatree_idempotent():
 
 
 @netcdf_nightlies_skip
+@pytest.mark.filterwarnings(
+    "ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2.5:DeprecationWarning"
+)
 def test_convert_to_datatree_from_file(tmpdir):
     rng = np.random.default_rng()
     first = convert_to_datatree(rng.normal(size=(1, 100)), group="prior")
@@ -168,6 +171,9 @@ def test_convert_to_datatree_bad():
 
 
 @netcdf_nightlies_skip
+@pytest.mark.filterwarnings(
+    "ignore:Setting the shape on a NumPy array has been deprecated in NumPy 2.5:DeprecationWarning"
+)
 def test_convert_to_dataset_bad(tmpdir):
     rng = np.random.default_rng()
     first = convert_to_datatree(rng.normal(size=(1, 100)), group="prior")
