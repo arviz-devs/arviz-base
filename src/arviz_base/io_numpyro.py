@@ -161,7 +161,9 @@ class SVIAdapter(NumPyroInferenceAdapter):
             )
         # if a custom guide is provided, sample by hand
         predictive = numpyro.infer.Predictive(
-            self.posterior.guide, params=self.result_obj.params, num_samples=self.sample_shape[0]
+            self.posterior.guide,
+            params=self.result_obj.params,
+            num_samples=self.sample_shape[0],
         )
         samples = predictive(key, *self._args, **self._kwargs)
         return samples
@@ -513,7 +515,10 @@ class NumPyroConverter:
                 continue
             name = rename_key.get(stat, stat)
             value_cp = value.copy()
-            data[name] = value_cp
+            if stat == "potential_energy":
+                data[name] = -value_cp
+            else:
+                data[name] = value_cp
             if stat == "num_steps":
                 data["tree_depth"] = np.log2(value_cp).astype(int) + 1
                 if self.posterior._max_tree_depth is not None:
