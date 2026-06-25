@@ -119,7 +119,7 @@ ban-relative-imports = "all"  # Disallow all relative imports.
 docstring-code-format = false
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 warn_redundant_casts = true
 warn_unused_configs = true
 pretty = true
