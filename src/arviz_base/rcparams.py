@@ -1,5 +1,6 @@
 """ArviZ rcparams. Based on matplotlib's implementation."""
 
+import importlib.util
 import locale
 import logging
 import os
@@ -212,7 +213,11 @@ def _validate_stats_module(value):
     ValueError
     """
     if isinstance(value, str):
-        return value
+        if value == "auto":
+            return "numba" if importlib.util.find_spec("numba") else "base"
+        if value in {"base", "numba"}:
+            return value
+        raise ValueError("stats.module must be 'auto', 'base', or 'numba'")
     eti_method = getattr(value, "eti", None)
     rhat_method = getattr(value, "rhat", None)
     if all(callable(meth) for meth in (eti_method, rhat_method)):
