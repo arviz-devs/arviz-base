@@ -4,8 +4,14 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from arviz_base import dataset_to_dataarray, dataset_to_dataframe, extract, references_to_dataset
-from arviz_base.labels import DimCoordLabeller
+from arviz_base import (
+    dataset_to_dataarray,
+    dataset_to_dataframe,
+    explode_dataset_dims,
+    extract,
+    references_to_dataset,
+)
+from arviz_base.labels import BaseLabeller, DimCoordLabeller
 
 
 class TestExtract:
@@ -263,3 +269,44 @@ class TestRefToDs:
         assert not np.any(np.isnan(ref_ds["mu"]))
         assert np.allclose(ref_ds["theta"].isel(ref_dim=0), 0)
         assert np.all(np.isnan(ref_ds["theta"].isel(ref_dim=[1, 2])))
+
+
+class TestExplodeDsDims:
+    def test_basic(self, centered_eight):
+        ds = explode_dataset_dims(
+            centered_eight.posterior.dataset, "school", labeller=BaseLabeller()
+        )
+        assert len(ds.data_vars) == 10
+        assert set(ds.data_vars) == set(
+            ["mu", "tau"]
+            + [f"theta[{school}]" for school in centered_eight.posterior["school"].to_numpy()]
+        )
+
+    def test_labeller(self, centered_eight):
+        ds = explode_dataset_dims(
+            centered_eight.posterior.dataset, "school", labeller=DimCoordLabeller()
+        )
+        assert len(ds.data_vars) == 10
+        assert set(ds.data_vars) == set(
+            ["mu", "tau"]
+            + [
+                f"theta[school: {school}]"
+                for school in centered_eight.posterior["school"].to_numpy()
+            ]
+        )
+
+    def test_dim_to_idx(self, centered_eight):
+        input_ds = (
+            centered_eight.posterior.to_dataset()
+            .assign_coords(region=(["school"], list("aaabbbbb")))
+            .set_xindex("region")
+        )
+        ds = explode_dataset_dims(
+            input_ds, "school", labeller=BaseLabeller(), dim_to_idx={"school": "region"}
+        )
+        assert len(ds.data_vars) == 4
+        assert set(ds.data_vars) == {"mu", "tau", "theta[a]", "theta[b]"}
+        assert "school_a" in ds["theta[a]"].dims
+        assert ds.sizes["school_a"] == 3
+        assert "school_b" in ds["theta[b]"].dims
+        assert ds.sizes["school_b"] == 5

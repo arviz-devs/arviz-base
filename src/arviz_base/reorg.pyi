@@ -1,6 +1,6 @@
 # File generated with docstub
 
-from collections.abc import Hashable, Iterable, Sequence
+from collections.abc import Hashable, Iterable, Mapping, Sequence
 from numbers import Number
 from typing import Literal
 
@@ -59,7 +59,10 @@ def dataset_to_dataframe(
     new_dim: Hashable = ...,
 ) -> pandas.DataFrame: ...
 def explode_dataset_dims(
-    ds: Dataset, dim: Hashable | Sequence[Hashable], labeller: Labeller | None = ...
+    ds: Dataset,
+    dim: Hashable | Sequence[Hashable],
+    labeller: Labeller | None = ...,
+    dim_to_idx: Mapping[str, str] | None = ...,
 ) -> Dataset: ...
 def references_to_dataset(
     references: Number | ArrayLike | dict | DataArray | Dataset,
