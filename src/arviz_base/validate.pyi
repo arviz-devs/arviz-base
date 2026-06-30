@@ -5,6 +5,7 @@ import warnings
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
+from _typeshed import Incomplete
 from xarray import Dataset, DataTree
 
 from arviz_base.rcparams import defaultParams, rcParams
@@ -12,7 +13,9 @@ from arviz_base.rcparams import defaultParams, rcParams
 def validate_sample_dims(
     sample_dims: str | Sequence[str] | None, data: Dataset | DataTree | None = ...
 ) -> list[str]: ...
-def validate_dims_chain_draw_axis(dims, data=...) -> tuple[list, int | None, int]: ...
+def validate_dims_chain_draw_axis(
+    dims: Incomplete, data: Incomplete = ...
+) -> tuple[list, int | None, int]: ...
 def validate_dict_argument(
     dict_arg: Mapping[str, Any] | None,
     func_arg: tuple[Callable, str] | None | None = ...,

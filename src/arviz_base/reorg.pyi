@@ -8,6 +8,7 @@ import numpy as np
 import pandas
 import pandas as pd
 import xarray as xr
+from _typeshed import Incomplete
 from numpy.typing import ArrayLike
 from xarray import DataArray, Dataset, DataTree
 
@@ -42,7 +43,7 @@ def extract(
     keep_dataset: bool = ...,
     random_seed: int | None = ...,
 ) -> DataArray | Dataset: ...
-def _stratified_resample(weights, rng) -> None: ...
+def _stratified_resample(weights: Incomplete, rng: Incomplete) -> None: ...
 def dataset_to_dataarray(
     ds: Dataset,
     sample_dims: Sequence[Hashable] | None = ...,
