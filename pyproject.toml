@@ -54,7 +54,7 @@ ci = [
 check = [
     "build",
     "pre-commit",
-    "docstub==0.6.0",
+    "docstub==0.6",
     "mypy",
 ]
 doc = [
