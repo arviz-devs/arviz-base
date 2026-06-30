@@ -94,12 +94,14 @@ def datatree3(seed=17):
 def datatree_binary(seed=17):
     """Generate a DataTree with binary data."""
     rng = np.random.default_rng(seed)
+    posterior = rng.binomial(1, 0.5, size=(4, 100))
     posterior_predictive = rng.binomial(1, 0.5, size=(4, 100, 7))
     observed_data = rng.binomial(1, 0.5, size=7)
     log_likelihood = rng.normal(loc=0, scale=1, size=(4, 100, 7))
 
     return from_dict(
         {
+            "posterior": {"theta": posterior},
             "posterior_predictive": {"y": posterior_predictive},
             "observed_data": {"y": observed_data},
             "log_likelihood": {"y": log_likelihood},
