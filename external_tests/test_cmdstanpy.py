@@ -1,4 +1,4 @@
-# pylint: disable=redefined-outer-name, no-self-use
+# pylint: disable=redefined-outer-name, no-self-use, unused-argument
 """Integration tests for the cmdstanpy converter.
 
 Whenever it is necessary to update the saved models for cmdstanpy,

@@ -178,13 +178,13 @@ def extract(  # noqa: PLR0915
 
 def _stratified_resample(weights, rng):
     """Stratified resampling."""
-    N = len(weights)
-    single_uniform = (rng.random(N) + np.arange(N)) / N
-    indexes = np.zeros(N, dtype=int)
+    n = len(weights)
+    single_uniform = (rng.random(n) + np.arange(n)) / n
+    indexes = np.zeros(n, dtype=int)
     cum_sum = np.cumsum(weights)
 
     i, j = 0, 0
-    while i < N:
+    while i < n:
         if single_uniform[i] < cum_sum[j]:
             indexes[i] = j
             i += 1

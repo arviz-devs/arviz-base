@@ -1,4 +1,4 @@
-# pylint: disable=no-member, invalid-name, redefined-outer-name
+# pylint: disable=no-member, invalid-name, redefined-outer-name, no-self-use, unused-argument, too-many-public-methods
 from collections import namedtuple
 
 import numpy as np
@@ -603,10 +603,9 @@ class TestDataNumPyro:
                 "svi_result": svi_result,
             }
 
-        else:
-            mcmc = MCMC(NUTS(model), num_warmup=10, num_samples=10)
-            mcmc.run(PRNGKey(0))
-            return {"posterior": mcmc}
+        mcmc = MCMC(NUTS(model), num_warmup=10, num_samples=10)
+        mcmc.run(PRNGKey(0))
+        return {"posterior": mcmc}
 
     def test_from_numpyro_with_adapter(self, data):
         """Adapter can be passed directly to from_numpyro as a posterior."""

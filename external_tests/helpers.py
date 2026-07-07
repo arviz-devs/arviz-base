@@ -1,4 +1,4 @@
-# pylint: disable=redefined-outer-name, comparison-with-callable, protected-access
+# pylint: disable=redefined-outer-name, comparison-with-callable, protected-access, unused-argument
 """Test helper functions for external tests."""
 
 import gzip

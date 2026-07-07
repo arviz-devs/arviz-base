@@ -228,7 +228,7 @@ class TestDataConvert:
 
 def test_convert_object_with_array_protocol():
     class ArrayLike:
-        def __array__(self, dtype=None):
+        def __array__(self, dtype=None):  # pylint: disable=unused-argument
             return np.ones((1, 5))
 
     obj = ArrayLike()

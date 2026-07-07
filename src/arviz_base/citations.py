@@ -39,12 +39,11 @@ def citations(methods=None, filepath=None, format_type="bibtex"):
         header = _get_header(methods)
         citation_text = _find_bibtex_entries(header, method_citations)
         if filepath:
-            with open(filepath, "w") as fw:
+            with open(filepath, "w", encoding="utf-8") as fw:
                 fw.write(citation_text)
-        else:
-            return citation_text
-    else:
-        raise ValueError("Invalid value for format_type. Use 'bibtex'.")
+            return None
+        return citation_text
+    raise ValueError("Invalid value for format_type. Use 'bibtex'.")
 
 
 def _extract_ids_per_entry(data, text):

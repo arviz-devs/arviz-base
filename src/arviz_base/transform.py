@@ -94,7 +94,6 @@ def get_unconstrained_samples(
     if return_dataset:
         # return dataset
         return ds_new
-    else:
-        # return datatree in the unconstrained_{group}
-        idata[f"unconstrained_{group}"] = xr.DataTree(ds_new)
-        return idata
+    # return datatree in the unconstrained_{group}
+    idata[f"unconstrained_{group}"] = xr.DataTree(ds_new)
+    return idata

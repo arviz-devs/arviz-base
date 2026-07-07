@@ -135,7 +135,7 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
                     download_success = True
                 elif os.path.exists(file_path):
                     os.remove(file_path)
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 if os.path.exists(file_path):
                     os.remove(file_path)
 
@@ -173,12 +173,11 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
             msg = f"Did you mean one of these? {', '.join(suggestions)}"
 
         raise ValueError(f"Dataset '{dataset}' not found. {msg}")
-    else:
-        raise ValueError(
-            f"Dataset {dataset} not found! The following are available:"
-            f"\n\n{', '.join(all_datasets)}\n\n"
-            f"{list_datasets()}"
-        )
+    raise ValueError(
+        f"Dataset {dataset} not found! The following are available:"
+        f"\n\n{', '.join(all_datasets)}\n\n"
+        f"{list_datasets()}"
+    )
 
 
 def list_datasets():
