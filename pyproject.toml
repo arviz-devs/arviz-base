@@ -94,7 +94,6 @@ select = [
     "UP",  # pyupgrade
     "I",  # isort
     "TID",  # Absolute imports
-    # "PL",  # Pylint
 ]
 ignore = [
     "PLR0912",  # too many branches

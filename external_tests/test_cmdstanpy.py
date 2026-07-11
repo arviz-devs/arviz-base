@@ -1,4 +1,4 @@
-# pylint: disable=redefined-outer-name, no-self-use, unused-argument
+# pylint: disable=redefined-outer-name, no-self-use
 """Integration tests for the cmdstanpy converter.
 
 Whenever it is necessary to update the saved models for cmdstanpy,
@@ -132,7 +132,7 @@ class TestDataCmdStanPy:
 
     @pytest.fixture(scope="class")
     @classmethod
-    def data(cls, filepaths, data_directory, tmp_path_factory):
+    def data(cls, filepaths, tmp_path_factory):
         # Skip tests if cmdstanpy not installed
         cmdstanpy = importorskip("cmdstanpy")
         CmdStanModel = cmdstanpy.CmdStanModel  # pylint: disable=invalid-name
