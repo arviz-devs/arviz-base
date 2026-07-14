@@ -155,7 +155,7 @@ def numpyro_schools_model(data, draws, chains):
     return {"mcmc": mcmc}
 
 
-def numpyro_schools_model_svi(data, _draws, _chains):
+def numpyro_schools_model_svi(data, draws, chains):  # pylint: disable=unused-argument
     """Non-centered eight schools implementation in NumPyro."""
     from jax.random import PRNGKey
     from numpyro.infer import SVI, Trace_ELBO, init_to_sample
@@ -168,7 +168,7 @@ def numpyro_schools_model_svi(data, _draws, _chains):
     return {"svi": svi, "svi_result": svi_result, "model_kwargs": data}
 
 
-def numpyro_schools_model_svi_custom_guide(data, _draws, _chains):
+def numpyro_schools_model_svi_custom_guide(data, draws, chains):  # pylint: disable=unused-argument
     """Non-centered eight schools implementation in NumPyro."""
     from jax.random import PRNGKey
     from numpyro.infer import SVI, Trace_ELBO
