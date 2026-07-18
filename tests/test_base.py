@@ -112,6 +112,7 @@ def test_load_remote_arviz_data():
     assert dt
     dt.close()
 
+
 def test_bad_checksum():
     with pytest.raises(IOError):
         load_arviz_data("bad_checksum")
