@@ -116,7 +116,8 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
     """
     if dataset in LOCAL_DATASETS:
         resource = LOCAL_DATASETS[dataset]
-        return open_datatree(resource.filename, **kwargs).load()
+        with open_datatree(resource.filename, **kwargs) as dt:
+            return dt.load()
 
     if dataset in REMOTE_DATASETS:
         remote = REMOTE_DATASETS[dataset]
@@ -153,7 +154,8 @@ def load_arviz_data(dataset=None, data_home=None, **kwargs):
                 "Run `arviz.clear_data_home()` and try again, or please open an issue."
             )
 
-        return open_datatree(file_path, **kwargs).load()
+        with open_datatree(file_path, **kwargs) as dt:
+            return dt.load()
 
     if dataset is None:
         return dict(itertools.chain(LOCAL_DATASETS.items(), REMOTE_DATASETS.items()))

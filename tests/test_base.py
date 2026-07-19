@@ -99,8 +99,7 @@ def test_load_local_arviz_data():
 def test_clear_data_home():
     resource = REMOTE_DATASETS["test_remote"]
     assert not os.path.exists(resource.filename)
-    dt = load_arviz_data("test_remote")
-    dt.close()
+    load_arviz_data("test_remote")
     assert os.path.exists(resource.filename)
     clear_data_home(data_home=os.path.dirname(resource.filename))
     assert not os.path.exists(resource.filename)
@@ -108,9 +107,7 @@ def test_clear_data_home():
 
 @netcdf_nightlies_skip
 def test_load_remote_arviz_data():
-    dt = load_arviz_data("test_remote")
-    assert dt
-    dt.close()
+    assert load_arviz_data("test_remote")
 
 
 def test_bad_checksum():
