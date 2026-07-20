@@ -4,7 +4,7 @@ import numpy as np
 from _typeshed import Incomplete
 from xarray import DataTree
 
-from arviz_base import from_dict
+from arviz_base.io_dict import from_dict
 
 def generate_base_data(seed: Incomplete = ...) -> None: ...
 def datatree(seed: Incomplete = ...) -> None: ...

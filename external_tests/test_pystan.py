@@ -1,4 +1,4 @@
-# pylint: disable=no-member, invalid-name, redefined-outer-name, too-many-function-args
+# pylint: disable=no-member, invalid-name, redefined-outer-name, too-many-function-args, no-self-use
 import importlib
 
 import numpy as np

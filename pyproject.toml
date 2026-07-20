@@ -49,13 +49,15 @@ test = [
 ]
 ci = [
     "pre-commit",
-    "cloudpickle"
+    "cloudpickle",
+    "pylint"
 ]
 check = [
     "build",
     "pre-commit",
     "docstub==0.6",
     "mypy",
+    "pylint",
 ]
 doc = [
     "sphinx-book-theme",
@@ -91,7 +93,6 @@ select = [
     "NPY", # numpy specific rules
     "UP",  # pyupgrade
     "I",  # isort
-    "PL",  # Pylint
     "TID",  # Absolute imports
 ]
 ignore = [

@@ -52,7 +52,7 @@ class NumPyroInferenceAdapter(ABC):
         self.posterior = inference_obj
         self.model = model
         self._args = model_args or tuple()
-        self._kwargs = model_kwargs or dict()
+        self._kwargs = model_kwargs or {}
         self.sample_shape = sample_shape
 
         self.prng_key_func = jax.random.PRNGKey
@@ -91,7 +91,7 @@ class NumPyroInferenceAdapter(ABC):
         """
         raise NotImplementedError
 
-    def get_sample_stats(self, **kwargs):
+    def get_sample_stats(self, **kwargs):  # pylint: disable=no-self-use, unused-argument
         """Get sample stats from the inference object (e.g., divergences for MCMC).
 
         Returns
@@ -99,7 +99,7 @@ class NumPyroInferenceAdapter(ABC):
         dict of {str: array-like}
             Dictionary of sample stats. Empty dict by default.
         """
-        return dict()
+        return {}
 
 
 class SVIAdapter(NumPyroInferenceAdapter):
@@ -256,10 +256,10 @@ def infer_dims(
     dist = numpyro.distributions
     handlers = numpyro.handlers
     init_to_sample = numpyro.infer.initialization.init_to_sample
-    PytreeTrace = numpyro.ops.pytree.PytreeTrace
+    PytreeTrace = numpyro.ops.pytree.PytreeTrace  # pylint: disable=invalid-name
 
     model_args = tuple() if model_args is None else model_args
-    model_kwargs = dict() if model_kwargs is None else model_kwargs
+    model_kwargs = {} if model_kwargs is None else model_kwargs
 
     def _get_dist_name(fn):
         if isinstance(fn, dist.Independent | dist.ExpandedDistribution | dist.MaskedDistribution):
@@ -414,10 +414,10 @@ class NumPyroConverter:
             }
         self.observations = observations if observations else None
 
-    def _get_model_trace(self, model, model_args, model_kwargs, key):
+    def _get_model_trace(self, model, model_args, model_kwargs, key):  # pylint: disable=no-self-use
         """Extract the numpyro model trace."""
         model_args = model_args or tuple()
-        model_kwargs = model_kwargs or dict()
+        model_kwargs = model_kwargs or {}
 
         # we need to use an init strategy to generate random samples for ImproperUniform sites
         seeded_model = numpyro.handlers.substitute(
@@ -459,34 +459,32 @@ class NumPyroConverter:
                         f"by the number of chains {self.nchains}."
                     )
                 return (self.nchains, ndraws)
-            else:
-                # Array already has chain/draw dims; optionally validate against nchains
-                sample_shape = aelem.shape[: len(rcParams["data.sample_dims"])]
-                if self.nchains is not None and sample_shape[0] != self.nchains:
-                    raise ValueError(
-                        f"Array shape {aelem.shape} implies {sample_shape[0]} chains, "
-                        f"but nchains={self.nchains}."
-                    )
-                return sample_shape
+            # Array already has chain/draw dims; optionally validate against nchains
+            sample_shape = aelem.shape[: len(rcParams["data.sample_dims"])]
+            if self.nchains is not None and sample_shape[0] != self.nchains:
+                raise ValueError(
+                    f"Array shape {aelem.shape} implies {sample_shape[0]} chains, "
+                    f"but nchains={self.nchains}."
+                )
+            return sample_shape
 
-        elif no_constant_data:
+        if no_constant_data:
             raise ValueError(
                 "When constructing InferenceData, must have at least one of "
                 "posterior, prior, posterior_predictive, or predictions."
             )
-        else:
-            # fallback shape when there's no inference, but there is constant data
-            fallback_shape = (
-                (self.nchains, 1)
-                if self.nchains is not None
-                else (1,) * len(rcParams["data.sample_dims"])
-            )
-            warnings.warn(
-                f"No posterior, prior, or predictive samples provided. "
-                f"Defaulting to sample_shape={fallback_shape}. "
-                f"This may cause unexpected behavior in downstream operations."
-            )
-            return fallback_shape
+        # fallback shape when there's no inference, but there is constant data
+        fallback_shape = (
+            (self.nchains, 1)
+            if self.nchains is not None
+            else (1,) * len(rcParams["data.sample_dims"])
+        )
+        warnings.warn(
+            f"No posterior, prior, or predictive samples provided. "
+            f"Defaulting to sample_shape={fallback_shape}. "
+            f"This may cause unexpected behavior in downstream operations."
+        )
+        return fallback_shape
 
     @requires("posterior")
     def posterior_to_xarray(self):
@@ -521,10 +519,9 @@ class NumPyroConverter:
                 data[name] = value_cp
             if stat == "num_steps":
                 data["tree_depth"] = np.log2(value_cp).astype(int) + 1
-                if self.posterior._max_tree_depth is not None:
-                    data["reached_max_tree_depth"] = (
-                        data["tree_depth"] >= self.posterior._max_tree_depth
-                    )
+                max_tree_depth = self.posterior._max_tree_depth  # pylint: disable=protected-access
+                if max_tree_depth is not None:
+                    data["reached_max_tree_depth"] = data["tree_depth"] >= max_tree_depth
 
         return dict_to_dataset(
             data,
