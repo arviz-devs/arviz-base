@@ -1,5 +1,6 @@
 # File generated with docstub
 
+import importlib.util
 import locale
 import logging
 import os
