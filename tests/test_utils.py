@@ -1,4 +1,6 @@
 # pylint: disable=redefined-outer-name
+from collections.abc import Hashable
+
 import numpy as np
 import pytest
 
@@ -142,7 +144,53 @@ def test_var_names_filter_invalid_argument():
 
 
 def test_subset_list_negation_not_found():
-    """Check there is a warning if negation pattern is ignored"""
     names = ["mu", "theta"]
     with pytest.warns(UserWarning, match=".+not.+found.+"):
         assert _subset_list("~tau", names) == names
+
+
+def test_subset_list_tuple_name_scalar():
+    whole_list = [("tuple", "name"), "a"]
+    out = _subset_list(("tuple", "name"), whole_list)
+    assert out == [("tuple", "name")]
+
+
+def test_subset_list_tuple_name_list():
+    whole_list = [("tuple", "name"), "str_name"]
+    out = _subset_list([("tuple", "name"), "str_name"], whole_list)
+    assert out == [("tuple", "name"), "str_name"]
+
+
+def test_subset_list_tuple_container():
+    whole_list = [("tuple", "name"), "str_name"]
+    out = _subset_list((("tuple", "name"), "str_name"), whole_list)
+    assert out == [("tuple", "name"), "str_name"]
+
+
+def test_subset_list_like_with_non_string_disables_filtering():
+    whole_list = [("tuple", "name"), "alpha", "beta"]
+
+    with pytest.warns(
+        UserWarning,
+        match="Filtering is only supported for string variable names",
+    ):
+        with pytest.raises(KeyError):
+            _subset_list([("tuple", "name"), "alp"], whole_list, filter_items="like")
+
+
+def test_subset_list_regex_with_non_string_disables_filtering():
+    whole_list = [("tuple", "name"), "alpha", "beta"]
+
+    with pytest.warns(
+        UserWarning,
+        match="Filtering is only supported for string variable names",
+    ):
+        with pytest.raises(KeyError):
+            _subset_list([("tuple", "name"), "alp.*"], whole_list, filter_items="regex")
+
+
+def test_subset_list_frozenset_name_scalar():
+    v = frozenset({"a", "b"})
+    whole_list: list[Hashable] = [v, "x"]
+    out = _subset_list(v, whole_list)
+    assert out == [v]
