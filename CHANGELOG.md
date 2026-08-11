@@ -1,3 +1,31 @@
+<a id="v1.3.0"></a>
+# [v1.3.0](https://github.com/arviz-devs/arviz-base/releases/tag/v1.3.0) - 2026-08-11
+
+## What's Changed
+
+### Documentation
+* Update Code of Conduct by [@OriolAbril](https://github.com/OriolAbril) in [#205](https://github.com/arviz-devs/arviz-base/pull/205)
+
+### Maintenance and bug fixes
+* Fix for numpyro lp sign by [@damonbayer](https://github.com/damonbayer) in [#207](https://github.com/arviz-devs/arviz-base/pull/207)
+* Add posterior group to datatree_binary by [@aloctavodia](https://github.com/aloctavodia) in [#209](https://github.com/arviz-devs/arviz-base/pull/209)
+* Replaces the version-named test envs with tox -e test by [@PiyushPanwarFST](https://github.com/PiyushPanwarFST) in [#210](https://github.com/arviz-devs/arviz-base/pull/210)
+* Update docstub to 0.6 and regenerate stubs by [@PiyushPanwarFST](https://github.com/PiyushPanwarFST) in [#208](https://github.com/arviz-devs/arviz-base/pull/208)
+* Fix post-release workflow by [@OriolAbril](https://github.com/OriolAbril) in [#203](https://github.com/arviz-devs/arviz-base/pull/203)
+* PyData inspired fixes by [@OriolAbril](https://github.com/OriolAbril) in [#204](https://github.com/arviz-devs/arviz-base/pull/204)
+* Close files after loading example data and update development pip install instructions by [@b25cs1051-KUSH](https://github.com/b25cs1051-KUSH) in [#215](https://github.com/arviz-devs/arviz-base/pull/215)
+* add pylint to arviz-base by [@PiyushPanwarFST](https://github.com/PiyushPanwarFST) in [#214](https://github.com/arviz-devs/arviz-base/pull/214)
+
+## New Contributors
+* [@damonbayer](https://github.com/damonbayer) made their first contribution in [#207](https://github.com/arviz-devs/arviz-base/pull/207)
+* [@PiyushPanwarFST](https://github.com/PiyushPanwarFST) made their first contribution in [#210](https://github.com/arviz-devs/arviz-base/pull/210)
+* [@b25cs1051-KUSH](https://github.com/b25cs1051-KUSH) made their first contribution in [#215](https://github.com/arviz-devs/arviz-base/pull/215)
+
+**Full Changelog**: https://github.com/arviz-devs/arviz-base/compare/v1.2.0...v1.3.0
+
+[Changes][v1.3.0]
+
+
 <a id="v1.2.0"></a>
 # [v1.2.0](https://github.com/arviz-devs/arviz-base/releases/tag/v1.2.0) - 2026-06-12
 
@@ -256,6 +284,7 @@
 [Changes][v0.4.0]
 
 
+[v1.3.0]: https://github.com/arviz-devs/arviz-base/compare/v1.2.0...v1.3.0
 [v1.2.0]: https://github.com/arviz-devs/arviz-base/compare/v1.1.0...v1.2.0
 [v1.1.0]: https://github.com/arviz-devs/arviz-base/compare/v1.0.0...v1.1.0
 [v1.0.0]: https://github.com/arviz-devs/arviz-base/compare/v0.8.2...v1.0.0
