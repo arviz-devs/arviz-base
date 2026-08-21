@@ -10,6 +10,7 @@ from arviz_base.rcparams import (
     _make_validate_choice,
     _make_validate_choice_regex,
     _validate_float_or_none,
+    _validate_positive_float,
     _validate_positive_int_or_none,
     _validate_probability,
     _validate_stats_module,
@@ -230,6 +231,25 @@ def test_validate_positive_int_or_none(args):
     else:
         value = _validate_positive_int_or_none(value)
         assert isinstance(value, int) or value is None
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ("not convert to float", "word"),
+        ("Only non-negative values", -2.3),
+        (False, "0.6"),
+        (False, 1),
+    ],
+)
+def test_validate_positive_float(args):
+    raise_error, value = args
+    if raise_error:
+        with pytest.raises(ValueError, match=raise_error):
+            _validate_positive_float(value)
+    else:
+        value = _validate_positive_float(value)
+        assert isinstance(value, float)
 
 
 @pytest.mark.parametrize(
