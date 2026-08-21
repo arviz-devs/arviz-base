@@ -6,7 +6,7 @@ import os
 import pprint
 import re
 import sys
-from collections.abc import Iterator, MutableMapping
+from collections.abc import Callable, Iterator, MutableMapping
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Literal, get_args
@@ -111,7 +111,7 @@ def _validate_positive_int(value):
     raise ValueError("Only positive values are valid")
 
 
-def _validate_float(value):
+def _validate_float(value: Any) -> float:
     """Validate value is a float."""
     try:
         value = float(value)
@@ -120,7 +120,7 @@ def _validate_float(value):
     return value
 
 
-def _validate_positive_float(value):
+def _validate_positive_float(value: Any) -> float:
     """Validate value is a float greater than or equal to zero."""
     value = _validate_float(value)
     if value < 0:
@@ -128,7 +128,7 @@ def _validate_positive_float(value):
     return value
 
 
-def _validate_str(value):
+def _validate_str(value: Any) -> str:
     """Validate a string."""
     try:
         value = str(value)
@@ -180,7 +180,7 @@ def _validate_rounding(value):
     )
 
 
-def _validate_boolean(value):
+def _validate_boolean(value: Any) -> bool:
     """Validate value is a float."""
     if isinstance(value, str):
         value = value.lower()
@@ -323,8 +323,10 @@ def make_iterable_validator(scalar_validator, length=None, allow_none=False, all
     return validate_iterable
 
 
-_validate_float_or_none = _add_none_to_validator(_validate_float)
-_validate_positive_int_or_none = _add_none_to_validator(_validate_positive_int)
+_validate_float_or_none: Callable[[Any], float | None] = _add_none_to_validator(_validate_float)
+_validate_positive_int_or_none: Callable[[Any], int | None] = _add_none_to_validator(
+    _validate_positive_int
+)
 _validate_dims = make_iterable_validator(str, length=None, allow_none=False, allow_auto=False)
 
 

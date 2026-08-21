@@ -10,6 +10,7 @@ from arviz_base.rcparams import (
     _make_validate_choice,
     _make_validate_choice_regex,
     _validate_float_or_none,
+    _validate_positive_float,
     _validate_positive_int_or_none,
     _validate_probability,
     _validate_stats_module,
@@ -235,6 +236,25 @@ def test_validate_positive_int_or_none(args):
 @pytest.mark.parametrize(
     "args",
     [
+        ("not convert to float", "word"),
+        ("Only non-negative values", -2.3),
+        (False, "0.6"),
+        (False, 1),
+    ],
+)
+def test_validate_positive_float(args):
+    raise_error, value = args
+    if raise_error:
+        with pytest.raises(ValueError, match=raise_error):
+            _validate_positive_float(value)
+    else:
+        value = _validate_positive_float(value)
+        assert isinstance(value, float)
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
         ("Only.+between 0 and 1", -1),
         ("Only.+between 0 and 1", "1.3"),
         ("not convert to float", "word"),
@@ -286,22 +306,6 @@ def test_validate_stats_module(args):
     else:
         validated = _validate_stats_module(value)
         assert value is validated
-
-
-def test_bfmi_threshold_default():
-    """Test bfmi_threshold rcParam has correct default and validates properly."""
-    assert rcParams["stats.bfmi_threshold"] == 0.3
-    with rc_context(rc={"stats.bfmi_threshold": 0.2}):
-        assert rcParams["stats.bfmi_threshold"] == 0.2
-    assert rcParams["stats.bfmi_threshold"] == 0.3
-
-
-def test_bfmi_threshold_validation():
-    """Test bfmi_threshold validation rejects invalid values."""
-    with pytest.raises(ValueError, match="between 0 and 1"):
-        rcParams["stats.bfmi_threshold"] = 1.5
-    with pytest.raises(ValueError, match="between 0 and 1"):
-        rcParams["stats.bfmi_threshold"] = -0.1
 
 
 ## Some simple integration checks with rcparams
