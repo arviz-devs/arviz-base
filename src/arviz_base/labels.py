@@ -170,6 +170,20 @@ class BaseLabeller:
         """
         return var_name
 
+    def dim_to_str(self, dim):  # pylint: disable=no-self-use
+        """Format a dimension name as a string.
+
+        Parameters
+        ----------
+        dim : str or None
+            The dimension name. It should accept ``None``
+
+        Returns
+        -------
+        str or None
+        """
+        return dim
+
     def var_pp_to_str(self, var_name, pp_var_name):
         """Format the corresponding variable names for observation and posterior predictive.
 
@@ -452,6 +466,21 @@ class MapLabeller(BaseLabeller):
         """
         var_name_str = self.var_name_map.get(var_name, var_name)
         return super().var_name_to_str(var_name_str)
+
+    def dim_to_str(self, dim):
+        """Format a dimension name as a string.
+
+        Parameters
+        ----------
+        var_name : str or None
+            The dimension name. It should accept ``None``
+
+        Returns
+        -------
+        str or None
+        """
+        dim_name_str = self.dim_map.get(dim, dim)
+        return super().dim_to_str(dim_name_str)
 
 
 class NoVarLabeller(BaseLabeller):
