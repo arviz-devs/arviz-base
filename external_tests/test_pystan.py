@@ -242,3 +242,19 @@ class TestDataPyStan:
         fit = data.obj
         draws, _ = get_draws(fit, variables=["theta", "theta"])
         assert draws.get("theta") is not None
+
+    def test_pystan_posterior_predictive_variable_mapping(self, data, eight_schools_params):
+        inference_data = from_pystan(
+            posterior=data.obj,
+            posterior_predictive={"y": "y_hat"},
+            observed_data={"y": eight_schools_params["y"]},
+        )
+
+        test_dict = {
+            "posterior": ["theta", "~y_hat"],
+            "posterior_predictive": ["y", "~y_hat"],
+            "observed_data": ["y", "~y_hat"],
+        }
+
+        fails = check_multiple_attrs(test_dict, inference_data)
+        assert not fails
