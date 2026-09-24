@@ -3,9 +3,7 @@
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import TYPE_CHECKING
 
-import lazy_loader as _lazy
 import numpy as np
 from numpy.typing import ArrayLike
 from xarray import DataTree
@@ -13,13 +11,6 @@ from xarray import DataTree
 from arviz_base.base import dict_to_dataset, requires
 from arviz_base.rcparams import rc_context, rcParams
 from arviz_base.utils import expand_dims
-
-if TYPE_CHECKING:
-    import jax
-    import numpyro
-else:
-    jax = _lazy.load("jax")
-    numpyro = _lazy.load("numpyro")
 
 
 class NumPyroInferenceAdapter(ABC):
@@ -49,6 +40,8 @@ class NumPyroInferenceAdapter(ABC):
             For MCMC: (num_chains, num_draws)
             For SVI: (num_samples,)
         """
+        import jax
+
         self.posterior = inference_obj
         self.model = model
         self._args = model_args or tuple()
@@ -150,6 +143,8 @@ class SVIAdapter(NumPyroInferenceAdapter):
     def get_samples(  # noqa: D102
         self, seed: int | None = None, **kwargs: dict
     ) -> dict[str, ArrayLike]:
+        import numpyro
+
         key = self.prng_key_func(seed or 0)
         if isinstance(self.posterior.guide, numpyro.infer.autoguide.AutoGuide):
             return self.posterior.guide.sample_posterior(
@@ -253,6 +248,9 @@ def infer_dims(
     dict of {str: list of str(s)}
         Mapping from model site name to list of dimension labels.
     """
+    import jax
+    import numpyro
+
     dist = numpyro.distributions
     handlers = numpyro.handlers
     init_to_sample = numpyro.infer.initialization.init_to_sample
@@ -356,6 +354,8 @@ class NumPyroConverter:
             Number of chains used for sampling MCMC. Ignored if posterior is present, or if
             inference method is not MCMC.
         """
+        import jax
+
         self.posterior = posterior
         self.prior = jax.device_get(prior)
         self.posterior_predictive = jax.device_get(posterior_predictive)
@@ -416,6 +416,8 @@ class NumPyroConverter:
 
     def _get_model_trace(self, model, model_args, model_kwargs, key):  # pylint: disable=no-self-use
         """Extract the numpyro model trace."""
+        import numpyro
+
         model_args = model_args or tuple()
         model_kwargs = model_kwargs or {}
 
@@ -489,6 +491,8 @@ class NumPyroConverter:
     @requires("posterior")
     def posterior_to_xarray(self):
         """Convert the posterior to an xarray dataset."""
+        import numpyro
+
         data = self._samples
         return dict_to_dataset(
             data,
@@ -501,6 +505,8 @@ class NumPyroConverter:
     @requires("posterior")
     def sample_stats_to_xarray(self):
         """Extract sample_stats from NumPyro posterior."""
+        import numpyro
+
         rename_key = {
             "potential_energy": "lp",
             "adapt_state.step_size": "step_size",
@@ -535,6 +541,8 @@ class NumPyroConverter:
     @requires("model")
     def log_likelihood_to_xarray(self):
         """Extract log likelihood from NumPyro posterior."""
+        import numpyro
+
         if not self.log_likelihood:
             return None
         data = {}
@@ -558,6 +566,8 @@ class NumPyroConverter:
 
     def translate_posterior_predictive_dict_to_xarray(self, dct, dims):
         """Convert posterior_predictive or prediction samples to xarray."""
+        import numpyro
+
         data = {}
         for k, ary in dct.items():
             shape = ary.shape
@@ -593,6 +603,8 @@ class NumPyroConverter:
 
     def priors_to_xarray(self):
         """Convert prior samples (and if possible prior predictive too) to xarray."""
+        import numpyro
+
         if self.prior is None:
             return {"prior": None, "prior_predictive": None}
         if self.posterior is not None:
@@ -636,6 +648,8 @@ class NumPyroConverter:
     @requires("model")
     def observed_data_to_xarray(self):
         """Convert observed data to xarray."""
+        import numpyro
+
         return dict_to_dataset(
             self.observations,
             inference_library=numpyro,
@@ -648,6 +662,8 @@ class NumPyroConverter:
     @requires("constant_data")
     def constant_data_to_xarray(self):
         """Convert constant_data to xarray."""
+        import numpyro
+
         return dict_to_dataset(
             self.constant_data,
             inference_library=numpyro,
@@ -660,6 +676,8 @@ class NumPyroConverter:
     @requires("predictions_constant_data")
     def predictions_constant_data_to_xarray(self):
         """Convert predictions_constant_data to xarray."""
+        import numpyro
+
         return dict_to_dataset(
             self.predictions_constant_data,
             inference_library=numpyro,
@@ -784,6 +802,8 @@ def from_numpyro(
     -------
     DataTree
     """
+    import numpyro
+
     if posterior is None:
         if sample_dims is None:
             raise ValueError(
