@@ -41,7 +41,7 @@ jobs:
       if [ "$(cmdstanpy.version)" = "latest" ]; then
           python -m pip --no-cache-dir install cmdstanpy
       else
-          python -m pip --no-cache-dir install cmdstanpy
+          python -m pip --no-cache-dir install git+https://github.com/stan-dev/cmdstanpy@develop#egg=cmdstanpy
       fi
 
       python -m pip --no-cache-dir install "emcee>=3" h5py
