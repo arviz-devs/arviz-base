@@ -1,3 +1,19 @@
+<a id="v1.3.1"></a>
+# [v1.3.1](https://github.com/arviz-devs/arviz-base/releases/tag/v1.3.1) - 2026-09-25
+
+## What's Changed
+* Add stats.bfmi_threshold rcParam entry by [@majiayu000](https://github.com/majiayu000) in [#126](https://github.com/arviz-devs/arviz-base/pull/126)
+* Update citation information by [@aloctavodia](https://github.com/aloctavodia) in [#225](https://github.com/arviz-devs/arviz-base/pull/225)
+
+
+## New Contributors
+* [@majiayu000](https://github.com/majiayu000) made their first contribution in [#126](https://github.com/arviz-devs/arviz-base/pull/126)
+
+**Full Changelog**: https://github.com/arviz-devs/arviz-base/compare/v1.3.0...v1.3.1
+
+[Changes][v1.3.1]
+
+
 <a id="v1.3.0"></a>
 # [v1.3.0](https://github.com/arviz-devs/arviz-base/releases/tag/v1.3.0) - 2026-08-11
 
@@ -284,6 +300,7 @@
 [Changes][v0.4.0]
 
 
+[v1.3.1]: https://github.com/arviz-devs/arviz-base/compare/v1.3.0...v1.3.1
 [v1.3.0]: https://github.com/arviz-devs/arviz-base/compare/v1.2.0...v1.3.0
 [v1.2.0]: https://github.com/arviz-devs/arviz-base/compare/v1.1.0...v1.2.0
 [v1.1.0]: https://github.com/arviz-devs/arviz-base/compare/v1.0.0...v1.1.0
