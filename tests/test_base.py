@@ -8,6 +8,7 @@ from urllib.parse import urlunsplit
 
 import numpy as np
 import pytest
+import xarray as xr
 from numpy.typing import ArrayLike
 from xarray import DataTree
 from xarray.testing import assert_allclose
@@ -285,6 +286,31 @@ def test_ndarray_to_dataarray(args):
     with_dims = ndarray_to_dataarray(ary, "x", dims=dims, sample_dims=[])
     with_sample_dims = ndarray_to_dataarray(ary, "x", dims=[], sample_dims=dims)
     assert_allclose(with_sample_dims, with_dims)
+
+
+def test_ndarray_to_dataarray_keeps_dataarray():
+    rng = np.random.default_rng(3)
+    da = xr.DataArray(
+        rng.normal(size=(2, 10, 3)),
+        dims=["chain", "draw", "channel"],
+        coords={"channel": ["a", "b", "c"]},
+    )
+    out = ndarray_to_dataarray(da, "x", dims=["other"], coords={"other": [0, 1, 2]})
+    assert out.dims == ("chain", "draw", "channel")
+    assert_allclose(out, da)
+
+
+def test_dict_to_dataset_mixed_dataarray_and_ndarray():
+    rng = np.random.default_rng(3)
+    da = xr.DataArray(rng.normal(size=(1, 100, 3)), dims=["chain", "draw", "channel"])
+    dataset = dict_to_dataset(
+        {"a": da, "b": rng.normal(size=(1, 100, 2))},
+        coords={"group": ["x", "y"]},
+        dims={"b": ["group"]},
+    )
+    assert dataset.a.dims == ("chain", "draw", "channel")
+    assert dataset.b.dims == ("chain", "draw", "group")
+    assert "channel" not in dataset.coords
 
 
 @pytest.mark.parametrize("mode", ["scalar", "0d array"])

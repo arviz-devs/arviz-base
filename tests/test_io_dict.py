@@ -1,6 +1,7 @@
 # pylint: disable=redefined-outer-name
 import numpy as np
 import pytest
+import xarray as xr
 
 from arviz_base import from_dict
 from arviz_base.testing import check_multiple_attrs
@@ -103,6 +104,14 @@ def test_from_dict_auto_skip_event_dims():
     assert "school" in dt.posterior_predictive.sizes
     assert "school" in dt.observed_data.sizes
     assert "school" not in dt.log_likelihood.sizes
+
+
+def test_from_dict_keeps_dataarray_dims():
+    rng = np.random.default_rng()
+    alpha = xr.DataArray(rng.normal(size=(1, 50, 3)), dims=["chain", "draw", "channel"])
+    dt = from_dict({"posterior": {"alpha": alpha, "beta": rng.normal(size=(1, 50))}})
+    assert set(dt.posterior.dims) == {"chain", "draw", "channel"}
+    assert dt.posterior["alpha"].dims == ("chain", "draw", "channel")
 
 
 def test_from_dict_attrs(data):
