@@ -47,6 +47,9 @@ def from_dict(
         * If ``log_likelihood`` is a substring of the group name,
           ``skip_event_dims`` is set to ``True``.
 
+        Variables that are already :class:`xarray.DataArray` objects are kept as is,
+        so `coords`, `dims` and `sample_dims` are not applied to them.
+
     name : str, optional
         Name of the DataTree root node. This is used as the DataTree name by
         ArviZ.

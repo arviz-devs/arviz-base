@@ -162,7 +162,9 @@ def ndarray_to_dataarray(
     Parameters
     ----------
     ary : scalar or array_like
-        Values for the DataArray object to be created.
+        Values for the DataArray object to be created. If it is already an
+        :class:`xarray.DataArray` it is returned as is: `dims`, `sample_dims`
+        and `coords` are not applied to it.
     var_name : hashable
         Name of the created DataArray object.
     dims : iterable of hashable, optional
@@ -190,6 +192,9 @@ def ndarray_to_dataarray(
     --------
     dict_to_dataset
     """
+    if isinstance(ary, xr.DataArray):
+        return ary
+
     if dims is None:
         dims = []
 
@@ -234,7 +239,9 @@ def dict_to_dataset(
     Parameters
     ----------
     data : mapping of {hashable_key : array_like}
-        Data to convert. Keys are variable names.
+        Data to convert. Keys are variable names. Values that are already
+        :class:`xarray.DataArray` objects are kept as is, so `coords`, `dims`
+        and `sample_dims` are not applied to them.
     attrs : mapping of {hashable_key : any}, optional
         JSON-like arbitrary metadata to attach to the dataset, in addition to default
         attributes added by :func:`make_attrs`.
