@@ -1,4 +1,6 @@
 # pylint: disable=no-member, invalid-name, redefined-outer-name, no-self-use, too-many-public-methods
+import subprocess
+import sys
 from collections import namedtuple
 
 import numpy as np
@@ -676,3 +678,13 @@ class TestNumPyroAdapters:
         # All values should be array-like
         for v in samples.values():
             assert isinstance(v, (jax.numpy.ndarray | np.ndarray))
+
+
+def test_import_does_not_break_numpyro_distributions():
+    # https://github.com/arviz-devs/arviz-base/issues/194
+    # Needs a fresh interpreter, arviz_base has to be imported before numpyro.
+    code = (
+        "import arviz_base; import numpyro.distributions; import numpyro; "
+        "assert hasattr(numpyro.distributions, 'distribution')"
+    )
+    subprocess.run([sys.executable, "-c", code], check=True)

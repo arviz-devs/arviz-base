@@ -4,9 +4,8 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-import lazy_loader as _lazy
 import numpy as np
 import numpyro
 from _typeshed import Incomplete
@@ -16,13 +15,6 @@ from xarray import DataTree
 from arviz_base.base import dict_to_dataset, requires
 from arviz_base.rcparams import rc_context, rcParams
 from arviz_base.utils import expand_dims
-
-if TYPE_CHECKING:
-    import jax
-    import numpyro
-else:
-    jax: Incomplete
-    numpyro: Incomplete
 
 class NumPyroInferenceAdapter(ABC):
     def __init__(
