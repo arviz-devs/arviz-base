@@ -502,3 +502,131 @@ class TestDataCmdStanPy:
         }
         fails = check_multiple_attrs(test_dict, inference_data_false_is_false)
         assert not fails
+
+
+@pytest.fixture(scope="module")
+def log_prior_fit(tmp_path_factory):
+    """Read saved draws with explicit prior log densities through CmdStanPy's CSV parser."""
+    cmdstanpy = importorskip("cmdstanpy")
+    directory = tmp_path_factory.mktemp("log_prior")
+    source = Path(__file__).parent / "saved_models" / "cmdstanpy"
+    paths = []
+    for path in sorted(source.glob("cmdstanpy_eight_schools_warmup-*.csv")):
+        output = directory / path.name
+        rows = []
+        columns = None
+        for line in path.read_text(encoding="utf8").splitlines():
+            if line.startswith("#") or not line:
+                rows.append(line)
+            elif columns is None:
+                columns = line.split(",")
+                rows.append(
+                    line
+                    + ",log_prior_mu,log_prior_tau,"
+                    + ",".join(f"log_prior_theta.{i}" for i in range(1, 9))
+                )
+            else:
+                values = line.split(",")
+                mu = float(values[columns.index("mu")])
+                tau = float(values[columns.index("tau")])
+                log_mu = -0.5 * (mu / 5) ** 2 - np.log(5 * np.sqrt(2 * np.pi))
+                log_tau = np.log(2 / (5 * np.pi)) - np.log1p((tau / 5) ** 2)
+                theta = np.array([float(values[columns.index(f"theta.{i}")]) for i in range(1, 9)])
+                log_theta = -0.5 * ((theta - mu) / tau) ** 2 - np.log(tau * np.sqrt(2 * np.pi))
+                rows.append(f"{line},{log_mu},{log_tau}," + ",".join(map(str, log_theta)))
+        output.write_text("\n".join(rows) + "\n", encoding="utf8")
+        paths.append(str(output))
+    return cmdstanpy.from_csv(paths)
+
+
+@pytest.mark.parametrize(
+    "selection",
+    [
+        "log_prior_mu",
+        ["log_prior_mu", "log_prior_tau"],
+        {"mu": "log_prior_mu", "tau": "log_prior_tau"},
+    ],
+)
+@pytest.mark.parametrize("save_warmup", [False, True])
+def test_log_prior(log_prior_fit, selection, save_warmup):
+    """Selected densities preserve posterior sample ordering and optional warmup."""
+    result = from_cmdstanpy(
+        log_prior_fit,
+        prior=log_prior_fit,
+        log_prior=selection,
+        log_likelihood={"y": "log_lik"},
+        save_warmup=save_warmup,
+        index_origin=1,
+    )
+    selected = {selection: selection} if isinstance(selection, str) else selection
+    if isinstance(selected, list):
+        selected = {name: name for name in selected}
+    assert set(result.log_prior.data_vars) == set(selected)
+    for name, original in selected.items():
+        expected = log_prior_fit.stan_variable(original)
+        np.testing.assert_allclose(result.log_prior[name].values.T.ravel(order="F"), expected)
+        assert original not in result.posterior
+        assert original in result.prior
+        assert result.log_prior[name].dims == ("chain", "draw")
+    assert result.log_prior.sizes == {"chain": 4, "draw": 100}
+    np.testing.assert_array_equal(result.log_prior.draw, np.arange(1, 101))
+    assert "y" in result.log_likelihood
+    assert "mu" in result.posterior
+    assert ("warmup_log_prior" in result) == save_warmup
+    if save_warmup:
+        assert result.warmup_log_prior.sizes == {"chain": 4, "draw": 500}
+        for name, original in selected.items():
+            expected = log_prior_fit.stan_variable(original, inc_warmup=True)
+            warmup = expected.reshape((600, 4), order="F")[:500]
+            np.testing.assert_allclose(result.warmup_log_prior[name].values.T, warmup)
+
+
+def test_log_prior_default(log_prior_fit):
+    """Prior densities stay in posterior unless explicitly selected."""
+    result = from_cmdstanpy(log_prior_fit)
+    assert "log_prior" not in result
+    assert "log_prior_mu" in result.posterior
+
+
+def test_log_prior_unknown_variable(log_prior_fit):
+    """An invalid selection reports the missing Stan variable."""
+    with pytest.raises(ValueError, match="unknown variable: missing_prior"):
+        from_cmdstanpy(log_prior_fit, log_prior="missing_prior")
+
+
+def test_log_prior_without_posterior(log_prior_fit):
+    """Prior samples alone cannot provide prior density at posterior draws."""
+    result = from_cmdstanpy(prior=log_prior_fit, log_prior="log_prior_mu")
+    assert "log_prior" not in result
+    assert "log_prior_mu" in result.prior
+
+
+@pytest.mark.parametrize("save_warmup", [False, True])
+def test_log_prior_vector_coordinates(log_prior_fit, save_warmup):
+    """Vector parameter densities keep parameter dimensions and sample coordinates."""
+    schools = [f"school_{i}" for i in range(8)]
+    result = from_cmdstanpy(
+        log_prior_fit,
+        log_prior={"theta": "log_prior_theta"},
+        log_likelihood={"y": "log_lik"},
+        posterior_predictive=["y_hat"],
+        coords={"school": schools},
+        dims={"theta": ["school"], "y": ["school"]},
+        save_warmup=save_warmup,
+    )
+    assert result.log_prior.theta.dims == ("chain", "draw", "school")
+    np.testing.assert_array_equal(result.log_prior.school, schools)
+    expected = log_prior_fit.stan_variable("log_prior_theta")
+    actual = result.log_prior.theta.values.transpose(1, 0, 2).reshape((-1, 8), order="F")
+    np.testing.assert_allclose(actual, expected)
+    assert "theta" in result.posterior
+    assert "log_prior_theta" not in result.posterior
+    assert "y_hat" in result.posterior_predictive
+    assert "y" in result.log_likelihood
+    if save_warmup:
+        expected = log_prior_fit.stan_variable("log_prior_theta", inc_warmup=True)
+        expected = expected.reshape((600, 4, 8), order="F")[:500]
+        np.testing.assert_allclose(
+            result.warmup_log_prior.theta.values.transpose(1, 0, 2), expected
+        )
+        np.testing.assert_array_equal(result.warmup_log_prior.school, schools)
