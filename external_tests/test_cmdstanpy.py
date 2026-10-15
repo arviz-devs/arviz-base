@@ -8,6 +8,7 @@ run `pytest external_tests/test_cmdstanpy.py`.
 All saved stan and csv files will be regenerated automatically.
 """
 
+import json
 import os
 from glob import glob
 from pathlib import Path
@@ -536,6 +537,28 @@ def log_prior_fit(tmp_path_factory):
                 rows.append(f"{line},{log_mu},{log_tau}," + ",".join(map(str, log_theta)))
         output.write_text("\n".join(rows) + "\n", encoding="utf8")
         paths.append(str(output))
+    if hasattr(cmdstanpy, "from_output_files"):
+        config = directory / "config.json"
+        config.write_text(
+            json.dumps(
+                {
+                    "model_name": "stan_model_test_model",
+                    "stan_major_version": "2",
+                    "stan_minor_version": "37",
+                    "stan_patch_version": "0",
+                    "method_config": {
+                        "method": "sample",
+                        "algorithm": "hmc",
+                        "num_samples": 100,
+                        "num_warmup": 500,
+                        "save_warmup": True,
+                        "max_depth": 10,
+                    },
+                }
+            ),
+            encoding="utf8",
+        )
+        return cmdstanpy.CmdStanMCMC.from_files(paths, config)
     return cmdstanpy.from_csv(paths)
 
 
