@@ -12,6 +12,7 @@ import json
 import os
 from glob import glob
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -20,6 +21,34 @@ from arviz_base import from_cmdstanpy
 from arviz_base.testing import check_multiple_attrs
 
 from .helpers import importorskip  # pylint: disable=unused-import
+
+
+def _read_saved_fit(paths, directory, *, num_warmup, save_warmup):
+    """Load legacy saved CSV files with released and development CmdStanPy APIs."""
+    cmdstanpy = importorskip("cmdstanpy")
+    if not hasattr(cmdstanpy, "from_output_files"):
+        return cmdstanpy.from_csv(paths)
+    config = directory / "config.json"
+    config.write_text(
+        json.dumps(
+            {
+                "model_name": "stan_model_test_model",
+                "stan_major_version": "2",
+                "stan_minor_version": "37",
+                "stan_patch_version": "0",
+                "method_config": {
+                    "method": "sample",
+                    "algorithm": "hmc",
+                    "num_samples": 100,
+                    "num_warmup": num_warmup,
+                    "save_warmup": save_warmup,
+                    "max_depth": 10,
+                },
+            }
+        ),
+        encoding="utf8",
+    )
+    return cmdstanpy.CmdStanMCMC.from_files(paths, config)
 
 
 def _create_test_data(target_dir):
@@ -137,33 +166,20 @@ class TestDataCmdStanPy:
         # Skip tests if cmdstanpy not installed
         cmdstanpy = importorskip("cmdstanpy")
         CmdStanModel = cmdstanpy.CmdStanModel  # pylint: disable=invalid-name
-        CmdStanMCMC = cmdstanpy.CmdStanMCMC  # pylint: disable=invalid-name
-        RunSet = cmdstanpy.stanfit.RunSet  # pylint: disable=invalid-name
-        CmdStanArgs = cmdstanpy.model.CmdStanArgs  # pylint: disable=invalid-name
-        SamplerArgs = cmdstanpy.model.SamplerArgs  # pylint: disable=invalid-name
 
         class Data:
-            args = CmdStanArgs(
-                "dummy.stan",
-                "dummy.exe",
-                list(range(1, 5)),
-                method_args=SamplerArgs(iter_sampling=100),
+            obj = _read_saved_fit(
+                filepaths["nowarmup"],
+                tmp_path_factory.mktemp("cmdstanpy_nowarmup"),
+                num_warmup=1000,
+                save_warmup=False,
             )
-            runset_obj = RunSet(args)
-            runset_obj._csv_files = filepaths["nowarmup"]  # pylint: disable=protected-access
-            obj = CmdStanMCMC(runset_obj)
-            obj._assemble_draws()  # pylint: disable=protected-access
-
-            args_warmup = CmdStanArgs(
-                "dummy.stan",
-                "dummy.exe",
-                list(range(1, 5)),
-                method_args=SamplerArgs(iter_sampling=100, iter_warmup=500, save_warmup=True),
+            obj_warmup = _read_saved_fit(
+                filepaths["warmup"],
+                tmp_path_factory.mktemp("cmdstanpy_warmup"),
+                num_warmup=500,
+                save_warmup=True,
             )
-            runset_obj_warmup = RunSet(args_warmup)
-            runset_obj_warmup._csv_files = filepaths["warmup"]  # pylint: disable=protected-access
-            obj_warmup = CmdStanMCMC(runset_obj_warmup)
-            obj_warmup._assemble_draws()  # pylint: disable=protected-access
 
             temp_dir = tmp_path_factory.mktemp("stan_model")
             stan_file = temp_dir / "modified_dtype.stan"
@@ -177,7 +193,8 @@ class TestDataCmdStanPy:
                 file_handle.write(modified_dtype_model)
             exe_file = temp_dir / "modified_dtype"
             exe_file.touch()
-            model = CmdStanModel(stan_file=stan_file, exe_file=exe_file, force_compile=False)
+            with patch("cmdstanpy.compilation.compile_stan_file", return_value=str(exe_file)):
+                model = CmdStanModel(stan_file=stan_file, exe_file=exe_file, force_compile=False)
 
         return Data
 
@@ -508,7 +525,6 @@ class TestDataCmdStanPy:
 @pytest.fixture(scope="module")
 def log_prior_fit(tmp_path_factory):
     """Read saved draws with explicit prior log densities through CmdStanPy's CSV parser."""
-    cmdstanpy = importorskip("cmdstanpy")
     directory = tmp_path_factory.mktemp("log_prior")
     source = Path(__file__).parent / "saved_models" / "cmdstanpy"
     paths = []
@@ -537,29 +553,7 @@ def log_prior_fit(tmp_path_factory):
                 rows.append(f"{line},{log_mu},{log_tau}," + ",".join(map(str, log_theta)))
         output.write_text("\n".join(rows) + "\n", encoding="utf8")
         paths.append(str(output))
-    if hasattr(cmdstanpy, "from_output_files"):
-        config = directory / "config.json"
-        config.write_text(
-            json.dumps(
-                {
-                    "model_name": "stan_model_test_model",
-                    "stan_major_version": "2",
-                    "stan_minor_version": "37",
-                    "stan_patch_version": "0",
-                    "method_config": {
-                        "method": "sample",
-                        "algorithm": "hmc",
-                        "num_samples": 100,
-                        "num_warmup": 500,
-                        "save_warmup": True,
-                        "max_depth": 10,
-                    },
-                }
-            ),
-            encoding="utf8",
-        )
-        return cmdstanpy.CmdStanMCMC.from_files(paths, config)
-    return cmdstanpy.from_csv(paths)
+    return _read_saved_fit(paths, directory, num_warmup=500, save_warmup=True)
 
 
 @pytest.mark.parametrize(
