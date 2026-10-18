@@ -44,12 +44,12 @@ The latest development version can be installed from the main branch using pip:
 pip install git+https://github.com/arviz-devs/arviz-base.git
 ```
 
-Another option is to clone the repository and install using git and setuptools:
+Another option is to clone the repository and install using git and pip:
 
 ```
 git clone https://github.com/arviz-devs/arviz-base.git
 cd arviz-base
-python setup.py install
+python -m pip install .
 ```
 
 ## Citation
