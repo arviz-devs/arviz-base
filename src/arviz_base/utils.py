@@ -2,6 +2,7 @@
 
 import re
 import warnings
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -88,7 +89,7 @@ def _subset_list(subset, whole_list, filter_items=None, warn=True, check_if_pres
 
     Parameters
     ----------
-    subset : hashable or sequence of hashable or None
+    subset : hashable or sequence of hashable, optional
         Elements to select from whole_list. If None, the whole list
         is returned unchanged.
     whole_list : sequence of hashable
@@ -113,34 +114,54 @@ def _subset_list(subset, whole_list, filter_items=None, warn=True, check_if_pres
         and ``filter_items``.
     """
     if subset is not None:
-        if isinstance(subset, str):
+        if subset in whole_list:
             subset = [subset]
+        elif isinstance(subset, str):
+            subset = [subset]
+        elif isinstance(subset, Sequence) and not isinstance(subset, str | bytes):
+            subset = list(subset)
+        else:
+            subset = [subset]
+
+        if filter_items is not None:
+            if not all(isinstance(item, str) for item in subset):
+                if warn:
+                    warnings.warn(
+                        "Filtering is only supported for string variable names.Disabling filtering."
+                    )
+                filter_items = None
 
         whole_list_tilde = [item for item in whole_list if _check_tilde_start(item)]
         if whole_list_tilde and warn:
             warnings.warn(
                 "ArviZ treats '~' as a negation character for selection. There are "
-                f"elements in `whole_list` starting with '~', {', '.join(whole_list_tilde)}. "
+                "elements in `whole_list` starting with '~', "
+                f"{', '.join(map(str, whole_list_tilde))}. "
                 "Please double check your results to ensure all elements are included"
             )
-
         excluded_items = [
             item[1:] for item in subset if _check_tilde_start(item) and item not in whole_list
         ]
         filter_items = str(filter_items).lower()
         if excluded_items:
             not_found = []
-
             if filter_items in {"like", "regex"}:
                 for pattern in excluded_items[:]:
                     excluded_items.remove(pattern)
                     if filter_items == "like":
-                        real_items = [real_item for real_item in whole_list if pattern in real_item]
+                        real_items = [
+                            real_item
+                            for real_item in whole_list
+                            if isinstance(real_item, str) and pattern in real_item
+                        ]
                     else:
                         # i.e filter_items == "regex"
                         real_items = [
-                            real_item for real_item in whole_list if re.search(pattern, real_item)
+                            real_item
+                            for real_item in whole_list
+                            if isinstance(real_item, str) and re.search(pattern, real_item)
                         ]
+
                     if not real_items:
                         not_found.append(pattern)
                     excluded_items.extend(real_items)
@@ -152,14 +173,23 @@ def _subset_list(subset, whole_list, filter_items=None, warn=True, check_if_pres
             subset = [item for item in whole_list if item not in excluded_items]
 
         elif filter_items == "like":
-            subset = [item for item in whole_list for name in subset if name in item]
+            subset = [
+                item
+                for item in whole_list
+                for name in subset
+                if isinstance(item, str) and isinstance(name, str) and name in item
+            ]
         elif filter_items == "regex":
-            subset = [item for item in whole_list for name in subset if re.search(name, item)]
-
-        existing_items = np.isin(subset, whole_list)
-        if check_if_present and not np.all(existing_items):
-            raise KeyError(f"{np.array(subset)[~existing_items]} are not present")
-
+            subset = [
+                item
+                for item in whole_list
+                for name in subset
+                if isinstance(item, str) and isinstance(name, str) and re.search(name, item)
+            ]
+        existing_items = [item in whole_list for item in subset]
+        if check_if_present and not all(existing_items):
+            missing = [item for item, ok in zip(subset, existing_items) if not ok]
+            raise KeyError(f"{missing} are not present")
     return subset
 
 
