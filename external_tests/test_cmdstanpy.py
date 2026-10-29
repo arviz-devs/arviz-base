@@ -502,3 +502,19 @@ class TestDataCmdStanPy:
         }
         fails = check_multiple_attrs(test_dict, inference_data_false_is_false)
         assert not fails
+
+    def test_cmdstanpy_posterior_predictive_variable_mapping(self, data, eight_schools_params):
+        inference_data = from_cmdstanpy(
+            posterior=data.obj,
+            posterior_predictive={"y": "y_hat"},
+            observed_data={"y": eight_schools_params["y"]},
+        )
+
+        test_dict = {
+            "posterior": ["theta", "~y_hat"],
+            "posterior_predictive": ["y", "~y_hat"],
+            "observed_data": ["y", "~y_hat"],
+        }
+
+        fails = check_multiple_attrs(test_dict, inference_data)
+        assert not fails
