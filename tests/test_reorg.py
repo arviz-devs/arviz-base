@@ -94,6 +94,56 @@ class TestExtract:
         post_attrs["sample_dims"] = ["chain", "draw"]
         assert post_attrs == centered_eight.posterior.attrs
 
+    @pytest.mark.parametrize("resampling_method", ["stratified", "multinomial"])
+    def test_weights_num_samples(self, centered_eight, resampling_method):
+        n_total = centered_eight.posterior.sizes["chain"] * centered_eight.posterior.sizes["draw"]
+        weights = np.random.default_rng(3).random(n_total)
+        post = extract(
+            centered_eight,
+            num_samples=12,
+            weights=weights / weights.sum(),
+            resampling_method=resampling_method,
+            random_seed=0,
+        )
+        assert post.sizes["sample"] == 12
+
+    @pytest.mark.parametrize("resampling_method", ["stratified", "multinomial"])
+    def test_weights_unnormalized(self, centered_eight, resampling_method):
+        n_total = centered_eight.posterior.sizes["chain"] * centered_eight.posterior.sizes["draw"]
+        weights = np.random.default_rng(3).random(n_total)
+        kwargs = {
+            "var_names": "mu",
+            "num_samples": n_total,
+            "resampling_method": resampling_method,
+            "random_seed": 0,
+        }
+        post_norm = extract(centered_eight, weights=weights / weights.sum(), **kwargs)
+        post_unnorm = extract(centered_eight, weights=weights * 10, **kwargs)
+        np.testing.assert_array_equal(post_unnorm.values, post_norm.values)
+
+    def test_weights_stratified_follow_weights(self, centered_eight):
+        n_total = centered_eight.posterior.sizes["chain"] * centered_eight.posterior.sizes["draw"]
+        weights = np.zeros(n_total)
+        weights[[2, 11, 25]] = [1, 2, 1]
+        post = extract(centered_eight, var_names="mu", num_samples=40, weights=weights)
+        flat_mu = centered_eight.posterior["mu"].values.ravel()
+        values, counts = np.unique(post.values, return_counts=True)
+        assert counts.sum() == 40
+        assert dict(zip(values, counts)) == {flat_mu[2]: 10, flat_mu[11]: 20, flat_mu[25]: 10}
+
+    @pytest.mark.parametrize("bad", ["negative", "zero", "nan"])
+    def test_weights_invalid(self, centered_eight, bad):
+        n_total = centered_eight.posterior.sizes["chain"] * centered_eight.posterior.sizes["draw"]
+        weights = np.ones(n_total)
+        if bad == "negative":
+            weights[0] = -1
+        elif bad == "zero":
+            weights[:] = 0
+        else:
+            weights[0] = np.nan
+        with pytest.raises(ValueError, match="Weights must be"):
+            extract(centered_eight, num_samples=10, weights=weights)
+
 
 class TestDsToDa:
     def test_default(self, centered_eight):
