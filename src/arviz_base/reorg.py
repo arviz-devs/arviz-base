@@ -67,6 +67,8 @@ def extract(  # noqa: PLR0915
         `sample_dims` represents a single dimension.
     weights : array-like, optional
         Extract a weighted subset of the samples. Only valid if `num_samples` is not ``None``.
+        Weights must be non-negative, they are normalized internally so they don't need
+        to sum to 1.
     resampling_method : str, optional
         Method to use for resampling. Default is "multinomial". Options are "multinomial"
         and "stratified". For stratified resampling, weights must be provided.
@@ -131,9 +133,12 @@ def extract(  # noqa: PLR0915
 
     if weights is not None:
         resampling_method = "stratified" if resampling_method is None else resampling_method
-        weights = np.array(weights).ravel()
+        weights = np.array(weights, dtype=float).ravel()
         if len(weights) != np.prod([data.sizes[dim] for dim in sample_dims]):
             raise ValueError("Weights must have the same size as `sample_dims`")
+        if np.any(weights < 0) or not np.isfinite(weights).all() or weights.sum() <= 0:
+            raise ValueError("Weights must be finite, non-negative and not all zero")
+        weights = weights / weights.sum()
     else:
         resampling_method = "multinomial" if resampling_method is None else resampling_method
 
@@ -169,29 +174,25 @@ def extract(  # noqa: PLR0915
         elif resampling_method == "stratified":
             if weights is None:
                 raise ValueError("Weights must be provided for stratified resampling")
-            resample_indices = _stratified_resample(weights, rng)
+            resample_indices = _stratified_resample(weights, rng, num_samples)
 
         data = data.isel({combined_dim: resample_indices})
 
     return data
 
 
-def _stratified_resample(weights, rng):
-    """Stratified resampling."""
-    n = len(weights)
+def _stratified_resample(weights, rng, num_samples=None):
+    """Stratified resampling.
+
+    `weights` are expected to be normalized. Returns `num_samples` indices,
+    or ``len(weights)`` indices if `num_samples` is None.
+    """
+    n = len(weights) if num_samples is None else num_samples
     single_uniform = (rng.random(n) + np.arange(n)) / n
-    indexes = np.zeros(n, dtype=int)
     cum_sum = np.cumsum(weights)
-
-    i, j = 0, 0
-    while i < n:
-        if single_uniform[i] < cum_sum[j]:
-            indexes[i] = j
-            i += 1
-        else:
-            j += 1
-
-    return indexes
+    # first index whose cumulative weight is above each uniform. The clip guards
+    # against rounding leaving cum_sum[-1] slightly below the largest uniform
+    return np.minimum(np.searchsorted(cum_sum, single_uniform, side="right"), len(weights) - 1)
 
 
 def dataset_to_dataarray(
