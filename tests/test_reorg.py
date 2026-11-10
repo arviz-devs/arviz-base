@@ -180,6 +180,31 @@ class TestDsToDa:
         assert "variable" not in post_da.coords
         assert "school" not in post_da.coords
 
+    def test_dims_in_different_order(self):
+        # beta lists its dims in a different order than they appear in the dataset
+        beta = np.arange(6).reshape(1, 1, 3, 2)
+        ds = xr.Dataset(
+            {
+                "alpha": (("chain", "draw", "school"), np.zeros((1, 1, 2))),
+                "beta": (("chain", "draw", "year", "school"), beta),
+            },
+            coords={"school": ["A", "B"], "year": [2020, 2021, 2022]},
+        )
+        da = dataset_to_dataarray(ds)
+        assert da.dims == ("chain", "draw", "label")
+        assert da.sel(label="beta[2020, B]").item() == 1
+        assert da.sel(label="beta[2021, A]").item() == 2
+        assert list(da["year"].to_numpy()[2:]) == [2020, 2020, 2021, 2021, 2022, 2022]
+        assert list(da["school"].to_numpy()[2:]) == ["A", "B"] * 3
+
+    def test_many_distinct_dims(self):
+        ds = xr.Dataset(
+            {f"x{i}": (("chain", "draw", f"dim{i}"), np.full((2, 3, 1), i)) for i in range(70)}
+        )
+        da = dataset_to_dataarray(ds)
+        assert da.sizes["label"] == 70
+        assert list(da.sel(chain=0, draw=0).to_numpy()) == list(range(70))
+
     def test_new_dim(self, centered_eight):
         post_ds = centered_eight.posterior.dataset
         post_da = dataset_to_dataarray(post_ds, new_dim="new_dim")
