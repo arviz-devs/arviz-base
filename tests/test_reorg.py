@@ -38,6 +38,10 @@ class TestExtract:
         xr.testing.assert_equal(post, centered_eight.posterior.to_dataset())
         assert post.attrs["sample_dims"] == ["draw"]
 
+    def test_input_attrs_unchanged(self, centered_eight):
+        extract(centered_eight.posterior.dataset, sample_dims="draw")
+        assert centered_eight.posterior.attrs["sample_dims"] == ["chain", "draw"]
+
     def test_var_name_group(self, centered_eight):
         prior = extract(centered_eight, group="prior", var_names="the", filter_vars="like")
         assert {"sample_dims": ["sample"]} == prior.attrs
