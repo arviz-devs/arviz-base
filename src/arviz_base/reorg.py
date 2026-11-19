@@ -245,22 +245,38 @@ def dataset_to_dataarray(
     if label_type not in ("flat", "vert"):
         raise ValueError(f"Invalid label_type: {label_type}")
 
-    labeled_stack = ds.to_stacked_array(new_dim, sample_dims=sample_dims)
+    # Stack each variable over its own dimensions, in its own order, so the stacked values
+    # follow the same order as the labels below. Dataset.to_stacked_array would instead expand
+    # every variable to all the dimensions in the dataset, which fails past 64 dimensions.
+    stack_dims = [dim for dim in ds.dims if dim not in sample_dims]
+    stacked_vars = []
+    for var_name, da in ds.data_vars.items():
+        var_dims = [dim for dim in da.dims if dim not in sample_dims]
+        da = da.assign_coords(
+            {dim: np.arange(da.sizes[dim]) for dim in var_dims if dim not in da.coords}
+        )
+        if var_dims:
+            da = da.stack({new_dim: var_dims}, create_index=False)
+        else:
+            da = da.expand_dims(new_dim, axis=-1)
+        size = da.sizes[new_dim]
+        missing_coords = {
+            dim: (new_dim, np.full(size, np.nan, dtype=object))
+            for dim in stack_dims
+            if dim not in var_dims
+        }
+        stacked_vars.append(
+            da.assign_coords({"variable": (new_dim, np.full(size, var_name)), **missing_coords})
+        )
+    labeled_stack = xr.concat(stacked_vars, dim=new_dim)
     labels = [
         (labeller.make_label_flat if label_type == "flat" else labeller.make_label_vert)(
             var_name, sel, isel
         )
         for var_name, sel, isel in xarray_sel_iter(ds, skip_dims=set(sample_dims))
     ]
-    indexes = [
-        idx_name
-        for idx_name, idx in labeled_stack.xindexes.items()
-        if (idx_name not in sample_dims) and (idx.dim not in sample_dims)
-    ]
-    labeled_stack = labeled_stack.drop_indexes(indexes).assign_coords({new_dim: labels})
-    for idx_name in indexes:
-        if idx_name == new_dim:
-            continue
+    labeled_stack = labeled_stack.assign_coords({new_dim: labels})
+    for idx_name in ["variable", *stack_dims]:
         if add_coords:
             labeled_stack = labeled_stack.set_xindex(idx_name)
         else:
