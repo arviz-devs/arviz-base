@@ -3,8 +3,8 @@
   "stan_major_version" : "2",
   "stan_minor_version" : "40",
   "stan_patch_version" : "0",
-  "model_name" : "stan_model_test_model",
-  "start_datetime" : "2026-11-19 01:54:29 UTC",
+  "model_name" : "cmdstanpy_eight_schools_model",
+  "start_datetime" : "2026-11-19 02:09:08 UTC",
   "method" : {
     "value" : "sample",
     "sample" : {
@@ -43,16 +43,16 @@
       "num_chains" : 1
     }
   },
-  "id" : 1,
+  "id" : 4,
   "data" : {
-    "file" : "\/var\/folders\/q5\/ptv_02lj71vdn5cgw3q10ytm0000gn\/T\/tmpbd2dmmnn\/kycoh1pr.json"
+    "file" : "\/var\/folders\/q5\/ptv_02lj71vdn5cgw3q10ytm0000gn\/T\/tmpvbb8ps3z\/ho82al0e.json"
   },
   "init" : "2",
   "random" : {
-    "seed" : 14656
+    "seed" : 14632
   },
   "output" : {
-    "file" : "\/var\/folders\/q5\/ptv_02lj71vdn5cgw3q10ytm0000gn\/T\/tmpbd2dmmnn\/stan_model_test7qplpz8p\/stan_model_test-20261118205429_1.csv",
+    "file" : "\/var\/folders\/q5\/ptv_02lj71vdn5cgw3q10ytm0000gn\/T\/tmpvbb8ps3z\/cmdstanpy_eight_schoolszbxkried\/cmdstanpy_eight_schools-20261118210908_4.csv",
     "diagnostic_file" : "",
     "refresh" : 100,
     "sig_figs" : 8,
@@ -62,5 +62,5 @@
   "num_threads" : 1,
   "mpi_enabled" : false,
   "stanc_version" : "stanc3 v2.40.0",
-  "stancflags" : "--filename-in-msg=stan_model_test.stan"
+  "stancflags" : "--filename-in-msg=cmdstanpy_eight_schools.stan"
 }

@@ -67,7 +67,7 @@ def _create_test_data(target_dir):
             }
         }
     """
-    stan_file = Path(target_dir) / "stan_model_test.stan"
+    stan_file = Path(target_dir) / "cmdstanpy_eight_schools.stan"
     with open(stan_file, "w", encoding="utf8") as file_handle:
         file_handle.write(model_code)
     model = cmdstanpy.CmdStanModel(stan_file=stan_file)
