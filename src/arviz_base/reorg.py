@@ -111,7 +111,7 @@ def extract(  # noqa: PLR0915
     """
     data = convert_to_dataset(data, group=group)
     sample_dims = validate_sample_dims(sample_dims, data=data)
-    data.attrs["sample_dims"] = sample_dims
+    data = data.assign_attrs(sample_dims=sample_dims)
     if len(sample_dims) == 1:
         combined = True
     if num_samples is not None and not combined:
