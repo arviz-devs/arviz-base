@@ -9,7 +9,6 @@ All saved stan and csv files will be regenerated automatically.
 """
 
 import os
-from glob import glob
 from pathlib import Path
 
 import numpy as np
@@ -27,7 +26,6 @@ def _create_test_data(target_dir):
     This function is needed when test data needs to be updated.
     """
     import platform
-    import shutil
 
     import cmdstanpy
 
@@ -81,29 +79,15 @@ def _create_test_data(target_dir):
     fit_no_warmup = model.sample(
         data=stan_data, iter_sampling=100, iter_warmup=1000, save_warmup=False
     )
-    fit_no_warmup.save_csvfiles(dir=target_dir)
-    fit_files = {
-        "cmdstanpy_eight_schools_nowarmup": [],
-        "cmdstanpy_eight_schools_warmup": [],
-    }
-    for path_i in fit_no_warmup.runset.csv_files:
-        path = Path(path_i)
-        _, num = path.stem.rsplit("-", 1)
-        new_path = path.parent / ("cmdstanpy_eight_schools_nowarmup-" + num + path.suffix)
-        shutil.move(path, new_path)
-        fit_files["cmdstanpy_eight_schools_nowarmup"].append(new_path)
+    fit_no_warmup.save_output_files(dir=os.path.join(target_dir, "nowarmup"))
     fit_warmup = model.sample(data=stan_data, iter_sampling=100, iter_warmup=500, save_warmup=True)
-    fit_warmup.save_csvfiles(dir=target_dir)
-    for path_i in fit_no_warmup.runset.csv_files:
-        path = Path(path_i)
-        _, num = path.stem.rsplit("-", 1)
-        new_path = path.parent / ("cmdstanpy_eight_schools_warmup-" + num + path.suffix)
-        shutil.move(path, new_path)
-        fit_files["cmdstanpy_eight_schools_warmup"].append(new_path)
+    fit_warmup.save_output_files(dir=os.path.join(target_dir, "warmup"))
+    for path in Path(target_dir).glob("*/*"):
+        if not path.name.endswith((".csv", "_config.json")):
+            path.unlink()
     stan_file.unlink()
     stan_file.with_suffix(".exe" if platform.system() == "Windows" else "").unlink()
     stan_file.with_suffix(".hpp").unlink(missing_ok=True)
-    return fit_files
 
 
 class TestDataCmdStanPy:
@@ -119,50 +103,15 @@ class TestDataCmdStanPy:
 
     @pytest.fixture(scope="class")
     @classmethod
-    def filepaths(cls, data_directory):
-        files = {
-            "nowarmup": glob(
-                os.path.join(data_directory, "cmdstanpy_eight_schools_nowarmup-*_[1-4].csv")
-            ),
-            "warmup": glob(
-                os.path.join(data_directory, "cmdstanpy_eight_schools_warmup-*_[1-4].csv")
-            ),
-        }
-        return files
-
-    @pytest.fixture(scope="class")
-    @classmethod
-    def data(cls, filepaths, tmp_path_factory):
+    def data(cls, data_directory, tmp_path_factory):
         # Skip tests if cmdstanpy not installed
         cmdstanpy = importorskip("cmdstanpy")
         CmdStanModel = cmdstanpy.CmdStanModel  # pylint: disable=invalid-name
-        CmdStanMCMC = cmdstanpy.CmdStanMCMC  # pylint: disable=invalid-name
-        RunSet = cmdstanpy.stanfit.RunSet  # pylint: disable=invalid-name
-        CmdStanArgs = cmdstanpy.model.CmdStanArgs  # pylint: disable=invalid-name
-        SamplerArgs = cmdstanpy.model.SamplerArgs  # pylint: disable=invalid-name
+        load = getattr(cmdstanpy, "from_output_files", None) or cmdstanpy.from_csv
 
         class Data:
-            args = CmdStanArgs(
-                "dummy.stan",
-                "dummy.exe",
-                list(range(1, 5)),
-                method_args=SamplerArgs(iter_sampling=100),
-            )
-            runset_obj = RunSet(args)
-            runset_obj._csv_files = filepaths["nowarmup"]  # pylint: disable=protected-access
-            obj = CmdStanMCMC(runset_obj)
-            obj._assemble_draws()  # pylint: disable=protected-access
-
-            args_warmup = CmdStanArgs(
-                "dummy.stan",
-                "dummy.exe",
-                list(range(1, 5)),
-                method_args=SamplerArgs(iter_sampling=100, iter_warmup=500, save_warmup=True),
-            )
-            runset_obj_warmup = RunSet(args_warmup)
-            runset_obj_warmup._csv_files = filepaths["warmup"]  # pylint: disable=protected-access
-            obj_warmup = CmdStanMCMC(runset_obj_warmup)
-            obj_warmup._assemble_draws()  # pylint: disable=protected-access
+            obj = load(os.path.join(data_directory, "nowarmup"))
+            obj_warmup = load(os.path.join(data_directory, "warmup"))
 
             temp_dir = tmp_path_factory.mktemp("stan_model")
             stan_file = temp_dir / "modified_dtype.stan"
