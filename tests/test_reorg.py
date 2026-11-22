@@ -205,6 +205,18 @@ class TestDsToDa:
         assert da.sizes["label"] == 70
         assert list(da.sel(chain=0, draw=0).to_numpy()) == list(range(70))
 
+    def test_datetime_coord(self):
+        time = np.array(["2020-01-01", "2020-01-02"], dtype="datetime64[ns]")
+        ds = xr.Dataset(
+            {
+                "mu": (("chain", "draw"), np.zeros((1, 1))),
+                "trend": (("chain", "draw", "time"), np.zeros((1, 1, 2))),
+            },
+            coords={"time": time},
+        )
+        da = dataset_to_dataarray(ds)
+        assert list(da["time"].to_numpy()[1:]) == list(time)
+
     def test_new_dim(self, centered_eight):
         post_ds = centered_eight.posterior.dataset
         post_da = dataset_to_dataarray(post_ds, new_dim="new_dim")
