@@ -181,7 +181,6 @@ class TestDsToDa:
         assert "school" not in post_da.coords
 
     def test_dims_in_different_order(self):
-        # beta lists its dims in a different order than they appear in the dataset
         beta = np.arange(6).reshape(1, 1, 3, 2)
         ds = xr.Dataset(
             {
