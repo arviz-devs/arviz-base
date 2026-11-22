@@ -249,6 +249,9 @@ def dataset_to_dataarray(
     # follow the same order as the labels below. Dataset.to_stacked_array would instead expand
     # every variable to all the dimensions in the dataset, which fails past 64 dimensions.
     stack_dims = [dim for dim in ds.dims if dim not in sample_dims]
+    partial_dims = [
+        dim for dim in stack_dims if any(dim not in da.dims for da in ds.data_vars.values())
+    ]
     stacked_vars = []
     for var_name, da in ds.data_vars.items():
         var_dims = [dim for dim in da.dims if dim not in sample_dims]
