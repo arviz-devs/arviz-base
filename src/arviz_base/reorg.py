@@ -260,13 +260,17 @@ def dataset_to_dataarray(
         else:
             da = da.expand_dims(new_dim, axis=-1)
         size = da.sizes[new_dim]
-        missing_coords = {
-            dim: (new_dim, np.full(size, np.nan, dtype=object))
-            for dim in stack_dims
-            if dim not in var_dims
+        partial_coords = {
+            dim: (
+                new_dim,
+                da[dim].to_index().astype(object)
+                if dim in var_dims
+                else np.full(size, np.nan, dtype=object),
+            )
+            for dim in partial_dims
         }
         stacked_vars.append(
-            da.assign_coords({"variable": (new_dim, np.full(size, var_name)), **missing_coords})
+            da.assign_coords({"variable": (new_dim, np.full(size, var_name)), **partial_coords})
         )
     labeled_stack = xr.concat(stacked_vars, dim=new_dim)
     labels = [
