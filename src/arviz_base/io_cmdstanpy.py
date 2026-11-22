@@ -30,6 +30,7 @@ class CmdStanPyConverter:
         constant_data=None,
         predictions_constant_data=None,
         log_likelihood=False,
+        log_prior=None,
         index_origin=None,
         coords=None,
         dims=None,
@@ -45,6 +46,7 @@ class CmdStanPyConverter:
         self.constant_data = constant_data
         self.predictions_constant_data = predictions_constant_data
         self.log_likelihood = log_likelihood
+        self.log_prior = log_prior
         self.index_origin = index_origin
         self.coords = coords
         self.dims = dims
@@ -116,6 +118,12 @@ class CmdStanPyConverter:
         if self.log_likelihood is not None:
             try:
                 items = _filter(items, self.log_likelihood)
+            except ValueError:
+                pass
+
+        if self.log_prior is not None:
+            try:
+                items = _filter(items, self.log_prior)
             except ValueError:
                 pass
 
@@ -235,6 +243,21 @@ class CmdStanPyConverter:
                 }
         return self._warmup_return_to_dict(data, data_warmup, "log_likelihood")
 
+    @requires("posterior")
+    @requires("log_prior")
+    def log_prior_to_xarray(self):
+        """Extract prior log densities evaluated at posterior draws."""
+        data, data_warmup = _unpack_fit(
+            self.posterior, _as_set(self.log_prior), self.save_warmup, self.dtypes
+        )
+        if isinstance(self.log_prior, dict):
+            data = {name: data[variable] for name, variable in self.log_prior.items()}
+            if data_warmup:
+                data_warmup = {
+                    name: data_warmup[variable] for name, variable in self.log_prior.items()
+                }
+        return self._warmup_return_to_dict(data, data_warmup, "log_prior")
+
     @requires("prior")
     def prior_to_xarray(self):
         """Convert prior samples to xarray."""
@@ -310,6 +333,7 @@ class CmdStanPyConverter:
             self.sample_stats_prior_to_xarray(),
             self.prior_predictive_to_xarray(),
             self.log_likelihood_to_xarray(),
+            self.log_prior_to_xarray(),
         ]
         for ds_dict in datalist:
             if ds_dict is not None:
@@ -404,6 +428,7 @@ def from_cmdstanpy(
     constant_data=None,
     predictions_constant_data=None,
     log_likelihood=None,
+    log_prior=None,
     index_origin=None,
     coords=None,
     dims=None,
@@ -438,6 +463,11 @@ def from_cmdstanpy(
         data is stored. By default, if a variable ``log_lik`` is present in the Stan model,
         it will be retrieved as pointwise log likelihood values. Use ``False``
         to avoid this behaviour.
+    log_prior : str or list of str or dict of {str : str}, optional
+        Variables containing prior log densities evaluated at the posterior draws.
+        If a dict, keys name the corresponding parameters and values name the Stan
+        variables holding their log densities. Selected variables are moved from
+        the posterior to the log_prior group. Prior samples are unaffected.
     index_origin : int, optional
         Starting value of integer coordinate values. Defaults to the value in rcParam
         ``data.index_origin``.
@@ -468,6 +498,7 @@ def from_cmdstanpy(
         constant_data=constant_data,
         predictions_constant_data=predictions_constant_data,
         log_likelihood=log_likelihood,
+        log_prior=log_prior,
         index_origin=index_origin,
         coords=coords,
         dims=dims,

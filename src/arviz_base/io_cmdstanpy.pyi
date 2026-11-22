@@ -30,6 +30,7 @@ class CmdStanPyConverter:
         constant_data: Incomplete = ...,
         predictions_constant_data: Incomplete = ...,
         log_likelihood: Incomplete = ...,
+        log_prior: Incomplete = ...,
         index_origin: Incomplete = ...,
         coords: Incomplete = ...,
         dims: Incomplete = ...,
@@ -48,6 +49,7 @@ class CmdStanPyConverter:
     def predictive_to_xarray(self, names: Incomplete, fit: Incomplete) -> None: ...
     def predictions_to_xarray(self) -> None: ...
     def log_likelihood_to_xarray(self) -> None: ...
+    def log_prior_to_xarray(self) -> None: ...
     def prior_to_xarray(self) -> None: ...
     def observed_data_to_xarray(self) -> None: ...
     def constant_data_to_xarray(self) -> None: ...
@@ -70,6 +72,7 @@ def from_cmdstanpy(
     constant_data: Mapping[str, ArrayLike] | None = ...,
     predictions_constant_data: dict | None = ...,
     log_likelihood: str | list[str] | dict[str, str] | None = ...,
+    log_prior: str | list[str] | dict[str, str] | None = ...,
     index_origin: int | None = ...,
     coords: dict | None = ...,
     dims: Mapping[Any, Sequence[Hashable]] | None = ...,
