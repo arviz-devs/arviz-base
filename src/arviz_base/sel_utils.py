@@ -300,9 +300,14 @@ def xarray_to_ndarray(data, *, var_names=None, combined=True, label_fun=None):
         label_fun(var_name, selection, isel) for var_name, selection, isel in vars_and_sel
     ]
 
-    # Merge chains and variables, check dtype to be compatible with divergences data
+    # Merge chains and variables. Use a dtype every selected variable fits in,
+    # so discrete or boolean variables do not truncate continuous ones
+    # (all-boolean data like divergences keeps its dtype).
     data0 = data_to_sel[vars_and_sel[0][0]].sel(**vars_and_sel[0][1])
-    unpacked_data = np.empty((len(unpacked_var_names), data0.size), dtype=data0.dtype)
+    out_dtype = np.result_type(
+        *(data_to_sel[var_name].dtype for var_name in dict.fromkeys(v[0] for v in vars_and_sel))
+    )
+    unpacked_data = np.empty((len(unpacked_var_names), data0.size), dtype=out_dtype)
     for idx, (var_name, selection, _) in enumerate(iterator2):
         unpacked_data[idx] = data_to_sel[var_name].sel(**selection).values.flatten()
 

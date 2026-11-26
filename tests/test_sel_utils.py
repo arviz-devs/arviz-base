@@ -49,6 +49,41 @@ def test_dataset_to_numpy_combined(sample_dataset):
     assert (data[var_names.index("tau")] == tau.reshape(1, 6)).all()
 
 
+def test_dataset_to_numpy_mixed_dtypes_keep_floats():
+    rng = np.random.default_rng(0)
+    discrete = rng.integers(0, 5, size=(2, 3))
+    continuous = rng.normal(size=(2, 3))
+    data = xr.Dataset(
+        {"k": (["chain", "draw"], discrete), "mu": (["chain", "draw"], continuous)},
+        coords={"chain": [0, 1], "draw": [0, 1, 2]},
+    )
+    for combined in (True, False):
+        var_names, values = xarray_to_ndarray(data, combined=combined)
+        assert np.issubdtype(values.dtype, np.floating)
+        mu_rows = values[[i for i, name in enumerate(var_names) if name.startswith("mu")]]
+        np.testing.assert_allclose(mu_rows.ravel(), continuous.ravel())
+
+
+def test_dataset_to_numpy_bool_first_keeps_floats():
+    rng = np.random.default_rng(1)
+    continuous = rng.normal(size=(2, 3))
+    data = xr.Dataset(
+        {"flag": (["chain", "draw"], continuous > 0), "mu": (["chain", "draw"], continuous)},
+        coords={"chain": [0, 1], "draw": [0, 1, 2]},
+    )
+    var_names, values = xarray_to_ndarray(data, combined=True)
+    np.testing.assert_allclose(values[var_names.index("mu")], continuous.ravel())
+
+
+def test_dataset_to_numpy_all_bool_keeps_dtype():
+    data = xr.Dataset(
+        {"div": (["chain", "draw"], np.array([[True, False, True], [False, False, True]]))},
+        coords={"chain": [0, 1], "draw": [0, 1, 2]},
+    )
+    _, values = xarray_to_ndarray(data, combined=True)
+    assert values.dtype == np.bool_
+
+
 def test_xarray_sel_iter_ordering():
     """Assert that coordinate names stay the provided order"""
     coords = list("dcba")
