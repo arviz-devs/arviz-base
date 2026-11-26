@@ -40,8 +40,32 @@ class TestExtract:
 
     def test_var_name_group(self, centered_eight):
         prior = extract(centered_eight, group="prior", var_names="the", filter_vars="like")
-        assert {"sample_dims": ["sample"]} == prior.attrs
         assert "theta" == prior.name
+        # Group metadata is kept on the single-variable DataArray (gh-213).
+        prior_attrs = prior.attrs.copy()
+        assert prior_attrs["sample_dims"] == ["sample"]
+        prior_attrs["sample_dims"] = ["chain", "draw"]
+        assert prior_attrs == centered_eight.prior.attrs
+
+    def test_single_var_keeps_group_metadata(self, centered_eight):
+        """Selecting a single variable must not drop the group's attrs (gh-213)."""
+        group_attrs = centered_eight.posterior.attrs
+
+        # Default path returns a DataArray for the single remaining variable.
+        post = extract(centered_eight, var_names="theta")
+        assert isinstance(post, xr.DataArray)
+        for key, value in group_attrs.items():
+            if key == "sample_dims":
+                continue
+            assert post.attrs[key] == value
+        assert post.attrs["sample_dims"] == ["sample"]
+
+        # Also holds when resampling (num_samples) and with a single sample dim.
+        post_sub = extract(centered_eight, var_names="theta", sample_dims="draw", num_samples=4)
+        for key, value in group_attrs.items():
+            if key == "sample_dims":
+                continue
+            assert post_sub.attrs[key] == value
 
     def test_keep_dataset(self, centered_eight):
         prior = extract(
