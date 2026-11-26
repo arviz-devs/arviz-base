@@ -121,6 +121,12 @@ def extract(  # noqa: PLR0915
     if weights is not None and num_samples is None:
         raise ValueError("weights are only compatible with num_samples")
 
+    # Selecting a single variable below returns a DataArray, which only carries that
+    # variable's own attrs. Keep the dataset-level attrs (group metadata such as created_at
+    # and inference_library) so they survive the conversion; they are re-attached at the end,
+    # after the stack/resample steps that would otherwise drop them.
+    dataset_attrs = dict(data.attrs)
+
     var_names = _var_names(var_names, data, filter_vars)
     if var_names is not None:
         if len(var_names) == 1 and not keep_dataset:
@@ -172,6 +178,11 @@ def extract(  # noqa: PLR0915
             resample_indices = _stratified_resample(weights, rng)
 
         data = data.isel({combined_dim: resample_indices})
+
+    if isinstance(data, xr.DataArray):
+        # Restore the dataset-level attrs dropped when a single variable was selected,
+        # letting any attrs set on the result (e.g. the updated sample_dims) take precedence.
+        data.attrs = {**dataset_attrs, **data.attrs}
 
     return data
 
